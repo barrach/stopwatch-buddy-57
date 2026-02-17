@@ -63,6 +63,7 @@ export default function NewObservation() {
   );
 
   const { mutate: saveObservation, isPending } = useMutation({
+    retry: false,
     mutationFn: async (payload: {
       data: string; horario: string; rota_id: string; obra_id: string;
       contrato_id: string | null; especialidade_id: string; categoria_id: string;
@@ -76,7 +77,9 @@ export default function NewObservation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      }
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
       toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantity} amostras)` });
