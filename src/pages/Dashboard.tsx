@@ -181,7 +181,16 @@ export default function Dashboard() {
       else if (cat === "Suplementar") result[rName].supplementary += r.quantidade || 0;
       else result[rName].unproductive += r.quantidade || 0;
     });
-    return Object.entries(result).map(([name, v]) => ({ name, ...v, total: v.productive + v.supplementary + v.unproductive }));
+    return Object.entries(result).map(([name, v]) => {
+      const total = v.productive + v.supplementary + v.unproductive;
+      return {
+        name,
+        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        total,
+      };
+    });
   }, [records, getParentCatName]);
 
   const bySpecialty = useMemo(() => {
@@ -194,7 +203,16 @@ export default function Dashboard() {
       else if (cat === "Suplementar") result[sName].supplementary += r.quantidade || 0;
       else result[sName].unproductive += r.quantidade || 0;
     });
-    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => ({ name, ...v }));
+    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => {
+      const total = v.productive + v.supplementary + v.unproductive;
+      return {
+        name,
+        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        total,
+      };
+    });
   }, [records, getParentCatName]);
 
   const byTime = useMemo(() => {
@@ -216,12 +234,17 @@ export default function Dashboard() {
       else if (cat === "Suplementar") result[oName].supplementary += r.quantidade || 0;
       else result[oName].unproductive += r.quantidade || 0;
     });
-    return Object.entries(result).map(([name, v]) => ({
-      name,
-      ...v,
-      total: v.productive + v.supplementary + v.unproductive,
-      prodPercent: Math.round((v.productive / (v.productive + v.supplementary + v.unproductive)) * 100) || 0,
-    }));
+    return Object.entries(result).map(([name, v]) => {
+      const total = v.productive + v.supplementary + v.unproductive;
+      return {
+        name,
+        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        total,
+        prodPercent: total > 0 ? Math.round((v.productive / total) * 100) : 0,
+      };
+    });
   }, [records, getParentCatName]);
 
   // Cross-filter click handlers
@@ -398,11 +421,8 @@ export default function Dashboard() {
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
-                const total = entry.payload.total;
-                return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, name];
-              }} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
               <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
@@ -488,11 +508,8 @@ export default function Dashboard() {
             <BarChart data={byRoute} onClick={handleRouteClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
-                const total = entry.payload.total;
-                return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, name];
-              }} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
               <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
@@ -512,8 +529,8 @@ export default function Dashboard() {
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
               <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
