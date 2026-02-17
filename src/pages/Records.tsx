@@ -262,6 +262,7 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Categoria</TableHead>
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
+                <TableHead className="text-xs font-semibold">Registrado por</TableHead>
                 <TableHead className="text-xs font-semibold w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -282,6 +283,9 @@ export default function Records() {
                     </TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
                     <TableCell className="text-xs text-right font-bold">{r.quantidade}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {r.criado_por ? r.criado_por.substring(0, 8) + "…" : "—"}
+                    </TableCell>
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -306,7 +310,7 @@ export default function Records() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-sm text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
