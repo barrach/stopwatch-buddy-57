@@ -1,4 +1,4 @@
-// Mock data and types based on the UNIPAR productivity measurement spreadsheet
+// Mock data and types based on the MEGASTEM productivity measurement spreadsheet
 
 export const SPECIALTIES = [
   "Elétrica",
@@ -37,8 +37,8 @@ export type Route = (typeof ROUTES)[number];
 
 export const TIME_SLOTS = ["8:00", "9:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
 
-export const COMPANIES = ["UNIPAR"] as const;
-export const OBRAS = ["UNIPAR - Cubatão", "UNIPAR - Bahia", "UNIPAR - Santo André"] as const;
+export const COMPANIES = ["MEGASTEM"] as const;
+export const OBRAS = ["MEGASTEM - Cubatão", "MEGASTEM - Bahia", "MEGASTEM - Santo André"] as const;
 export type Obra = (typeof OBRAS)[number];
 
 export const SAMPLERS = ["Michel Barrach"] as const;
