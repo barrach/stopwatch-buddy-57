@@ -55,6 +55,12 @@ export default function CadastroCategorias() {
     qc.invalidateQueries({ queryKey: ["categorias_observacao"] });
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("categorias_observacao").delete().eq("id", id);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["categorias_observacao"] });
+  };
+
   return (
     <CrudPage
       title="Categorias de Observação"
@@ -64,6 +70,7 @@ export default function CadastroCategorias() {
       extraFields={extraFields}
       onSave={save}
       onUpdate={update}
+      onDelete={remove}
     />
   );
 }
