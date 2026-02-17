@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Route, HardHat, Building2, Tag, Wrench, LogOut } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Route, Building2, Tag, Wrench, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import logoMega from "@/assets/logo-mega.png";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
@@ -25,8 +26,8 @@ export default function AppSidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-30">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-          <HardHat className="w-5 h-5 text-primary-foreground" />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center">
+          <img src={logoMega} alt="Megastem logo" className="w-9 h-9 object-contain" />
         </div>
         <div>
           <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight">ProdControl</h1>
