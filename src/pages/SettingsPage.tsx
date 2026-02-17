@@ -3,6 +3,7 @@ import AppLayout from "@/components/AppLayout";
 import { SPECIALTIES, OBSERVATION_CATEGORIES } from "@/data/mockData";
 import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,11 +123,14 @@ export default function SettingsPage() {
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gerencie usuários, especialidades, categorias e parâmetros do sistema
-          </p>
+        <div className="mb-8 flex items-center gap-3">
+          <img src={logoMega} alt="ProdControl logo" className="w-10 h-10 object-contain" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">ProdControl</h1>
+            <p className="text-sm text-muted-foreground">
+              Medição de Produtividade
+            </p>
+          </div>
         </div>
 
         {/* User Management */}
