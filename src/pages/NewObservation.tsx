@@ -29,7 +29,7 @@ export default function NewObservation() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [company, setCompany] = useState("UNIPAR");
+  const [company, setCompany] = useState("MEGASTEM");
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
 

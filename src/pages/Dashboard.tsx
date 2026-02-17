@@ -137,7 +137,7 @@ export default function Dashboard() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
-            <p className="text-sm text-muted-foreground mt-1">Visão geral da medição de produtividade — UNIPAR</p>
+            <p className="text-sm text-muted-foreground mt-1">Visão geral da medição de produtividade — MEGASTEM</p>
           </div>
           <div className="w-56">
             <Select value={obraFilter} onValueChange={setObraFilter}>
