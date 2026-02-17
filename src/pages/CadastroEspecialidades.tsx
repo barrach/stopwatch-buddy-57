@@ -18,7 +18,7 @@ export default function CadastroEspecialidades() {
 
   const save = async (form: Record<string, string>) => {
     const { error } = await supabase.from("especialidades").insert({
-      codigo: form.codigo, nome: form.nome, descricao: form.descricao || null, status: form.status, criado_por: user?.id,
+      codigo: form.nome.trim().toUpperCase().slice(0, 20), nome: form.nome, descricao: form.descricao || null, status: form.status, criado_por: user?.id,
     });
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["especialidades"] });

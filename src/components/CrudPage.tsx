@@ -51,28 +51,27 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
   const [filterStatus, setFilterStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<CrudItem | null>(null);
-  const [form, setForm] = useState<Record<string, string>>({ codigo: "", nome: "", descricao: "", status: "Ativo" });
+  const [form, setForm] = useState<Record<string, string>>({ nome: "", descricao: "", status: "Ativo" });
   const [saving, setSaving] = useState(false);
 
   const filtered = items.filter((item) => {
     if (filterStatus !== "all" && item.status !== filterStatus) return false;
     if (search) {
       const q = search.toLowerCase();
-      return item.codigo.toLowerCase().includes(q) || item.nome.toLowerCase().includes(q);
+      return item.nome.toLowerCase().includes(q);
     }
     return true;
   });
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ codigo: "", nome: "", descricao: "", status: "Ativo" });
+    setForm({ nome: "", descricao: "", status: "Ativo" });
     setDialogOpen(true);
   };
 
   const openEdit = (item: CrudItem) => {
     setEditItem(item);
     const formData: Record<string, string> = {
-      codigo: item.codigo,
       nome: item.nome,
       descricao: item.descricao || "",
       status: item.status,
@@ -85,8 +84,8 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
   };
 
   const handleSave = async () => {
-    if (!form.codigo.trim() || !form.nome.trim()) {
-      toast({ title: "Campos obrigatórios", description: "Código e Nome são obrigatórios.", variant: "destructive" });
+    if (!form.nome.trim()) {
+      toast({ title: "Campo obrigatório", description: "Nome é obrigatório.", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -135,7 +134,7 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Buscar por código ou nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               </div>
             </div>
             <div className="w-40">
@@ -159,7 +158,6 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-xs font-semibold">Código</TableHead>
                   <TableHead className="text-xs font-semibold">Nome</TableHead>
                   <TableHead className="text-xs font-semibold">Descrição</TableHead>
                   {extraFields.map((f) => (
@@ -172,7 +170,6 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
               <TableBody>
                 {filtered.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="text-xs font-mono">{item.codigo}</TableCell>
                     <TableCell className="text-xs font-medium">{item.nome}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{item.descricao || "—"}</TableCell>
                     {extraFields.map((f) => (
@@ -199,7 +196,7 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5 + extraFields.length} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={4 + extraFields.length} className="text-center py-8 text-sm text-muted-foreground">
                       Nenhum item encontrado
                     </TableCell>
                   </TableRow>
@@ -217,10 +214,6 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
               <DialogTitle>{editItem ? "Editar" : "Novo"} {title.replace(/s$/, "")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Código *</Label>
-                <Input value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} className="mt-1" disabled={!!editItem} />
-              </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Nome *</Label>
                 <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="mt-1" />

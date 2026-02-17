@@ -18,7 +18,7 @@ export default function CadastroRotas() {
 
   const save = async (form: Record<string, string>) => {
     const { error } = await supabase.from("rotas").insert({
-      codigo: form.codigo,
+      codigo: form.nome.trim().toUpperCase().slice(0, 20),
       nome: form.nome,
       descricao: form.descricao || null,
       status: form.status,

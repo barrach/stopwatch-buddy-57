@@ -32,7 +32,7 @@ export default function CadastroCategorias() {
 
   const save = async (form: Record<string, string>) => {
     const { error } = await supabase.from("categorias_observacao").insert({
-      codigo: form.codigo,
+      codigo: form.nome.trim().toUpperCase().slice(0, 20),
       nome: form.nome,
       descricao: form.descricao || null,
       status: form.status,
