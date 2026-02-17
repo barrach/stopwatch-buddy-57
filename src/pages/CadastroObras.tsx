@@ -32,7 +32,13 @@ export default function CadastroObras() {
     qc.invalidateQueries({ queryKey: ["obras"] });
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("obras").delete().eq("id", id);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["obras"] });
+  };
+
   return (
-    <CrudPage title="Obras" subtitle="Gerencie as obras/projetos" items={items as any} loading={isLoading} onSave={save} onUpdate={update} />
+    <CrudPage title="Obras" subtitle="Gerencie as obras/projetos" items={items as any} loading={isLoading} onSave={save} onUpdate={update} onDelete={remove} />
   );
 }

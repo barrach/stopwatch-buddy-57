@@ -39,6 +39,12 @@ export default function CadastroRotas() {
     qc.invalidateQueries({ queryKey: ["rotas"] });
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("rotas").delete().eq("id", id);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["rotas"] });
+  };
+
   return (
     <CrudPage
       title="Rotas"
@@ -47,6 +53,7 @@ export default function CadastroRotas() {
       loading={isLoading}
       onSave={save}
       onUpdate={update}
+      onDelete={remove}
     />
   );
 }
