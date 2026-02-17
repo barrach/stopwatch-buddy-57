@@ -13,7 +13,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Search } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Search, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface CrudField {
@@ -43,9 +47,10 @@ interface CrudPageProps {
   extraFields?: CrudField[];
   onSave: (data: Record<string, string>) => Promise<void>;
   onUpdate: (id: string, data: Record<string, string>) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
-export default function CrudPage({ title, subtitle, items, loading, extraFields = [], onSave, onUpdate }: CrudPageProps) {
+export default function CrudPage({ title, subtitle, items, loading, extraFields = [], onSave, onUpdate, onDelete }: CrudPageProps) {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -102,6 +107,16 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (item: CrudItem) => {
+    if (!onDelete) return;
+    try {
+      await onDelete(item.id);
+      toast({ title: "Excluído!", description: `${item.nome} foi removido.` });
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });
     }
   };
 
@@ -188,9 +203,34 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
                       </button>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        {onDelete && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir {item.nome}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação não pode ser desfeita. O item será removido permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

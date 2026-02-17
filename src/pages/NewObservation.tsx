@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TIME_SLOTS, COMPANIES } from "@/data/mockData";
+import { TIME_SLOTS } from "@/data/mockData";
 import { Camera, Save, RotateCcw, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,6 @@ export default function NewObservation() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [company, setCompany] = useState("MEGASTEM");
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
 
@@ -52,7 +51,6 @@ export default function NewObservation() {
     },
   });
 
-
   const { data: especialidades = [] } = useQuery({
     queryKey: ["especialidades", "ativas"],
     queryFn: async () => {
@@ -63,13 +61,25 @@ export default function NewObservation() {
   });
 
   const { data: categorias = [] } = useQuery({
-    queryKey: ["categorias_observacao", "ativas"],
+    queryKey: ["categorias_observacao", "all"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome").eq("status", "Ativo").order("nome");
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, status").order("nome");
       if (error) throw error;
       return data;
     },
   });
+
+  // Parent categories (Produtivo, Suplementar, Não Produtivo)
+  const parentCategorias = useMemo(
+    () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
+    [categorias]
+  );
+
+  // Subcategories (descriptions) for the selected parent category
+  const subcategorias = useMemo(
+    () => categoriaId ? categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo") : [],
+    [categorias, categoriaId]
+  );
 
   const { mutate: saveObservation, isPending } = useMutation({
     mutationFn: async (payload: {
@@ -82,9 +92,8 @@ export default function NewObservation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["observacoes"] });
-      const catName = categorias.find(c => c.id === categoriaId)?.nome ?? "";
+      const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       toast({ title: "Observação registrada!", description: `${catName} — ${descricao} (${quantity} amostras)` });
-      // Reset
       setCategoriaId("");
       setDescricao("");
       setEspecialidadeId("");
@@ -114,7 +123,7 @@ export default function NewObservation() {
       especialidade_id: especialidadeId,
       categoria_id: categoriaId,
       descricao,
-      empresa: company,
+      empresa: "MEGASTEM",
       quantidade: parseInt(quantity, 10),
       notas: notes || null,
     });
@@ -153,7 +162,7 @@ export default function NewObservation() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Obra *</Label>
+                <Label className="text-xs text-muted-foreground">Contrato *</Label>
                 <Select value={obraId} onValueChange={setObraId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
@@ -167,15 +176,6 @@ export default function NewObservation() {
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {rotas.map((r) => <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Empresa</Label>
-                <Select value={company} onValueChange={setCompany}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {COMPANIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -201,14 +201,19 @@ export default function NewObservation() {
                 <Select value={categoriaId} onValueChange={(v) => { setCategoriaId(v); setDescricao(""); }}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger>
                   <SelectContent>
-                    {categorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                    {parentCategorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <Label className="text-xs text-muted-foreground">Descrição *</Label>
-                <Input value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva a observação..." className="mt-1" />
+                <Select value={descricao} onValueChange={setDescricao} disabled={!categoriaId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={categoriaId ? "Selecione a descrição..." : "Selecione a categoria primeiro"} /></SelectTrigger>
+                  <SelectContent>
+                    {subcategorias.map((s) => <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

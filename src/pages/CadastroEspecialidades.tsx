@@ -32,7 +32,13 @@ export default function CadastroEspecialidades() {
     qc.invalidateQueries({ queryKey: ["especialidades"] });
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("especialidades").delete().eq("id", id);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["especialidades"] });
+  };
+
   return (
-    <CrudPage title="Especialidades" subtitle="Gerencie as especialidades de amostragem" items={items as any} loading={isLoading} onSave={save} onUpdate={update} />
+    <CrudPage title="Especialidades" subtitle="Gerencie as especialidades de amostragem" items={items as any} loading={isLoading} onSave={save} onUpdate={update} onDelete={remove} />
   );
 }
