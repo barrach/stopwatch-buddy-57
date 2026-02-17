@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList,
@@ -6,20 +7,9 @@ import {
 import AppLayout from "@/components/AppLayout";
 import StatCard, { Users, Clock, BarChart3, AlertTriangle } from "@/components/StatCard";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  OBRAS,
-  aggregateByCategory,
-  aggregateBySpecialty,
-  aggregateByTimeSlot,
-  aggregateByRoute,
-} from "@/data/mockData";
-import { useRecords } from "@/hooks/useRecords";
+import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "hsl(142, 70%, 45%)",
@@ -28,71 +18,122 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const PIE_COLORS = [
-  "hsl(32, 95%, 50%)",
-  "hsl(220, 70%, 55%)",
-  "hsl(142, 70%, 45%)",
-  "hsl(0, 72%, 51%)",
-  "hsl(280, 65%, 55%)",
-  "hsl(180, 60%, 45%)",
-  "hsl(45, 93%, 47%)",
-  "hsl(340, 70%, 50%)",
+  "hsl(32, 95%, 50%)", "hsl(220, 70%, 55%)", "hsl(142, 70%, 45%)",
+  "hsl(0, 72%, 51%)", "hsl(280, 65%, 55%)", "hsl(180, 60%, 45%)",
+  "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)",
 ];
 
 const tooltipStyle = {
-  background: "hsl(220, 25%, 12%)",
-  border: "1px solid hsl(220, 20%, 20%)",
-  borderRadius: "8px",
-  color: "#fff",
-  fontSize: "12px",
+  background: "hsl(220, 25%, 12%)", border: "1px solid hsl(220, 20%, 20%)",
+  borderRadius: "8px", color: "#fff", fontSize: "12px",
 };
 
-const renderPieLabel = ({ name, percent }: { name: string; percent: number }) =>
-  `${(percent * 100).toFixed(1)}%`;
+const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
 
 export default function Dashboard() {
-  const { records: allRecords } = useRecords();
   const [obraFilter, setObraFilter] = useState("all");
 
+  const { data: obras = [] } = useQuery({
+    queryKey: ["obras", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("obras").select("id, nome").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: allRecords = [] } = useQuery({
+    queryKey: ["observacoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("observacoes")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
+        .order("data", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const records = useMemo(
-    () => obraFilter === "all" ? allRecords : allRecords.filter((r) => r.obra === obraFilter),
+    () => obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter),
     [allRecords, obraFilter]
   );
 
-  const totalSamples = useMemo(() => records.reduce((s, r) => s + r.quantity, 0), [records]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
   const productiveCount = useMemo(
-    () => records.filter((r) => r.category === "Produtivo").reduce((s, r) => s + r.quantity, 0),
+    () => records.filter((r: any) => (r.categorias_observacao as any)?.nome === "Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records]
   );
   const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
   const unproductiveCount = useMemo(
-    () => records.filter((r) => r.category === "Não Produtivo").reduce((s, r) => s + r.quantity, 0),
+    () => records.filter((r: any) => (r.categorias_observacao as any)?.nome === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records]
   );
 
-  const byCategory = useMemo(() => aggregateByCategory(records), [records]);
-  const bySpecialty = useMemo(() => aggregateBySpecialty(records), [records]);
-  const byTime = useMemo(() => aggregateByTimeSlot(records), [records]);
-  const byRoute = useMemo(() => aggregateByRoute(records), [records]);
-
+  // Aggregations
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0 };
-    records.forEach((r) => (totals[r.category] += r.quantity));
+    records.forEach((r: any) => {
+      const cat = (r.categorias_observacao as any)?.nome;
+      if (cat && totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
+    });
     return Object.entries(totals).map(([name, value]) => ({ name, value }));
   }, [records]);
 
-  // Add percentage to Pareto data
+  const byDescription = useMemo(() => {
+    const totals: Record<string, number> = {};
+    records.forEach((r: any) => {
+      const key = r.descricao || "Sem descrição";
+      totals[key] = (totals[key] || 0) + (r.quantidade || 0);
+    });
+    return Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [records]);
+
   const byCategoryWithPercent = useMemo(() => {
-    const total = byCategory.reduce((s, c) => s + c.value, 0);
-    return byCategory.slice(0, 8).map((c) => ({
-      ...c,
-      percent: total > 0 ? Math.round((c.value / total) * 100) : 0,
+    const total = byDescription.reduce((s, c) => s + c.value, 0);
+    return byDescription.slice(0, 8).map((c) => ({
+      ...c, percent: total > 0 ? Math.round((c.value / total) * 100) : 0,
     }));
-  }, [byCategory]);
+  }, [byDescription]);
+
+  const byRoute = useMemo(() => {
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    records.forEach((r: any) => {
+      const rName = (r.rotas as any)?.nome || "Sem rota";
+      if (!result[rName]) result[rName] = { productive: 0, supplementary: 0, unproductive: 0 };
+      const cat = (r.categorias_observacao as any)?.nome;
+      if (cat === "Produtivo") result[rName].productive += r.quantidade || 0;
+      else if (cat === "Suplementar") result[rName].supplementary += r.quantidade || 0;
+      else result[rName].unproductive += r.quantidade || 0;
+    });
+    return Object.entries(result).map(([name, v]) => ({ name, ...v, total: v.productive + v.supplementary + v.unproductive }));
+  }, [records]);
+
+  const bySpecialty = useMemo(() => {
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    records.forEach((r: any) => {
+      const sName = (r.especialidades as any)?.nome || "Sem especialidade";
+      if (!result[sName]) result[sName] = { productive: 0, supplementary: 0, unproductive: 0 };
+      const cat = (r.categorias_observacao as any)?.nome;
+      if (cat === "Produtivo") result[sName].productive += r.quantidade || 0;
+      else if (cat === "Suplementar") result[sName].supplementary += r.quantidade || 0;
+      else result[sName].unproductive += r.quantidade || 0;
+    });
+    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => ({ name, ...v }));
+  }, [records]);
+
+  const byTime = useMemo(() => {
+    const result: Record<string, number> = {};
+    records.forEach((r: any) => {
+      const t = r.horario || "";
+      result[t] = (result[t] || 0) + (r.quantidade || 0);
+    });
+    return Object.entries(result).sort(([a], [b]) => a.localeCompare(b)).map(([time, total]) => ({ time, total }));
+  }, [records]);
 
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
@@ -103,7 +144,7 @@ export default function Dashboard() {
               <SelectTrigger><SelectValue placeholder="Filtrar por Obra" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Obras</SelectItem>
-                {OBRAS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -111,8 +152,8 @@ export default function Dashboard() {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="Total de Amostras" value={totalSamples} subtitle="Fev 2026" icon={Users} trend={{ value: "+12%", positive: true }} />
-          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Trabalhando + Planejando" icon={BarChart3} variant="success" trend={{ value: "+5%", positive: true }} />
+          <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
+          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Trabalhando + Planejando" icon={BarChart3} variant="success" />
           <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
           <StatCard title="Registros" value={records.length} subtitle={`${records.length} observações`} icon={Clock} />
         </div>
@@ -138,7 +179,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Pareto - Top Causes */}
+          {/* Pareto */}
           <div className="stat-card animate-fade-in">
             <h3 className="text-sm font-semibold text-foreground mb-4">Top Causas (Pareto)</h3>
             <ResponsiveContainer width="100%" height={280}>

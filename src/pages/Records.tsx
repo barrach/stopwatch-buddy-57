@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { SPECIALTIES, OBRAS } from "@/data/mockData";
-import { useRecords } from "@/hooks/useRecords";
+import { supabase } from "@/integrations/supabase/client";
 import { Search, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,28 +25,76 @@ const categoryBadgeVariant: Record<string, string> = {
 };
 
 export default function Records() {
-  const { records, deleteRecord } = useRecords();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [filterSpecialty, setFilterSpecialty] = useState("all");
-  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterEspecialidade, setFilterEspecialidade] = useState("all");
+  const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
 
-  const filtered = records.filter((r) => {
-    if (filterSpecialty !== "all" && r.specialty !== filterSpecialty) return false;
-    if (filterCategory !== "all" && r.category !== filterCategory) return false;
-    if (filterObra !== "all" && r.obra !== filterObra) return false;
+  const { data: obras = [] } = useQuery({
+    queryKey: ["obras", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("obras").select("id, nome").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: especialidades = [] } = useQuery({
+    queryKey: ["especialidades", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("especialidades").select("id, nome").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias_observacao", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: records = [] } = useQuery({
+    queryKey: ["observacoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("observacoes")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
+        .order("data", { ascending: false })
+        .order("horario", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { mutate: deleteRecord } = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("observacoes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      toast({ title: "Registro excluído", description: "Registro removido com sucesso." });
+    },
+  });
+
+  const filtered = records.filter((r: any) => {
+    if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
+    if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
+    if (filterObra !== "all" && r.obra_id !== filterObra) return false;
     if (search) {
       const q = search.toLowerCase();
-      return r.description.toLowerCase().includes(q) || r.specialty.toLowerCase().includes(q) || r.sampler.toLowerCase().includes(q);
+      const desc = r.descricao?.toLowerCase() || "";
+      const esp = (r.especialidades as any)?.nome?.toLowerCase() || "";
+      return desc.includes(q) || esp.includes(q);
     }
     return true;
   });
-
-  const handleDelete = (id: string) => {
-    deleteRecord(id);
-    toast({ title: "Registro excluído", description: `Registro #${id} removido com sucesso.` });
-  };
 
   return (
     <AppLayout>
@@ -70,27 +118,25 @@ export default function Records() {
                 <SelectTrigger><SelectValue placeholder="Obra" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as Obras</SelectItem>
-                  {OBRAS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="w-48">
-              <Select value={filterSpecialty} onValueChange={setFilterSpecialty}>
+              <Select value={filterEspecialidade} onValueChange={setFilterEspecialidade}>
                 <SelectTrigger><SelectValue placeholder="Especialidade" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas Especialidades</SelectItem>
-                  {SPECIALTIES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="w-44">
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <Select value={filterCategoria} onValueChange={setFilterCategoria}>
                 <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas Categorias</SelectItem>
-                  <SelectItem value="Produtivo">Produtivo</SelectItem>
-                  <SelectItem value="Suplementar">Suplementar</SelectItem>
-                  <SelectItem value="Não Produtivo">Não Produtivo</SelectItem>
+                  {categorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -102,7 +148,6 @@ export default function Records() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-semibold">ID</TableHead>
                 <TableHead className="text-xs font-semibold">Data</TableHead>
                 <TableHead className="text-xs font-semibold">Hora</TableHead>
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
@@ -115,45 +160,47 @@ export default function Records() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id} className="cursor-pointer">
-                  <TableCell className="text-xs font-mono text-muted-foreground">{r.id}</TableCell>
-                  <TableCell className="text-xs">{r.date}</TableCell>
-                  <TableCell className="text-xs">{r.time}</TableCell>
-                  <TableCell className="text-xs">{r.obra}</TableCell>
-                  <TableCell className="text-xs">{r.route}</TableCell>
-                  <TableCell className="text-xs font-medium">{r.specialty}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${categoryBadgeVariant[r.category]}`}>
-                      {r.category}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs max-w-[200px] truncate">{r.description}</TableCell>
-                  <TableCell className="text-xs text-right font-bold">{r.quantity}</TableCell>
-                  <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir registro #{r.id}?</AlertDialogTitle>
-                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(r.id)}>Excluir</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filtered.map((r: any) => {
+                const catNome = (r.categorias_observacao as any)?.nome || "";
+                return (
+                  <TableRow key={r.id} className="cursor-pointer">
+                    <TableCell className="text-xs">{r.data}</TableCell>
+                    <TableCell className="text-xs">{r.horario}</TableCell>
+                    <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
+                    <TableCell className="text-xs">{(r.rotas as any)?.nome}</TableCell>
+                    <TableCell className="text-xs font-medium">{(r.especialidades as any)?.nome}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${categoryBadgeVariant[catNome] || ""}`}>
+                        {catNome}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
+                    <TableCell className="text-xs text-right font-bold">{r.quantidade}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteRecord(r.id)}>Excluir</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>

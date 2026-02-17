@@ -180,6 +180,99 @@ export type Database = {
         }
         Relationships: []
       }
+      observacoes: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          categoria_id: string
+          contrato_id: string | null
+          criado_em: string
+          criado_por: string | null
+          data: string
+          descricao: string
+          empresa: string
+          especialidade_id: string
+          horario: string
+          id: string
+          notas: string | null
+          obra_id: string
+          quantidade: number
+          rota_id: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria_id: string
+          contrato_id?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data: string
+          descricao: string
+          empresa?: string
+          especialidade_id: string
+          horario: string
+          id?: string
+          notas?: string | null
+          obra_id: string
+          quantidade?: number
+          rota_id: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria_id?: string
+          contrato_id?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          descricao?: string
+          empresa?: string
+          especialidade_id?: string
+          horario?: string
+          id?: string
+          notas?: string | null
+          obra_id?: string
+          quantidade?: number
+          rota_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observacoes_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_observacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observacoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observacoes_especialidade_id_fkey"
+            columns: ["especialidade_id"]
+            isOneToOne: false
+            referencedRelation: "especialidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observacoes_rota_id_fkey"
+            columns: ["rota_id"]
+            isOneToOne: false
+            referencedRelation: "rotas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rotas: {
         Row: {
           alterado_em: string
