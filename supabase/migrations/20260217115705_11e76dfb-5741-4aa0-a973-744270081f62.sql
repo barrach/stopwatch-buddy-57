@@ -1,0 +1,1 @@
+ALTER TABLE public.observacoes ALTER COLUMN empresa SET DEFAULT 'MEGASTEM';
