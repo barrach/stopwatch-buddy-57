@@ -14,7 +14,208 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorias_observacao: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          categoria_pai_id: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria_pai_id?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria_pai_id?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_observacao_categoria_pai_id_fkey"
+            columns: ["categoria_pai_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_observacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          obra_id: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          obra_id: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          obra_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      especialidades: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      obras: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      rotas: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
