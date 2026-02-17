@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfWeek, endOfWeek, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format } from "date-fns";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "hsl(142, 70%, 45%)",
@@ -38,8 +37,10 @@ const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).
 
 export default function Dashboard() {
   const [obraFilter, setObraFilter] = useState("all");
-  const [dateMode, setDateMode] = useState<"all" | "day" | "week">("all");
+  const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [activeChart, setActiveChart] = useState<string | null>(null);
   const [drillData, setDrillData] = useState<{ title: string; data: any[] } | null>(null);
 
@@ -84,17 +85,11 @@ export default function Dashboard() {
     let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
-    } else if (dateMode === "week") {
-      const d = parseISO(selectedDate);
-      const ws = startOfWeek(d, { weekStartsOn: 1 });
-      const we = endOfWeek(d, { weekStartsOn: 1 });
-      filtered = filtered.filter((r: any) => {
-        const rd = parseISO(r.data);
-        return rd >= ws && rd <= we;
-      });
+    } else if (dateMode === "period") {
+      filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
     return filtered;
-  }, [allRecords, obraFilter, dateMode, selectedDate]);
+  }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Resolve parent category name for each record
   const getParentCatName = useCallback((r: any) => {
@@ -265,15 +260,27 @@ export default function Dashboard() {
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="day">Dia</SelectItem>
-                    <SelectItem value="week">Semana</SelectItem>
+                    <SelectItem value="period">Período</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {dateMode !== "all" && (
+              {dateMode === "day" && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Data</Label>
                   <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-40 mt-1" />
                 </div>
+              )}
+              {dateMode === "period" && (
+                <>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Início</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40 mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Fim</Label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40 mt-1" />
+                  </div>
+                </>
               )}
             </div>
             {/* Obra filter */}
