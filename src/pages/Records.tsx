@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Download, Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
 const categoryBadgeVariant: Record<string, string> = {
   Produtivo: "bg-success/15 text-success border-success/30",
@@ -25,12 +27,15 @@ const categoryBadgeVariant: Record<string, string> = {
 };
 
 export default function Records() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [filterEspecialidade, setFilterEspecialidade] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
+  const [importing, setImporting] = useState(false);
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
@@ -96,12 +101,113 @@ export default function Records() {
     return true;
   });
 
+  const handleExport = () => {
+    const rows: ExportRow[] = filtered.map((r: any) => ({
+      Data: r.data,
+      "Horário": r.horario,
+      Obra: (r.obras as any)?.nome || "",
+      Rota: (r.rotas as any)?.nome || "",
+      Especialidade: (r.especialidades as any)?.nome || "",
+      Categoria: (r.categorias_observacao as any)?.nome || "",
+      "Descrição": r.descricao || "",
+      Quantidade: r.quantidade,
+      Empresa: r.empresa || "",
+      Notas: r.notas || "",
+    }));
+    if (rows.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum registro para exportar.", variant: "destructive" });
+      return;
+    }
+    exportToExcel(rows);
+    toast({ title: "Exportado!", description: `${rows.length} registro(s) exportados para Excel.` });
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const rows = await parseExcelFile(file);
+
+      // Build lookup maps from cached data
+      const obraMap = new Map(obras.map((o) => [o.nome.toLowerCase(), o.id]));
+      const espMap = new Map(especialidades.map((s) => [s.nome.toLowerCase(), s.id]));
+      const catMap = new Map(categorias.map((c) => [c.nome.toLowerCase(), c.id]));
+
+      // Fetch rotas for lookup
+      const { data: rotasData } = await supabase.from("rotas").select("id, nome").eq("status", "Ativo");
+      const rotaMap = new Map((rotasData || []).map((r) => [r.nome.toLowerCase(), r.id]));
+
+      const errors: string[] = [];
+      const insertRows: any[] = [];
+
+      rows.forEach((row, i) => {
+        const lineNum = i + 2; // header is row 1
+        const obraId = obraMap.get(String(row.Obra || "").toLowerCase());
+        const rotaId = rotaMap.get(String(row.Rota || "").toLowerCase());
+        const espId = espMap.get(String(row.Especialidade || "").toLowerCase());
+        const catId = catMap.get(String(row.Categoria || "").toLowerCase());
+
+        if (!obraId) { errors.push(`Linha ${lineNum}: Obra "${row.Obra}" não encontrada`); return; }
+        if (!rotaId) { errors.push(`Linha ${lineNum}: Rota "${row.Rota}" não encontrada`); return; }
+        if (!espId) { errors.push(`Linha ${lineNum}: Especialidade "${row.Especialidade}" não encontrada`); return; }
+        if (!catId) { errors.push(`Linha ${lineNum}: Categoria "${row.Categoria}" não encontrada`); return; }
+
+        insertRows.push({
+          data: String(row.Data),
+          horario: String(row["Horário"] || row.Horário || ""),
+          obra_id: obraId,
+          rota_id: rotaId,
+          especialidade_id: espId,
+          categoria_id: catId,
+          descricao: String(row["Descrição"] || row.Descrição || ""),
+          quantidade: Number(row.Quantidade) || 1,
+          empresa: String(row.Empresa || "MEGASTEM"),
+          notas: row.Notas ? String(row.Notas) : null,
+          contrato_id: null,
+          criado_por: user?.id || null,
+        });
+      });
+
+      if (errors.length > 0 && insertRows.length === 0) {
+        toast({ title: "Erro na importação", description: errors.slice(0, 5).join("\n"), variant: "destructive" });
+        return;
+      }
+
+      if (insertRows.length > 0) {
+        const { error } = await supabase.from("observacoes").insert(insertRows);
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      }
+
+      const msg = `${insertRows.length} registro(s) importados.` + (errors.length > 0 ? ` ${errors.length} linha(s) com erro ignoradas.` : "");
+      toast({ title: "Importação concluída!", description: msg });
+    } catch (err: any) {
+      toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Registros</h1>
-          <p className="text-sm text-muted-foreground mt-1">Todas as observações de produtividade registradas</p>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Registros</h1>
+            <p className="text-sm text-muted-foreground mt-1">Todas as observações de produtividade registradas</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={handleExport}>
+              <Download className="w-4 h-4" /> Exportar
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              Importar
+            </Button>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+          </div>
         </div>
 
         {/* Filters */}
