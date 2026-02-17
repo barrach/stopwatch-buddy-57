@@ -38,6 +38,8 @@ export type Route = (typeof ROUTES)[number];
 export const TIME_SLOTS = ["8:00", "9:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
 
 export const COMPANIES = ["UNIPAR"] as const;
+export const OBRAS = ["UNIPAR - Cubatão", "UNIPAR - Bahia", "UNIPAR - Santo André"] as const;
+export type Obra = (typeof OBRAS)[number];
 
 export const SAMPLERS = ["Michel Barrach"] as const;
 
@@ -49,6 +51,7 @@ export interface ObservationRecord {
   route: Route;
   specialty: Specialty;
   company: string;
+  obra: string;
   category: ObservationCategory;
   description: string;
   quantity: number;
@@ -58,22 +61,21 @@ export interface ObservationRecord {
 
 // Mock records based on spreadsheet data
 export const MOCK_RECORDS: ObservationRecord[] = [
-  { id: "1", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Caldeiraria", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 4, month: "2026-02" },
-  { id: "2", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Andaime", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 13, month: "2026-02" },
-  { id: "3", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Andaime", company: "UNIPAR", category: "Suplementar", description: "Aguardando Instruções", quantity: 2, month: "2026-02" },
-  { id: "4", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Elétrica", company: "UNIPAR", category: "Suplementar", description: "Transitando no local de trabalho - com ferramenta", quantity: 4, month: "2026-02" },
-  { id: "5", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Caldeiraria", company: "UNIPAR", category: "Não Produtivo", description: "Pessoal", quantity: 4, month: "2026-02" },
-  // Additional mock data for richer dashboards
-  { id: "6", sampler: "Michel Barrach", date: "2026-02-14", time: "8:00", route: "Rota 2", specialty: "Mecânica", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 8, month: "2026-02" },
-  { id: "7", sampler: "Michel Barrach", date: "2026-02-14", time: "8:00", route: "Rota 2", specialty: "Elétrica", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 6, month: "2026-02" },
-  { id: "8", sampler: "Michel Barrach", date: "2026-02-14", time: "9:00", route: "Rota 2", specialty: "Civil", company: "UNIPAR", category: "Suplementar", description: "Aguardando Ferramenta ou Material", quantity: 3, month: "2026-02" },
-  { id: "9", sampler: "Michel Barrach", date: "2026-02-14", time: "10:00", route: "Rota 3", specialty: "Instrumentação", company: "UNIPAR", category: "Produtivo", description: "Planejando", quantity: 5, month: "2026-02" },
-  { id: "10", sampler: "Michel Barrach", date: "2026-02-14", time: "11:00", route: "Rota 3", specialty: "Pintura", company: "UNIPAR", category: "Não Produtivo", description: "Ocioso", quantity: 2, month: "2026-02" },
-  { id: "11", sampler: "Michel Barrach", date: "2026-02-15", time: "13:00", route: "Rota 1", specialty: "Isolamento", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 7, month: "2026-02" },
-  { id: "12", sampler: "Michel Barrach", date: "2026-02-15", time: "14:00", route: "Rota 1", specialty: "Lubrificação", company: "UNIPAR", category: "Suplementar", description: "Aguardando Liberação", quantity: 4, month: "2026-02" },
-  { id: "13", sampler: "Michel Barrach", date: "2026-02-15", time: "15:00", route: "Rota 4", specialty: "Equip./Elevação", company: "UNIPAR", category: "Produtivo", description: "Trabalhando", quantity: 10, month: "2026-02" },
-  { id: "14", sampler: "Michel Barrach", date: "2026-02-15", time: "16:00", route: "Rota 4", specialty: "Caldeiraria", company: "UNIPAR", category: "Suplementar", description: "Assistindo", quantity: 3, month: "2026-02" },
-  { id: "15", sampler: "Michel Barrach", date: "2026-02-16", time: "8:00", route: "Rota 2", specialty: "Andaime", company: "UNIPAR", category: "Não Produtivo", description: "Pessoal", quantity: 2, month: "2026-02" },
+  { id: "1", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Caldeiraria", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Produtivo", description: "Trabalhando", quantity: 4, month: "2026-02" },
+  { id: "2", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Andaime", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Produtivo", description: "Trabalhando", quantity: 13, month: "2026-02" },
+  { id: "3", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Andaime", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Suplementar", description: "Aguardando Instruções", quantity: 2, month: "2026-02" },
+  { id: "4", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Elétrica", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Suplementar", description: "Transitando no local de trabalho - com ferramenta", quantity: 4, month: "2026-02" },
+  { id: "5", sampler: "Michel Barrach", date: "2026-02-13", time: "14:00", route: "Rota 1", specialty: "Caldeiraria", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Não Produtivo", description: "Pessoal", quantity: 4, month: "2026-02" },
+  { id: "6", sampler: "Michel Barrach", date: "2026-02-14", time: "8:00", route: "Rota 2", specialty: "Mecânica", company: "UNIPAR", obra: "UNIPAR - Bahia", category: "Produtivo", description: "Trabalhando", quantity: 8, month: "2026-02" },
+  { id: "7", sampler: "Michel Barrach", date: "2026-02-14", time: "8:00", route: "Rota 2", specialty: "Elétrica", company: "UNIPAR", obra: "UNIPAR - Bahia", category: "Produtivo", description: "Trabalhando", quantity: 6, month: "2026-02" },
+  { id: "8", sampler: "Michel Barrach", date: "2026-02-14", time: "9:00", route: "Rota 2", specialty: "Civil", company: "UNIPAR", obra: "UNIPAR - Bahia", category: "Suplementar", description: "Aguardando Ferramenta ou Material", quantity: 3, month: "2026-02" },
+  { id: "9", sampler: "Michel Barrach", date: "2026-02-14", time: "10:00", route: "Rota 3", specialty: "Instrumentação", company: "UNIPAR", obra: "UNIPAR - Santo André", category: "Produtivo", description: "Planejando", quantity: 5, month: "2026-02" },
+  { id: "10", sampler: "Michel Barrach", date: "2026-02-14", time: "11:00", route: "Rota 3", specialty: "Pintura", company: "UNIPAR", obra: "UNIPAR - Santo André", category: "Não Produtivo", description: "Ocioso", quantity: 2, month: "2026-02" },
+  { id: "11", sampler: "Michel Barrach", date: "2026-02-15", time: "13:00", route: "Rota 1", specialty: "Isolamento", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Produtivo", description: "Trabalhando", quantity: 7, month: "2026-02" },
+  { id: "12", sampler: "Michel Barrach", date: "2026-02-15", time: "14:00", route: "Rota 1", specialty: "Lubrificação", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Suplementar", description: "Aguardando Liberação", quantity: 4, month: "2026-02" },
+  { id: "13", sampler: "Michel Barrach", date: "2026-02-15", time: "15:00", route: "Rota 4", specialty: "Equip./Elevação", company: "UNIPAR", obra: "UNIPAR - Santo André", category: "Produtivo", description: "Trabalhando", quantity: 10, month: "2026-02" },
+  { id: "14", sampler: "Michel Barrach", date: "2026-02-15", time: "16:00", route: "Rota 4", specialty: "Caldeiraria", company: "UNIPAR", obra: "UNIPAR - Cubatão", category: "Suplementar", description: "Assistindo", quantity: 3, month: "2026-02" },
+  { id: "15", sampler: "Michel Barrach", date: "2026-02-16", time: "8:00", route: "Rota 2", specialty: "Andaime", company: "UNIPAR", obra: "UNIPAR - Bahia", category: "Não Produtivo", description: "Pessoal", quantity: 2, month: "2026-02" },
 ];
 
 // Helper to aggregate data
@@ -109,4 +111,18 @@ export function aggregateByTimeSlot(records: ObservationRecord[]) {
     if (result[r.time] !== undefined) result[r.time] += r.quantity;
   });
   return Object.entries(result).map(([time, total]) => ({ time, total }));
+}
+
+export function aggregateByRoute(records: ObservationRecord[]) {
+  const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+  ROUTES.forEach((r) => (result[r] = { productive: 0, supplementary: 0, unproductive: 0 }));
+  records.forEach((r) => {
+    if (!result[r.route]) return;
+    if (r.category === "Produtivo") result[r.route].productive += r.quantity;
+    else if (r.category === "Suplementar") result[r.route].supplementary += r.quantity;
+    else result[r.route].unproductive += r.quantity;
+  });
+  return Object.entries(result)
+    .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
+    .map(([name, v]) => ({ name, ...v, total: v.productive + v.supplementary + v.unproductive }));
 }
