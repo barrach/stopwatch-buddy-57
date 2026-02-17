@@ -25,7 +25,7 @@ export default function NewObservation() {
   const [time, setTime] = useState("");
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
-  const [contratoId, setContratoId] = useState("");
+  
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -52,16 +52,6 @@ export default function NewObservation() {
     },
   });
 
-  const { data: contratos = [] } = useQuery({
-    queryKey: ["contratos", "por_obra", obraId],
-    queryFn: async () => {
-      if (!obraId) return [];
-      const { data, error } = await supabase.from("contratos").select("id, nome").eq("status", "Ativo").eq("obra_id", obraId).order("nome");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!obraId,
-  });
 
   const { data: especialidades = [] } = useQuery({
     queryKey: ["especialidades", "ativas"],
@@ -100,7 +90,6 @@ export default function NewObservation() {
       setEspecialidadeId("");
       setRotaId("");
       setObraId("");
-      setContratoId("");
       setTime("");
       setQuantity("1");
       setNotes("");
@@ -121,7 +110,7 @@ export default function NewObservation() {
       horario: time,
       rota_id: rotaId,
       obra_id: obraId,
-      contrato_id: contratoId || null,
+      contrato_id: null,
       especialidade_id: especialidadeId,
       categoria_id: categoriaId,
       descricao,
@@ -165,19 +154,10 @@ export default function NewObservation() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Obra *</Label>
-                <Select value={obraId} onValueChange={(v) => { setObraId(v); setContratoId(""); }}>
+                <Select value={obraId} onValueChange={setObraId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Contrato</Label>
-                <Select value={contratoId} onValueChange={setContratoId} disabled={!obraId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder={obraId ? "Selecione..." : "Selecione obra primeiro"} /></SelectTrigger>
-                  <SelectContent>
-                    {contratos.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
