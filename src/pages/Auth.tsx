@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { HardHat } from "lucide-react";
+import logoMega from "@/assets/logo-mega.png";
 
 export default function Auth() {
   const { toast } = useToast();
@@ -40,12 +40,10 @@ export default function Auth() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-3 justify-center mb-8">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <HardHat className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={logoMega} alt="Megastem logo" className="w-10 h-10 object-contain" />
           <div>
             <h1 className="text-lg font-bold text-foreground">ProdControl</h1>
-            <p className="text-[11px] text-muted-foreground">Medição de Produtividade</p>
+            <p className="text-[11px] text-info">Medição de Produtividade</p>
           </div>
         </div>
 
@@ -55,20 +53,20 @@ export default function Auth() {
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="text-xs text-muted-foreground">E-mail</Label>
+              <Label className="text-xs text-info">E-mail</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Senha</Label>
+              <Label className="text-xs text-info">Senha</Label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1" />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-info hover:bg-info/90 text-info-foreground" disabled={loading}>
               {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar conta"}
             </Button>
           </form>
           <p className="text-xs text-muted-foreground text-center mt-4">
             {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
-            <button onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline">
+            <button onClick={() => setIsLogin(!isLogin)} className="text-info hover:underline">
               {isLogin ? "Criar conta" : "Entrar"}
             </button>
           </p>
