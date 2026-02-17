@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Download, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
@@ -35,14 +36,34 @@ const tooltipStyle = {
 
 const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
 
+// Cross-filter state type
+interface CrossFilters {
+  categoria?: string;
+  rota?: string;
+  especialidade?: string;
+  contrato?: string;
+  horario?: string;
+  descricao?: string;
+}
+
 export default function Dashboard() {
   const [obraFilter, setObraFilter] = useState("all");
   const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
-  const [activeChart, setActiveChart] = useState<string | null>(null);
-  const [drillData, setDrillData] = useState<{ title: string; data: any[] } | null>(null);
+  const [crossFilters, setCrossFilters] = useState<CrossFilters>({});
+
+  const hasActiveFilters = Object.values(crossFilters).some(Boolean);
+
+  const toggleCrossFilter = (key: keyof CrossFilters, value: string) => {
+    setCrossFilters((prev) => ({
+      ...prev,
+      [key]: prev[key] === value ? undefined : value,
+    }));
+  };
+
+  const clearAllFilters = () => setCrossFilters({});
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
@@ -65,7 +86,6 @@ export default function Dashboard() {
     },
   });
 
-  // Fetch parent categories to resolve category hierarchy
   const { data: parentCats = [] } = useQuery({
     queryKey: ["categorias_observacao", "parents"],
     queryFn: async () => {
@@ -81,7 +101,17 @@ export default function Dashboard() {
     return map;
   }, [parentCats]);
 
-  const records = useMemo(() => {
+  const getParentCatName = useCallback((r: any) => {
+    const catData = r.categorias_observacao as any;
+    if (!catData) return "Sem categoria";
+    if (catData.categoria_pai_id) {
+      return parentCatMap[catData.categoria_pai_id] || catData.nome;
+    }
+    return catData.nome;
+  }, [parentCatMap]);
+
+  // Base records filtered by top-level filters (date, obra)
+  const baseRecords = useMemo(() => {
     let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
@@ -91,15 +121,18 @@ export default function Dashboard() {
     return filtered;
   }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
 
-  // Resolve parent category name for each record
-  const getParentCatName = useCallback((r: any) => {
-    const catData = r.categorias_observacao as any;
-    if (!catData) return "Sem categoria";
-    if (catData.categoria_pai_id) {
-      return parentCatMap[catData.categoria_pai_id] || catData.nome;
-    }
-    return catData.nome;
-  }, [parentCatMap]);
+  // Cross-filtered records: apply all active cross-filters
+  const records = useMemo(() => {
+    return baseRecords.filter((r: any) => {
+      if (crossFilters.categoria && getParentCatName(r) !== crossFilters.categoria) return false;
+      if (crossFilters.rota && ((r.rotas as any)?.nome || "Sem rota") !== crossFilters.rota) return false;
+      if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
+      if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
+      if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
+      if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
+      return true;
+    });
+  }, [baseRecords, crossFilters, getParentCatName]);
 
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
   const productiveCount = useMemo(
@@ -174,9 +207,8 @@ export default function Dashboard() {
   }, [records]);
 
   const byObra = useMemo(() => {
-    const source = obraFilter === "all" ? records : records;
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
-    source.forEach((r: any) => {
+    records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0 };
       const cat = getParentCatName(r);
@@ -190,32 +222,32 @@ export default function Dashboard() {
       total: v.productive + v.supplementary + v.unproductive,
       prodPercent: Math.round((v.productive / (v.productive + v.supplementary + v.unproductive)) * 100) || 0,
     }));
-  }, [records, getParentCatName, obraFilter]);
+  }, [records, getParentCatName]);
 
-  // Interactive drill-down handler
-  const handleBarClick = (chartTitle: string, data: any[], entry: any) => {
-    if (!entry || !entry.activePayload) return;
-    const clicked = entry.activePayload[0]?.payload;
-    if (!clicked) return;
-    
-    // Show drill-down details
-    const details = records.filter((r: any) => {
-      if (chartTitle.includes("Rota")) return (r.rotas as any)?.nome === clicked.name;
-      if (chartTitle.includes("Especialidade")) return (r.especialidades as any)?.nome === clicked.name;
-      if (chartTitle.includes("Contrato")) return (r.obras as any)?.nome === clicked.name;
-      if (chartTitle.includes("Horário")) return r.horario === clicked.time;
-      return false;
-    });
-
-    const drillDetails = details.map((r: any) => ({
-      descricao: r.descricao,
-      categoria: getParentCatName(r),
-      especialidade: (r.especialidades as any)?.nome || "—",
-      quantidade: r.quantidade,
-      data: r.data,
-    }));
-
-    setDrillData({ title: `Detalhes: ${clicked.name || clicked.time}`, data: drillDetails });
+  // Cross-filter click handlers
+  const handleContratoClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("contrato", e.activePayload[0].payload.name);
+  };
+  const handleRouteClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("rota", e.activePayload[0].payload.name);
+  };
+  const handleSpecialtyClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("especialidade", e.activePayload[0].payload.name);
+  };
+  const handleTimeClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("horario", e.activePayload[0].payload.time);
+  };
+  const handleParetoClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
+  };
+  const handlePieClick = (_: any, index: number) => {
+    const entry = categoryTotals[index];
+    if (entry) toggleCrossFilter("categoria", entry.name);
   };
 
   // Export functions
@@ -242,6 +274,10 @@ export default function Dashboard() {
     window.print();
   };
 
+  // Helper to style chart cards with active filter highlight
+  const chartCardClass = (filterKey: keyof CrossFilters) =>
+    `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
@@ -251,7 +287,6 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mt-1">Visão geral da medição de produtividade — MEGASTEM</p>
           </div>
           <div className="flex flex-wrap gap-3 items-end">
-            {/* Date filter */}
             <div className="flex gap-2 items-end">
               <div>
                 <Label className="text-xs text-muted-foreground">Período</Label>
@@ -283,7 +318,6 @@ export default function Dashboard() {
                 </>
               )}
             </div>
-            {/* Obra filter */}
             <div>
               <Label className="text-xs text-muted-foreground">Contrato</Label>
               <Select value={obraFilter} onValueChange={setObraFilter}>
@@ -294,7 +328,6 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Export */}
             <div className="flex gap-1">
               <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Excel
@@ -306,6 +339,46 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Active cross-filters bar */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2 mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
+            <span className="text-xs font-semibold text-muted-foreground">Filtros ativos:</span>
+            {crossFilters.categoria && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("categoria", crossFilters.categoria!)}>
+                Categoria: {crossFilters.categoria} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.contrato && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("contrato", crossFilters.contrato!)}>
+                Contrato: {crossFilters.contrato} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.rota && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("rota", crossFilters.rota!)}>
+                Rota: {crossFilters.rota} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.especialidade && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("especialidade", crossFilters.especialidade!)}>
+                Especialidade: {crossFilters.especialidade} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.horario && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("horario", crossFilters.horario!)}>
+                Horário: {crossFilters.horario} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.descricao && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("descricao", crossFilters.descricao!)}>
+                Descrição: {crossFilters.descricao} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
+              Limpar todos
+            </Button>
+          </div>
+        )}
+
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
@@ -314,45 +387,15 @@ export default function Dashboard() {
           <StatCard title="Registros" value={records.length} subtitle={`${records.length} observações`} icon={Clock} />
         </div>
 
-        {/* Drill-down panel */}
-        {drillData && (
-          <div className="stat-card animate-fade-in mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-foreground">{drillData.title}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setDrillData(null)}>Fechar</Button>
-            </div>
-            <div className="max-h-60 overflow-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-1.5 font-semibold">Data</th>
-                    <th className="text-left py-1.5 font-semibold">Categoria</th>
-                    <th className="text-left py-1.5 font-semibold">Especialidade</th>
-                    <th className="text-left py-1.5 font-semibold">Descrição</th>
-                    <th className="text-right py-1.5 font-semibold">Qtd</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {drillData.data.map((d, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td className="py-1">{d.data}</td>
-                      <td className="py-1">{d.categoria}</td>
-                      <td className="py-1">{d.especialidade}</td>
-                      <td className="py-1">{d.descricao}</td>
-                      <td className="py-1 text-right font-bold">{d.quantidade}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* Visão Geral por Contrato */}
-        <div className="stat-card animate-fade-in mb-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Visão Geral por Contrato</h3>
+        <div className={chartCardClass("contrato")}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Visão Geral por Contrato
+            {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar todos os gráficos</p>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={byObra} margin={{ bottom: 20 }} onClick={(e) => handleBarClick("Contrato", byObra, e)}>
+            <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
@@ -373,13 +416,28 @@ export default function Dashboard() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Distribution Pie */}
-          <div className="stat-card animate-fade-in">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Distribuição por Categoria</h3>
+          <div className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
+            <h3 className="text-sm font-semibold text-foreground mb-4">
+              Distribuição por Categoria
+              {crossFilters.categoria && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.categoria}</span>}
+            </h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Clique em uma fatia para filtrar</p>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false}>
+                <Pie
+                  data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100}
+                  paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false}
+                  onClick={handlePieClick}
+                >
                   {categoryTotals.map((entry) => (
-                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer" />
+                    <Cell
+                      key={entry.name}
+                      fill={CATEGORY_COLORS[entry.name] || "#666"}
+                      className="cursor-pointer"
+                      opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
+                      stroke={crossFilters.categoria === entry.name ? "hsl(220, 70%, 30%)" : "none"}
+                      strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
+                    />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => {
@@ -392,17 +450,25 @@ export default function Dashboard() {
           </div>
 
           {/* Pareto */}
-          <div className="stat-card animate-fade-in">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Top Causas (Pareto)</h3>
+          <div className={`stat-card animate-fade-in transition-all ${crossFilters.descricao ? "ring-2 ring-primary/50" : ""}`}>
+            <h3 className="text-sm font-semibold text-foreground mb-4">
+              Top Causas (Pareto)
+              {crossFilters.descricao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.descricao}</span>}
+            </h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={byCategoryWithPercent} layout="vertical" margin={{ left: 20, right: 40 }}>
+              <BarChart data={byCategoryWithPercent} layout="vertical" margin={{ left: 20, right: 40 }} onClick={handleParetoClick}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
                 <YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [`${value} (${entry.payload.percent}%)`, "Amostras"]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                  {byCategoryWithPercent.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  {byCategoryWithPercent.map((item, i) => (
+                    <Cell
+                      key={i}
+                      fill={PIE_COLORS[i % PIE_COLORS.length]}
+                      opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1}
+                    />
                   ))}
                   <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
                 </Bar>
@@ -412,10 +478,14 @@ export default function Dashboard() {
         </div>
 
         {/* Route Chart */}
-        <div className="stat-card animate-fade-in mb-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Produtividade por Rota</h3>
+        <div className={chartCardClass("rota")}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Produtividade por Rota
+            {crossFilters.rota && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.rota}</span>}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byRoute} onClick={(e) => handleBarClick("Rota", byRoute, e)}>
+            <BarChart data={byRoute} onClick={handleRouteClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
@@ -432,10 +502,14 @@ export default function Dashboard() {
         </div>
 
         {/* Specialty Chart */}
-        <div className="stat-card animate-fade-in mb-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Produtividade por Especialidade</h3>
+        <div className={chartCardClass("especialidade")}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Produtividade por Especialidade
+            {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={(e) => handleBarClick("Especialidade", bySpecialty, e)}>
+            <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
@@ -449,10 +523,14 @@ export default function Dashboard() {
         </div>
 
         {/* By Time Slot */}
-        <div className="stat-card animate-fade-in">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Amostras por Horário</h3>
+        <div className={chartCardClass("horario")}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Amostras por Horário
+            {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={byTime} onClick={(e) => handleBarClick("Horário", byTime, e)}>
+            <BarChart data={byTime} onClick={handleTimeClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
