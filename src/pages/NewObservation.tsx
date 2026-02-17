@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import { TIME_SLOTS } from "@/data/mockData";
 import { Camera, Save, RotateCcw, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useOfflineQuery } from "@/hooks/useOfflineQuery";
+import { addToQueue } from "@/lib/offlineQueue";
 
 export default function NewObservation() {
   const { toast } = useToast();
@@ -25,57 +27,36 @@ export default function NewObservation() {
   const [time, setTime] = useState("");
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
-  
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
 
-  // Fetch dimension data from DB
-  const { data: rotas = [] } = useQuery({
-    queryKey: ["rotas", "ativas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("rotas").select("id, nome").eq("status", "Ativo").order("nome");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: rotas = [] } = useOfflineQuery<{ id: string; nome: string }>(
+    ["rotas", "ativas"], "rotas", "id, nome",
+    [{ column: "status", value: "Ativo" }], "nome"
+  );
 
-  const { data: obras = [] } = useQuery({
-    queryKey: ["obras", "ativas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("obras").select("id, nome").eq("status", "Ativo").order("nome");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: obras = [] } = useOfflineQuery<{ id: string; nome: string }>(
+    ["obras", "ativas"], "obras", "id, nome",
+    [{ column: "status", value: "Ativo" }], "nome"
+  );
 
-  const { data: especialidades = [] } = useQuery({
-    queryKey: ["especialidades", "ativas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("especialidades").select("id, nome").eq("status", "Ativo").order("nome");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: especialidades = [] } = useOfflineQuery<{ id: string; nome: string }>(
+    ["especialidades", "ativas"], "especialidades", "id, nome",
+    [{ column: "status", value: "Ativo" }], "nome"
+  );
 
-  const { data: categorias = [] } = useQuery({
-    queryKey: ["categorias_observacao", "all"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, status").order("nome");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: categorias = [] } = useOfflineQuery<{ id: string; nome: string; categoria_pai_id: string | null; status: string }>(
+    ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
+  );
 
-  // Parent categories (Produtivo, Suplementar, Não Produtivo)
   const parentCategorias = useMemo(
     () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
     [categorias]
   );
 
-  // Subcategories (descriptions) for the selected parent category
   const subcategorias = useMemo(
     () => categoriaId ? categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo") : [],
     [categorias, categoriaId]
@@ -87,13 +68,18 @@ export default function NewObservation() {
       contrato_id: string | null; especialidade_id: string; categoria_id: string;
       descricao: string; empresa: string; quantidade: number; notas: string | null;
     }) => {
+      if (!navigator.onLine) {
+        await addToQueue({ table: "observacoes", operation: "insert", payload });
+        return;
+      }
       const { error } = await supabase.from("observacoes").insert([payload]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["observacoes"] });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
-      toast({ title: "Observação registrada!", description: `${catName} — ${descricao} (${quantity} amostras)` });
+      const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
+      toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantity} amostras)` });
       setCategoriaId("");
       setDescricao("");
       setEspecialidadeId("");
@@ -123,7 +109,7 @@ export default function NewObservation() {
       especialidade_id: especialidadeId,
       categoria_id: categoriaId,
       descricao,
-      empresa: "MEGASTEM",
+      empresa: "MEGASTEAM",
       quantidade: parseInt(quantity, 10),
       notas: notes || null,
     });
@@ -136,18 +122,18 @@ export default function NewObservation() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Nova Observação</h1>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Nova Observação</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Registre uma nova observação de produtividade
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {/* Identification */}
           <div className="stat-card animate-fade-in">
             <h3 className="text-sm font-semibold text-foreground mb-4">Identificação</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="date" className="text-xs text-muted-foreground">Data</Label>
                 <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="mt-1" />
@@ -216,7 +202,7 @@ export default function NewObservation() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantidade de Amostras *</Label>
                   <Input id="qty" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1" />
@@ -228,7 +214,6 @@ export default function NewObservation() {
                 <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observações adicionais..." className="mt-1" rows={3} />
               </div>
 
-              {/* Photo placeholder */}
               <div>
                 <Label className="text-xs text-muted-foreground">Foto</Label>
                 <button
@@ -243,7 +228,7 @@ export default function NewObservation() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button type="submit" className="flex-1 gap-2" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Salvar Observação

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import Dashboard from "./pages/Dashboard";
 import NewObservation from "./pages/NewObservation";
 import Records from "./pages/Records";
@@ -21,6 +22,7 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  useOfflineSync();
 
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;

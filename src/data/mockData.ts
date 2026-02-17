@@ -37,8 +37,8 @@ export type Route = (typeof ROUTES)[number];
 
 export const TIME_SLOTS = ["8:00", "9:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
 
-export const COMPANIES = ["MEGASTEM"] as const;
-export const OBRAS = ["MEGASTEM - Cubatão", "MEGASTEM - Bahia", "MEGASTEM - Santo André"] as const;
+export const COMPANIES = ["MEGASTEAM"] as const;
+export const OBRAS = ["MEGASTEAM - Cubatão", "MEGASTEAM - Bahia", "MEGASTEAM - Santo André"] as const;
 export type Obra = (typeof OBRAS)[number];
 
 export const SAMPLERS = ["Michel Barrach"] as const;
