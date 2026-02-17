@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Route, HardHat, Building2, FileText, Tag, Wrench, LogOut } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Route, HardHat, Building2, Tag, Wrench, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -11,7 +11,7 @@ const navItems = [
 
 const cadastroItems = [
   { to: "/cadastro/obras", label: "Obras", icon: Building2 },
-  { to: "/cadastro/contratos", label: "Contratos", icon: FileText },
+  
   { to: "/cadastro/rotas", label: "Rotas", icon: Route },
   { to: "/cadastro/especialidades", label: "Especialidades", icon: Wrench },
   { to: "/cadastro/categorias", label: "Categorias", icon: Tag },
