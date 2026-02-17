@@ -421,7 +421,7 @@ export default function Dashboard() {
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
@@ -508,7 +508,7 @@ export default function Dashboard() {
             <BarChart data={byRoute} onClick={handleRouteClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
@@ -529,7 +529,7 @@ export default function Dashboard() {
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
