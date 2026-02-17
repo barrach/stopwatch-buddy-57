@@ -131,6 +131,24 @@ export default function Dashboard() {
     return Object.entries(result).sort(([a], [b]) => a.localeCompare(b)).map(([time, total]) => ({ time, total }));
   }, [records]);
 
+  const byObra = useMemo(() => {
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    allRecords.forEach((r: any) => {
+      const oName = (r.obras as any)?.nome || "Sem obra";
+      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0 };
+      const cat = (r.categorias_observacao as any)?.nome;
+      if (cat === "Produtivo") result[oName].productive += r.quantidade || 0;
+      else if (cat === "Suplementar") result[oName].supplementary += r.quantidade || 0;
+      else result[oName].unproductive += r.quantidade || 0;
+    });
+    return Object.entries(result).map(([name, v]) => ({
+      name,
+      ...v,
+      total: v.productive + v.supplementary + v.unproductive,
+      prodPercent: Math.round((v.productive / (v.productive + v.supplementary + v.unproductive)) * 100) || 0,
+    }));
+  }, [allRecords]);
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
@@ -156,6 +174,28 @@ export default function Dashboard() {
           <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Trabalhando + Planejando" icon={BarChart3} variant="success" />
           <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
           <StatCard title="Registros" value={records.length} subtitle={`${records.length} observações`} icon={Clock} />
+        </div>
+
+        {/* Visão Geral por Obra */}
+        <div className="stat-card animate-fade-in mb-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Visão Geral por Obra</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={byObra} margin={{ bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
+                const total = entry.payload.total;
+                return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, name];
+              }} />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Charts Grid */}
