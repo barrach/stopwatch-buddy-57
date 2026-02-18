@@ -189,6 +189,9 @@ export type Database = {
           criado_em: string
           criado_por: string | null
           data: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           descricao: string
           empresa: string
           especialidade_id: string
@@ -207,6 +210,9 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           data: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           descricao: string
           empresa?: string
           especialidade_id: string
@@ -225,6 +231,9 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           data?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           descricao?: string
           empresa?: string
           especialidade_id?: string

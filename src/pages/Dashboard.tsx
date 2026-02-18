@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LabelList,
+  PieChart, Pie, Cell, LabelList, Line, ComposedChart,
 } from "recharts";
 import AppLayout from "@/components/AppLayout";
 import StatCard, { Users, Clock, BarChart3, AlertTriangle } from "@/components/StatCard";
@@ -36,7 +36,8 @@ const tooltipStyle = {
 
 const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
 
-// Cross-filter state type
+type ParetoMode = "especialidade" | "categoria";
+
 interface CrossFilters {
   categoria?: string;
   rota?: string;
@@ -44,6 +45,7 @@ interface CrossFilters {
   contrato?: string;
   horario?: string;
   descricao?: string;
+  pareto?: string;
 }
 
 export default function Dashboard() {
@@ -53,6 +55,16 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [crossFilters, setCrossFilters] = useState<CrossFilters>({});
+  const [paretoMode, setParetoMode] = useState<ParetoMode>(() => {
+    try { return (sessionStorage.getItem("paretoMode") as ParetoMode) || "categoria"; } catch { return "categoria"; }
+  });
+
+  const handleParetoModeChange = (mode: ParetoMode) => {
+    setParetoMode(mode);
+    try { sessionStorage.setItem("paretoMode", mode); } catch {}
+    // Clear pareto cross-filter when switching mode
+    setCrossFilters(prev => ({ ...prev, pareto: undefined }));
+  };
 
   const hasActiveFilters = Object.values(crossFilters).some(Boolean);
 
@@ -80,6 +92,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from("observacoes")
         .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome)")
+        .is("deleted_at", null)
         .order("data", { ascending: false });
       if (error) throw error;
       return data;
@@ -129,10 +142,13 @@ export default function Dashboard() {
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
       if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
-      if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
+      if (crossFilters.pareto) {
+        if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
+        if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
+      }
       return true;
     });
-  }, [baseRecords, crossFilters, getParentCatName]);
+  }, [baseRecords, crossFilters, getParentCatName, paretoMode]);
 
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
   const productiveCount = useMemo(
@@ -145,7 +161,6 @@ export default function Dashboard() {
     [records, getParentCatName]
   );
 
-  // Aggregations
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0 };
     records.forEach((r: any) => {
@@ -155,21 +170,33 @@ export default function Dashboard() {
     return Object.entries(totals).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
 
-  const byDescription = useMemo(() => {
+  // Pareto data: dynamic by mode (especialidade or categoria/description)
+  const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      const key = r.descricao || "Sem descrição";
+      let key: string;
+      if (paretoMode === "especialidade") {
+        key = (r.especialidades as any)?.nome || "Sem especialidade";
+      } else {
+        key = r.descricao || "Sem descrição";
+      }
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
-    return Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [records]);
 
-  const byCategoryWithPercent = useMemo(() => {
-    const total = byDescription.reduce((s, c) => s + c.value, 0);
-    return byDescription.slice(0, 8).map((c) => ({
-      ...c, percent: total > 0 ? Math.round((c.value / total) * 100) : 0,
-    }));
-  }, [byDescription]);
+    // Sort descending, tie-break alphabetically
+    const sorted = Object.entries(totals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
+
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    let cumulative = 0;
+    return sorted.slice(0, 10).map((item) => {
+      cumulative += item.value;
+      const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
+      const cumPercent = total > 0 ? parseFloat(((cumulative / total) * 100).toFixed(1)) : 0;
+      return { ...item, percent, cumPercent };
+    });
+  }, [records, paretoMode]);
 
   const byRoute = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
@@ -247,7 +274,7 @@ export default function Dashboard() {
     });
   }, [records, getParentCatName]);
 
-  // Cross-filter click handlers
+  // Handlers
   const handleContratoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("contrato", e.activePayload[0].payload.name);
@@ -266,14 +293,13 @@ export default function Dashboard() {
   };
   const handleParetoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
+    toggleCrossFilter("pareto", e.activePayload[0].payload.name);
   };
   const handlePieClick = (_: any, index: number) => {
     const entry = categoryTotals[index];
     if (entry) toggleCrossFilter("categoria", entry.name);
   };
 
-  // Export functions
   const exportToExcel = () => {
     import("xlsx").then((XLSX) => {
       const exportData = records.map((r: any) => ({
@@ -293,13 +319,12 @@ export default function Dashboard() {
     });
   };
 
-  const exportToPDF = () => {
-    window.print();
-  };
+  const exportToPDF = () => window.print();
 
-  // Helper to style chart cards with active filter highlight
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
+
+  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : "Categorias";
 
   return (
     <AppLayout>
@@ -391,9 +416,9 @@ export default function Dashboard() {
                 Horário: {crossFilters.horario} <X className="w-3 h-3" />
               </Badge>
             )}
-            {crossFilters.descricao && (
-              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("descricao", crossFilters.descricao!)}>
-                Descrição: {crossFilters.descricao} <X className="w-3 h-3" />
+            {crossFilters.pareto && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("pareto", crossFilters.pareto!)}>
+                Pareto ({paretoLabel}): {crossFilters.pareto} <X className="w-3 h-3" />
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
@@ -407,7 +432,7 @@ export default function Dashboard() {
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Trabalhando + Planejando" icon={BarChart3} variant="success" />
           <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
-          <StatCard title="Registros" value={records.length} subtitle={`${records.length} observações`} icon={Clock} />
+          <StatCard title="Registros" value={allRecords.length} subtitle={`${allRecords.length} observações`} icon={Clock} />
         </div>
 
         {/* Visão Geral por Contrato */}
@@ -469,31 +494,88 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Pareto */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.descricao ? "ring-2 ring-primary/50" : ""}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Top Causas (Pareto)
-              {crossFilters.descricao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.descricao}</span>}
-            </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={byCategoryWithPercent} layout="vertical" margin={{ left: 20, right: 40 }} onClick={handleParetoClick}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                <YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [`${value} (${entry.payload.percent}%)`, "Amostras"]} />
-                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                  {byCategoryWithPercent.map((item, i) => (
-                    <Cell
-                      key={i}
-                      fill={PIE_COLORS[i % PIE_COLORS.length]}
-                      opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1}
-                    />
-                  ))}
-                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          {/* Pareto — configurable */}
+          <div className={`stat-card animate-fade-in transition-all ${crossFilters.pareto ? "ring-2 ring-primary/50" : ""}`}>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Top Causas (Pareto)
+                  {crossFilters.pareto && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.pareto}</span>}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar</p>
+              </div>
+              {/* Pareto mode toggle */}
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] text-muted-foreground mr-1">Pareto por:</span>
+                <button
+                  onClick={() => handleParetoModeChange("categoria")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
+                    paretoMode === "categoria"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  Categorias
+                </button>
+                <button
+                  onClick={() => handleParetoModeChange("especialidade")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
+                    paretoMode === "especialidade"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  Especialidades
+                </button>
+              </div>
+            </div>
+
+            {paretoData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
+                <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Sem dados para o Pareto</p>
+                <p className="text-xs text-muted-foreground/70">Ajuste os filtros para ver dados</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+                  <YAxis
+                    dataKey="name" type="category" width={160}
+                    tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+                    tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v}
+                  />
+                  <YAxis
+                    yAxisId="right" orientation="right" type="number" domain={[0, 100]}
+                    tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+                    width={40}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(value: number, name: string, entry: any) => {
+                      if (name === "% Acumulado") return [`${value}%`, name];
+                      return [`${value} (${entry.payload.percent}%)`, "Amostras"];
+                    }}
+                  />
+                  <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                    {paretoData.map((item, i) => (
+                      <Cell
+                        key={i}
+                        fill={PIE_COLORS[i % PIE_COLORS.length]}
+                        opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1}
+                      />
+                    ))}
+                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                  </Bar>
+                  <Line
+                    yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado"
+                    stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(0, 72%, 51%)" }}
+                    activeDot={{ r: 5 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
