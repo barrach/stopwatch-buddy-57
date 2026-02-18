@@ -4,6 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -16,10 +17,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X } from "lucide-react";
+import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
+
+const PAGE_SIZE = 50;
 
 const categoryBadgeVariant: Record<string, string> = {
   Produtivo: "bg-success/15 text-success border-success/30",
@@ -36,7 +39,10 @@ export default function Records() {
   const [filterEspecialidade, setFilterEspecialidade] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
+  const [filterDateStart, setFilterDateStart] = useState("");
+  const [filterDateEnd, setFilterDateEnd] = useState("");
   const [importing, setImporting] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -70,6 +76,17 @@ export default function Records() {
     },
   });
 
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("user_id, nome, email");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const profileMap = new Map(profiles.map((p) => [p.user_id, p.nome || p.email || p.user_id.substring(0, 8)]));
+
   const { data: records = [] } = useQuery({
     queryKey: ["observacoes"],
     queryFn: async () => {
@@ -102,6 +119,8 @@ export default function Records() {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
     if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
     if (filterObra !== "all" && r.obra_id !== filterObra) return false;
+    if (filterDateStart && r.data < filterDateStart) return false;
+    if (filterDateEnd && r.data > filterDateEnd) return false;
     if (search) {
       const q = search.toLowerCase();
       const desc = r.descricao?.toLowerCase() || "";
@@ -111,12 +130,15 @@ export default function Records() {
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const filteredIds = new Set(filtered.map((r: any) => r.id));
 
-  // Clear selection when filters change
+  // Reset page when filters change
   useEffect(() => {
+    setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterEspecialidade, filterCategoria, filterObra]);
+  }, [search, filterEspecialidade, filterCategoria, filterObra, filterDateStart, filterDateEnd]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((r: any) => selectedIds.has(r.id));
   const someSelected = selectedIds.size > 0;
@@ -124,14 +146,12 @@ export default function Records() {
 
   const toggleSelectAll = () => {
     if (allFilteredSelected) {
-      // Deselect all filtered
       setSelectedIds(prev => {
         const next = new Set(prev);
         filtered.forEach((r: any) => next.delete(r.id));
         return next;
       });
     } else {
-      // Select all filtered
       setSelectedIds(prev => {
         const next = new Set(prev);
         filtered.forEach((r: any) => next.add(r.id));
@@ -335,6 +355,35 @@ export default function Records() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Date range */}
+            <div>
+              <Label className="text-xs text-muted-foreground">De</Label>
+              <Input
+                type="date"
+                value={filterDateStart}
+                onChange={(e) => setFilterDateStart(e.target.value)}
+                className="w-38 mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Até</Label>
+              <Input
+                type="date"
+                value={filterDateEnd}
+                onChange={(e) => setFilterDateEnd(e.target.value)}
+                className="w-38 mt-1"
+              />
+            </div>
+            {(filterDateStart || filterDateEnd) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 px-2 text-muted-foreground"
+                onClick={() => { setFilterDateStart(""); setFilterDateEnd(""); }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -379,11 +428,6 @@ export default function Records() {
                       <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
                         ⚠️ Esta ação é auditável — os registros ficarão marcados como excluídos com data e usuário responsável, mas não aparecerão mais na listagem.
                       </div>
-                      {(search || filterEspecialidade !== "all" || filterCategoria !== "all" || filterObra !== "all") && (
-                        <p className="text-xs text-muted-foreground">
-                          Filtros ativos estão sendo respeitados — somente os registros visíveis serão afetados.
-                        </p>
-                      )}
                     </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -429,9 +473,10 @@ export default function Records() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r: any) => {
+              {paginated.map((r: any) => {
                 const catNome = (r.categorias_observacao as any)?.nome || "";
                 const isSelected = selectedIds.has(r.id);
+                const userName = r.criado_por ? (profileMap.get(r.criado_por) || r.criado_por.substring(0, 8) + "…") : "—";
                 return (
                   <TableRow
                     key={r.id}
@@ -457,8 +502,8 @@ export default function Records() {
                     </TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
                     <TableCell className="text-xs text-right font-bold">{r.quantidade}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.criado_por ? r.criado_por.substring(0, 8) + "…" : "—"}
+                    <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
+                      {userName}
                     </TableCell>
                     <TableCell>
                       <AlertDialog>
@@ -482,7 +527,7 @@ export default function Records() {
                   </TableRow>
                 );
               })}
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
@@ -493,7 +538,35 @@ export default function Records() {
           </Table>
         </div>
 
-        <p className="text-xs text-muted-foreground mt-3">{filtered.length} registro(s) encontrado(s)</p>
+        {/* Pagination + count */}
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-xs text-muted-foreground">{filtered.length} registro(s) encontrado(s)</p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Página {page} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                disabled={page === totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

@@ -54,6 +54,26 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+
+  const applyQuickFilter = (preset: "today" | "week" | "month") => {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    if (preset === "today") {
+      setDateMode("day");
+      setSelectedDate(todayStr);
+    } else if (preset === "week") {
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      setStartDate(start.toISOString().slice(0, 10));
+      setEndDate(todayStr);
+      setDateMode("period");
+    } else if (preset === "month") {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      setStartDate(start.toISOString().slice(0, 10));
+      setEndDate(todayStr);
+      setDateMode("period");
+    }
+  };
   const [crossFilters, setCrossFilters] = useState<CrossFilters>({});
   const [paretoMode, setParetoMode] = useState<ParetoMode>(() => {
     try { return (sessionStorage.getItem("paretoMode") as ParetoMode) || "categoria"; } catch { return "categoria"; }
@@ -335,7 +355,21 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mt-1">Visão geral da medição de produtividade — MEGASTEAM</p>
           </div>
           <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-2 items-end flex-wrap">
+              {/* Quick presets */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Atalhos</Label>
+                <div className="flex gap-1 mt-1">
+                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("today")}>Hoje</Button>
+                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("week")}>Semana</Button>
+                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("month")}>Mês</Button>
+                  {dateMode !== "all" && (
+                    <Button variant="ghost" size="sm" className="h-10 px-2 text-xs text-muted-foreground" onClick={() => setDateMode("all")}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Período</Label>
                 <Select value={dateMode} onValueChange={(v) => setDateMode(v as any)}>

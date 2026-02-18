@@ -15,6 +15,7 @@ import CadastroRotas from "./pages/CadastroRotas";
 import CadastroEspecialidades from "./pages/CadastroEspecialidades";
 import CadastroCategorias from "./pages/CadastroCategorias";
 import CadastroObras from "./pages/CadastroObras";
+import AuditoriaPage from "./pages/AuditoriaPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -48,6 +49,7 @@ function AppRoutes() {
       <Route path="/cadastro/especialidades" element={<CadastroEspecialidades />} />
       <Route path="/cadastro/categorias" element={<CadastroCategorias />} />
       <Route path="/cadastro/obras" element={<CadastroObras />} />
+      <Route path="/auditoria" element={<AuditoriaPage />} />
       
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
