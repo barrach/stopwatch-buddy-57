@@ -546,11 +546,7 @@ export default function Dashboard() {
                     tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
                     tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v}
                   />
-                  <YAxis
-                    yAxisId="right" orientation="right" type="number" domain={[0, 100]}
-                    tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
-                    width={40}
-                  />
+                  <YAxis yAxisId="right" hide />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(value: number, name: string, entry: any) => {
