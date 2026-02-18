@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -15,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Trash2, Download, Upload, Loader2 } from "lucide-react";
+import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
@@ -36,6 +37,11 @@ export default function Records() {
   const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
   const [importing, setImporting] = useState(false);
+
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
@@ -70,6 +76,7 @@ export default function Records() {
       const { data, error } = await supabase
         .from("observacoes")
         .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
+        .is("deleted_at", null)
         .order("data", { ascending: false })
         .order("horario", { ascending: false });
       if (error) throw error;
@@ -79,7 +86,10 @@ export default function Records() {
 
   const { mutate: deleteRecord } = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("observacoes").delete().eq("id", id);
+      const { error } = await supabase
+        .from("observacoes")
+        .update({ deleted_at: new Date().toISOString(), deleted_by: user?.id || null })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -100,6 +110,87 @@ export default function Records() {
     }
     return true;
   });
+
+  const filteredIds = new Set(filtered.map((r: any) => r.id));
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, filterEspecialidade, filterCategoria, filterObra]);
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((r: any) => selectedIds.has(r.id));
+  const someSelected = selectedIds.size > 0;
+  const selectedInCurrentFilter = [...selectedIds].filter(id => filteredIds.has(id)).length;
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      // Deselect all filtered
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        filtered.forEach((r: any) => next.delete(r.id));
+        return next;
+      });
+    } else {
+      // Select all filtered
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        filtered.forEach((r: any) => next.add(r.id));
+        return next;
+      });
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const idsToDelete = [...selectedIds].filter(id => filteredIds.has(id));
+    let succeeded = 0;
+    let failed = 0;
+
+    try {
+      const { error } = await supabase
+        .from("observacoes")
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: user?.id || null,
+        })
+        .in("id", idsToDelete);
+
+      if (error) {
+        failed = idsToDelete.length;
+      } else {
+        succeeded = idsToDelete.length;
+      }
+    } catch {
+      failed = idsToDelete.length;
+    }
+
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+
+    if (failed > 0) {
+      toast({
+        title: `Exclusão parcial`,
+        description: `${succeeded} excluído(s) com sucesso. ${failed} falharam.`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Registros excluídos",
+        description: `${succeeded} registro(s) removidos com sucesso.`,
+      });
+    }
+  };
 
   const handleExport = () => {
     const rows: ExportRow[] = filtered.map((r: any) => ({
@@ -129,12 +220,10 @@ export default function Records() {
     try {
       const rows = await parseExcelFile(file);
 
-      // Build lookup maps from cached data
       const obraMap = new Map(obras.map((o) => [o.nome.toLowerCase(), o.id]));
       const espMap = new Map(especialidades.map((s) => [s.nome.toLowerCase(), s.id]));
       const catMap = new Map(categorias.map((c) => [c.nome.toLowerCase(), c.id]));
 
-      // Fetch rotas for lookup
       const { data: rotasData } = await supabase.from("rotas").select("id, nome").eq("status", "Ativo");
       const rotaMap = new Map((rotasData || []).map((r) => [r.nome.toLowerCase(), r.id]));
 
@@ -142,7 +231,7 @@ export default function Records() {
       const insertRows: any[] = [];
 
       rows.forEach((row, i) => {
-        const lineNum = i + 2; // header is row 1
+        const lineNum = i + 2;
         const obraId = obraMap.get(String(row.Obra || "").toLowerCase());
         const rotaId = rotaMap.get(String(row.Rota || "").toLowerCase());
         const espId = espMap.get(String(row.Especialidade || "").toLowerCase());
@@ -211,7 +300,7 @@ export default function Records() {
         </div>
 
         {/* Filters */}
-        <div className="stat-card mb-6 animate-fade-in">
+        <div className="stat-card mb-4 animate-fade-in">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
@@ -249,11 +338,84 @@ export default function Records() {
           </div>
         </div>
 
+        {/* Bulk action bar */}
+        {someSelected && (
+          <div className="mb-4 flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
+            <span className="text-sm font-medium text-foreground">
+              {selectedInCurrentFilter} registro(s) selecionado(s)
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-muted-foreground"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              <X className="w-3 h-3" /> Limpar seleção
+            </Button>
+            <div className="flex-1" />
+            <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={selectedInCurrentFilter === 0}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Apagar {selectedInCurrentFilter} selecionado(s)
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    Confirmar exclusão em massa
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3">
+                      <p>
+                        Você está prestes a excluir <strong>{selectedInCurrentFilter} registro(s)</strong>.
+                      </p>
+                      <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                        ⚠️ Esta ação é auditável — os registros ficarão marcados como excluídos com data e usuário responsável, mas não aparecerão mais na listagem.
+                      </div>
+                      {(search || filterEspecialidade !== "all" || filterCategoria !== "all" || filterObra !== "all") && (
+                        <p className="text-xs text-muted-foreground">
+                          Filtros ativos estão sendo respeitados — somente os registros visíveis serão afetados.
+                        </p>
+                      )}
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBulkDelete}
+                    className="bg-destructive hover:bg-destructive/90"
+                    disabled={bulkDeleting}
+                  >
+                    {bulkDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Confirmar exclusão
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+
         {/* Table */}
         <div className="stat-card animate-fade-in overflow-hidden p-0">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10 pl-4">
+                  <Checkbox
+                    checked={allFilteredSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Selecionar todos"
+                    className="translate-y-[2px]"
+                  />
+                </TableHead>
                 <TableHead className="text-xs font-semibold">Data</TableHead>
                 <TableHead className="text-xs font-semibold">Hora</TableHead>
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
@@ -269,8 +431,20 @@ export default function Records() {
             <TableBody>
               {filtered.map((r: any) => {
                 const catNome = (r.categorias_observacao as any)?.nome || "";
+                const isSelected = selectedIds.has(r.id);
                 return (
-                  <TableRow key={r.id} className="cursor-pointer">
+                  <TableRow
+                    key={r.id}
+                    className={`cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
+                  >
+                    <TableCell className="pl-4">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(r.id)}
+                        aria-label="Selecionar registro"
+                        className="translate-y-[2px]"
+                      />
+                    </TableCell>
                     <TableCell className="text-xs">{r.data}</TableCell>
                     <TableCell className="text-xs">{r.horario}</TableCell>
                     <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
@@ -296,7 +470,7 @@ export default function Records() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
-                            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                            <AlertDialogDescription>Esta ação é auditável — o registro ficará marcado como excluído com data e responsável.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -310,7 +484,7 @@ export default function Records() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
