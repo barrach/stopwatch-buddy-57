@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Camera, Save, RotateCcw, Loader2 } from "lucide-react";
+import { Camera, Save, RotateCcw, Loader2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
@@ -32,6 +32,7 @@ export default function NewObservation() {
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const { data: rotas = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["rotas", "ativas"], "rotas", "id, nome",
@@ -122,6 +123,78 @@ export default function NewObservation() {
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 
+  const handleAISuggest = async () => {
+    setIsSuggesting(true);
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const especialidadeNome = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
+      const obraNome = obras.find((o) => o.id === obraId)?.nome || "";
+      const rotaNome = rotas.find((r) => r.id === rotaId)?.nome || "";
+
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-observations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: "suggest",
+          context: {
+            especialidade: especialidadeNome,
+            obra: obraNome,
+            rota: rotaNome,
+            horario: time,
+            notas: notes,
+          },
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        if (resp.status === 429) toast({ title: "Limite atingido", description: err.error, variant: "destructive" });
+        else if (resp.status === 402) toast({ title: "Créditos insuficientes", description: err.error, variant: "destructive" });
+        else throw new Error(err.error || "Erro ao buscar sugestão");
+        return;
+      }
+
+      const { suggestion } = await resp.json();
+      if (!suggestion) {
+        toast({ title: "Sem sugestão", description: "A IA não conseguiu sugerir uma categoria para este contexto.", variant: "destructive" });
+        return;
+      }
+
+      // Find the matching parent category
+      const matchedParent = parentCategorias.find(
+        (c) => c.nome.toLowerCase() === suggestion.categoria?.toLowerCase()
+      );
+      if (matchedParent) {
+        setCategoriaId(matchedParent.id);
+        setDescricao(""); // reset so user picks sub after category loads
+        // Try to auto-set description after state updates
+        setTimeout(() => {
+          const subs = categorias.filter(
+            (c) => c.categoria_pai_id === matchedParent.id && c.status === "Ativo"
+          );
+          const matchedSub = subs.find(
+            (s) => s.nome.toLowerCase() === suggestion.descricao?.toLowerCase()
+          );
+          if (matchedSub) setDescricao(matchedSub.nome);
+        }, 100);
+      }
+
+      toast({
+        title: "Sugestão da IA",
+        description: `${suggestion.categoria} → ${suggestion.descricao}. ${suggestion.justificativa}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
@@ -173,7 +246,24 @@ export default function NewObservation() {
 
           {/* Observation Details */}
           <div className="stat-card animate-fade-in">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Observação</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Observação</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAISuggest}
+                disabled={isSuggesting}
+                className="gap-1.5 text-xs"
+              >
+                {isSuggesting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                Sugerir com IA
+              </Button>
+            </div>
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Especialidade *</Label>
