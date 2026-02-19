@@ -757,7 +757,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
                   <YAxis
                     dataKey="name" type="category" width={160}
                     tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
@@ -768,10 +768,10 @@ export default function Dashboard() {
                     contentStyle={tooltipStyle}
                     formatter={(value: number, name: string, entry: any) => {
                       if (name === "% Acumulado") return [`${value}%`, name];
-                      return [`${value} (${entry.payload.percent}%)`, "Amostras"];
+                      return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
                     }}
                   />
-                  <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                  <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                     {paretoData.map((item, i) => (
                       <Cell
                         key={i}
