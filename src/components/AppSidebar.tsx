@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, LogOut, Route, X, ShieldAlert, Sparkles } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, LogOut, Route, X, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logoMega from "@/assets/logo-mega.png";
 
@@ -7,7 +7,6 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
   { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
   { to: "/registros", label: "Registros", icon: ClipboardList },
-  { to: "/relatorio-ia", label: "Relatório IA", icon: Sparkles },
   { to: "/auditoria", label: "Auditoria", icon: ShieldAlert },
 ];
 

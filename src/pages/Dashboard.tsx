@@ -13,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -49,7 +50,10 @@ interface CrossFilters {
 }
 
 export default function Dashboard() {
+  const { toast } = useToast();
   const [obraFilter, setObraFilter] = useState("all");
+  const [aiReport, setAiReport] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -340,6 +344,122 @@ export default function Dashboard() {
   };
 
   const exportToPDF = () => window.print();
+
+  // ---- AI Report ----
+  const aiStats = useMemo(() => {
+    const total = records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+    let prod = 0, supl = 0, naoProd = 0;
+    const byEsp: Record<string, { prod: number; total: number }> = {};
+    const byCat: Record<string, number> = {};
+
+    records.forEach((r: any) => {
+      const qty = r.quantidade || 0;
+      const cat = getParentCatName(r);
+      if (cat === "Produtivo") prod += qty;
+      else if (cat === "Suplementar") supl += qty;
+      else naoProd += qty;
+
+      const espName = (r.especialidades as any)?.nome || "Sem especialidade";
+      if (!byEsp[espName]) byEsp[espName] = { prod: 0, total: 0 };
+      byEsp[espName].total += qty;
+      if (cat === "Produtivo") byEsp[espName].prod += qty;
+
+      byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
+    });
+
+    const porEspecialidade = Object.entries(byEsp)
+      .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
+      .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
+      .join("\n");
+
+    const topCategorias = Object.entries(byCat)
+      .sort(([, a], [, b]) => b - a).slice(0, 8)
+      .map(([nome, qty]) => `${nome}: ${qty} amostras`).join("\n");
+
+    const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
+
+    return {
+      totalAmostras: total,
+      produtivo: prod,
+      suplementar: supl,
+      naoProdutivo: naoProd,
+      produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
+      suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
+      naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
+      periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
+      obra: obraName,
+      porEspecialidade,
+      topCategorias,
+    };
+  }, [records, getParentCatName, obraFilter, obras, dateMode, selectedDate, startDate, endDate]);
+
+  const handleGenerateAIReport = async () => {
+    if (records.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma observação encontrada para o período selecionado.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingReport(true);
+    setAiReport("");
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-observations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ type: "report", context: aiStats }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        toast({ title: resp.status === 429 ? "Limite atingido" : resp.status === 402 ? "Créditos insuficientes" : "Erro", description: err.error, variant: "destructive" });
+        return;
+      }
+      if (!resp.body) throw new Error("Sem resposta da IA");
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let done = false;
+      while (!done) {
+        const { done: sd, value } = await reader.read();
+        if (sd) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { done = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) setAiReport((prev) => prev + content);
+          } catch { /* ignore */ }
+        }
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const formatAIReport = (text: string) =>
+    text.split("\n").map((line, i) => {
+      if (line.startsWith("## ") || line.startsWith("# "))
+        return <h2 key={i} className="text-base font-bold text-foreground mt-5 mb-2">{line.replace(/^#+\s*/, "").replace(/\*\*/g, "")}</h2>;
+      if (line.startsWith("**") && line.endsWith("**"))
+        return <h3 key={i} className="font-semibold text-foreground mt-4 mb-1">{line.replace(/\*\*/g, "")}</h3>;
+      if (line.startsWith("- ") || line.startsWith("• "))
+        return <li key={i} className="ml-4 text-sm text-foreground/80 list-disc">{line.replace(/^[-•]\s*/, "")}</li>;
+      if (line.trim() === "") return <br key={i} />;
+      const parts = line.split(/\*\*([^*]+)\*\*/g);
+      return (
+        <p key={i} className="text-sm text-foreground/80 leading-relaxed">
+          {parts.map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
+        </p>
+      );
+    });
 
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
@@ -667,6 +787,53 @@ export default function Dashboard() {
               <Bar dataKey="total" name="Total" fill="hsl(220, 70%, 55%)" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* AI Analysis Section */}
+        <div className="stat-card animate-fade-in mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Análise Inteligente</h3>
+                <p className="text-[11px] text-muted-foreground">A IA analisa os dados do período atual e gera insights acionáveis</p>
+              </div>
+            </div>
+            <Button
+              onClick={handleGenerateAIReport}
+              disabled={isGeneratingReport || records.length === 0}
+              size="sm"
+              className="gap-2"
+            >
+              {isGeneratingReport ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
+              ) : (
+                <><Sparkles className="w-4 h-4" /> {aiReport ? "Atualizar Análise" : "Gerar Análise com IA"}</>
+              )}
+            </Button>
+          </div>
+
+          {(aiReport || isGeneratingReport) && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-muted-foreground">Análise gerada — {aiStats.periodo} {aiStats.obra && `• ${aiStats.obra}`}</span>
+                {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground ml-auto" />}
+              </div>
+              <div className="prose prose-sm max-w-none">
+                {formatAIReport(aiReport)}
+                {isGeneratingReport && !aiReport && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {records.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-3">Selecione um período com dados para habilitar a análise.</p>
+          )}
         </div>
       </div>
     </AppLayout>
