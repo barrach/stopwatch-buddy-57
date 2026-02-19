@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [obraFilter, setObraFilter] = useState("all");
   const [aiReport, setAiReport] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [aiReportExpanded, setAiReportExpanded] = useState(false);
   const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -441,6 +442,7 @@ export default function Dashboard() {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
       setIsGeneratingReport(false);
+      setAiReportExpanded(true);
     }
   };
 
@@ -618,16 +620,30 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mb-3">
                 <FileText className="w-4 h-4 text-primary" />
                 <span className="text-xs font-semibold text-muted-foreground">Análise gerada — {aiStats.periodo} {aiStats.obra && `• ${aiStats.obra}`}</span>
-                {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground ml-auto" />}
-              </div>
-              <div className="prose prose-sm max-w-none">
-                {formatAIReport(aiReport)}
-                {isGeneratingReport && !aiReport && (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
-                  </div>
+                {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+                {!isGeneratingReport && aiReport && (
+                  <button
+                    onClick={() => setAiReportExpanded((v) => !v)}
+                    className="ml-auto flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    {aiReportExpanded ? (
+                      <><ChevronUp className="w-4 h-4" /> Recolher</>
+                    ) : (
+                      <><ChevronDown className="w-4 h-4" /> Expandir</>
+                    )}
+                  </button>
                 )}
               </div>
+              {aiReportExpanded && (
+                <div className="prose prose-sm max-w-none">
+                  {formatAIReport(aiReport)}
+                </div>
+              )}
+              {isGeneratingReport && !aiReport && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
+                </div>
+              )}
             </div>
           )}
 
