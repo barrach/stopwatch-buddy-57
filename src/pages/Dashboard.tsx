@@ -589,6 +589,53 @@ export default function Dashboard() {
           <StatCard title="Registros" value={allRecords.length} subtitle={`${allRecords.length} observações`} icon={Clock} />
         </div>
 
+        {/* AI Analysis Section */}
+        <div className="stat-card animate-fade-in mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Análise Inteligente</h3>
+                <p className="text-[11px] text-muted-foreground">A IA analisa os dados do período atual e gera insights acionáveis</p>
+              </div>
+            </div>
+            <Button
+              onClick={handleGenerateAIReport}
+              disabled={isGeneratingReport || records.length === 0}
+              size="sm"
+              className="gap-2"
+            >
+              {isGeneratingReport ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
+              ) : (
+                <><Sparkles className="w-4 h-4" /> {aiReport ? "Atualizar Análise" : "Gerar Análise com IA"}</>
+              )}
+            </Button>
+          </div>
+
+          {(aiReport || isGeneratingReport) && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-muted-foreground">Análise gerada — {aiStats.periodo} {aiStats.obra && `• ${aiStats.obra}`}</span>
+                {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground ml-auto" />}
+              </div>
+              <div className="prose prose-sm max-w-none">
+                {formatAIReport(aiReport)}
+                {isGeneratingReport && !aiReport && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {records.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-3">Selecione um período com dados para habilitar a análise.</p>
+          )}
+        </div>
+
         {/* Visão Geral por Contrato */}
         <div className={chartCardClass("contrato")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
@@ -787,53 +834,6 @@ export default function Dashboard() {
               <Bar dataKey="total" name="Total" fill="hsl(220, 70%, 55%)" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* AI Analysis Section */}
-        <div className="stat-card animate-fade-in mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Análise Inteligente</h3>
-                <p className="text-[11px] text-muted-foreground">A IA analisa os dados do período atual e gera insights acionáveis</p>
-              </div>
-            </div>
-            <Button
-              onClick={handleGenerateAIReport}
-              disabled={isGeneratingReport || records.length === 0}
-              size="sm"
-              className="gap-2"
-            >
-              {isGeneratingReport ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
-              ) : (
-                <><Sparkles className="w-4 h-4" /> {aiReport ? "Atualizar Análise" : "Gerar Análise com IA"}</>
-              )}
-            </Button>
-          </div>
-
-          {(aiReport || isGeneratingReport) && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-primary" />
-                <span className="text-xs font-semibold text-muted-foreground">Análise gerada — {aiStats.periodo} {aiStats.obra && `• ${aiStats.obra}`}</span>
-                {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground ml-auto" />}
-              </div>
-              <div className="prose prose-sm max-w-none">
-                {formatAIReport(aiReport)}
-                {isGeneratingReport && !aiReport && (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {records.length === 0 && (
-            <p className="text-xs text-muted-foreground mt-3">Selecione um período com dados para habilitar a análise.</p>
-          )}
         </div>
       </div>
     </AppLayout>
