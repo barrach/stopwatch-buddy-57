@@ -2,3 +2,6 @@ project_id = "adpwboqltejtfzcvrvon"
 
 [functions.admin-users]
 verify_jwt = false
+
+[functions.ai-observations]
+verify_jwt = false
