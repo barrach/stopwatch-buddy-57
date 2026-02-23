@@ -47,6 +47,7 @@ interface CrossFilters {
   horario?: string;
   descricao?: string;
   pareto?: string;
+  funcao?: string;
 }
 
 export default function Dashboard() {
@@ -167,6 +168,7 @@ export default function Dashboard() {
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
       if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
+      if (crossFilters.funcao && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.funcao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
         if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
@@ -279,6 +281,28 @@ export default function Dashboard() {
     return Object.entries(result).sort(([a], [b]) => a.localeCompare(b)).map(([time, total]) => ({ time, total }));
   }, [records]);
 
+  const byFunction = useMemo(() => {
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    records.forEach((r: any) => {
+      const fName = (r as any).funcoes?.nome || "Sem função";
+      if (!result[fName]) result[fName] = { productive: 0, supplementary: 0, unproductive: 0 };
+      const cat = getParentCatName(r);
+      if (cat === "Produtivo") result[fName].productive += r.quantidade || 0;
+      else if (cat === "Suplementar") result[fName].supplementary += r.quantidade || 0;
+      else result[fName].unproductive += r.quantidade || 0;
+    });
+    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => {
+      const total = v.productive + v.supplementary + v.unproductive;
+      return {
+        name,
+        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        total,
+      };
+    });
+  }, [records, getParentCatName]);
+
   const byObra = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
@@ -322,6 +346,10 @@ export default function Dashboard() {
   const handleParetoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("pareto", e.activePayload[0].payload.name);
+  };
+  const handleFunctionClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("funcao", e.activePayload[0].payload.name);
   };
   const handlePieClick = (_: any, index: number) => {
     const entry = categoryTotals[index];
@@ -573,6 +601,11 @@ export default function Dashboard() {
             {crossFilters.horario && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("horario", crossFilters.horario!)}>
                 Horário: {crossFilters.horario} <X className="w-3 h-3" />
+              </Badge>
+            )}
+            {crossFilters.funcao && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("funcao", crossFilters.funcao!)}>
+                Função: {crossFilters.funcao} <X className="w-3 h-3" />
               </Badge>
             )}
             {crossFilters.pareto && (
@@ -835,6 +868,27 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* By Function */}
+        <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Produtividade por Função
+            {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
