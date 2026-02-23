@@ -37,7 +37,7 @@ const tooltipStyle = {
 
 const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
 
-type ParetoMode = "especialidade" | "categoria";
+type ParetoMode = "especialidade" | "categoria" | "funcao";
 
 interface CrossFilters {
   categoria?: string;
@@ -116,7 +116,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome), funcoes(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false });
       if (error) throw error;
@@ -170,6 +170,7 @@ export default function Dashboard() {
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
         if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
+        if (paretoMode === "funcao" && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.pareto) return false;
       }
       return true;
     });
@@ -202,6 +203,8 @@ export default function Dashboard() {
       let key: string;
       if (paretoMode === "especialidade") {
         key = (r.especialidades as any)?.nome || "Sem especialidade";
+      } else if (paretoMode === "funcao") {
+        key = (r as any).funcoes?.nome || "Sem função";
       } else {
         key = r.descricao || "Sem descrição";
       }
@@ -743,6 +746,16 @@ export default function Dashboard() {
                   }`}
                 >
                   Especialidades
+                </button>
+                <button
+                  onClick={() => handleParetoModeChange("funcao")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
+                    paretoMode === "funcao"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  Funções
                 </button>
               </div>
             </div>

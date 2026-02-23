@@ -28,6 +28,7 @@ export default function NewObservation() {
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
+  const [funcaoId, setFuncaoId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -53,6 +54,11 @@ export default function NewObservation() {
     ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
   );
 
+  const { data: funcoes = [] } = useOfflineQuery<{ id: string; nome: string }>(
+    ["funcoes", "ativas"], "funcoes" as any, "id, nome",
+    [{ column: "status", value: "Ativo" }], "nome"
+  );
+
   const parentCategorias = useMemo(
     () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
     [categorias]
@@ -67,8 +73,9 @@ export default function NewObservation() {
     retry: false,
     mutationFn: async (payload: {
       data: string; horario: string; rota_id: string; obra_id: string;
-      contrato_id: string | null; especialidade_id: string; categoria_id: string;
-      descricao: string; empresa: string; quantidade: number; notas: string | null;
+      contrato_id: string | null; especialidade_id: string; funcao_id: string | null;
+      categoria_id: string; descricao: string; empresa: string;
+      quantidade: number; notas: string | null;
     }) => {
       if (!navigator.onLine) {
         await addToQueue({ table: "observacoes", operation: "insert", payload });
@@ -87,6 +94,7 @@ export default function NewObservation() {
       setCategoriaId("");
       setDescricao("");
       setEspecialidadeId("");
+      setFuncaoId("");
       setRotaId("");
       setObraId("");
       setTime("");
@@ -111,6 +119,7 @@ export default function NewObservation() {
       obra_id: obraId,
       contrato_id: null,
       especialidade_id: especialidadeId,
+      funcao_id: funcaoId || null,
       categoria_id: categoriaId,
       descricao,
       empresa: "MEGASTEAM",
@@ -271,6 +280,16 @@ export default function NewObservation() {
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a especialidade..." /></SelectTrigger>
                   <SelectContent>
                     {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Função</Label>
+                <Select value={funcaoId} onValueChange={setFuncaoId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a função..." /></SelectTrigger>
+                  <SelectContent>
+                    {funcoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

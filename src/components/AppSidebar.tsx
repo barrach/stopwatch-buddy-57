@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, LogOut, Route, X, ShieldAlert } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, LogOut, Route, X, ShieldAlert, UserCog } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logoMega from "@/assets/logo-mega.png";
 
@@ -15,6 +15,7 @@ const cadastroItems = [
   { to: "/cadastro/rotas", label: "Rotas", icon: Route },
   { to: "/cadastro/especialidades", label: "Especialidades", icon: Wrench },
   { to: "/cadastro/categorias", label: "Categorias", icon: Tag },
+  { to: "/cadastro/funcoes", label: "Funções", icon: UserCog },
 ];
 
 interface AppSidebarProps {
