@@ -144,6 +144,42 @@ export type Database = {
         }
         Relationships: []
       }
+      funcoes: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           alterado_em: string
@@ -195,6 +231,7 @@ export type Database = {
           descricao: string
           empresa: string
           especialidade_id: string
+          funcao_id: string | null
           horario: string
           id: string
           notas: string | null
@@ -216,6 +253,7 @@ export type Database = {
           descricao: string
           empresa?: string
           especialidade_id: string
+          funcao_id?: string | null
           horario: string
           id?: string
           notas?: string | null
@@ -237,6 +275,7 @@ export type Database = {
           descricao?: string
           empresa?: string
           especialidade_id?: string
+          funcao_id?: string | null
           horario?: string
           id?: string
           notas?: string | null
@@ -264,6 +303,13 @@ export type Database = {
             columns: ["especialidade_id"]
             isOneToOne: false
             referencedRelation: "especialidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observacoes_funcao_id_fkey"
+            columns: ["funcao_id"]
+            isOneToOne: false
+            referencedRelation: "funcoes"
             referencedColumns: ["id"]
           },
           {
