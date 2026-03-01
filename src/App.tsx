@@ -2,16 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import Dashboard from "./pages/Dashboard";
 import NewObservation from "./pages/NewObservation";
 import Records from "./pages/Records";
 import RoutesPage from "./pages/RoutesPage";
 import SettingsPage from "./pages/SettingsPage";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
 import CadastroRotas from "./pages/CadastroRotas";
 import CadastroEspecialidades from "./pages/CadastroEspecialidades";
 import CadastroCategorias from "./pages/CadastroCategorias";
@@ -25,22 +22,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
   useOfflineSync();
-
-  if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
-  }
-
-  if (!user) {
-    return (
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
-    );
-  }
 
   return (
     <Routes>
@@ -56,8 +38,6 @@ function AppRoutes() {
       <Route path="/cadastro/funcoes" element={<CadastroFuncoes />} />
       <Route path="/auditoria" element={<AuditoriaPage />} />
       <Route path="/relatorio-ia" element={<RelatorioIA />} />
-      
-      <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
