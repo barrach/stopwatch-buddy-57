@@ -11,6 +11,7 @@ import Records from "./pages/Records";
 import RoutesPage from "./pages/RoutesPage";
 import SettingsPage from "./pages/SettingsPage";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import CadastroRotas from "./pages/CadastroRotas";
 import CadastroEspecialidades from "./pages/CadastroEspecialidades";
 import CadastroCategorias from "./pages/CadastroCategorias";
@@ -35,6 +36,7 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
