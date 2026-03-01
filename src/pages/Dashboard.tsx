@@ -30,6 +30,28 @@ const PIE_COLORS = [
   "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)",
 ];
 
+const SPECIALTY_COLORS: Record<string, string> = {
+  "Elétrica": "hsl(230, 80%, 45%)",
+  "Instrumentação": "hsl(0, 100%, 45%)",
+  "Mecânica": "hsl(140, 70%, 30%)",
+  "Caldeiraria": "hsl(0, 0%, 15%)",
+  "Caldeiraria/Solda": "hsl(0, 0%, 15%)",
+  "Andaime": "hsl(0, 0%, 75%)",
+  "Pintura": "hsl(50, 100%, 50%)",
+  "Limpeza": "hsl(50, 100%, 50%)",
+  "Isolamento": "hsl(50, 100%, 50%)",
+  "Civil": "hsl(50, 100%, 50%)",
+  "Máquinas": "hsl(50, 100%, 50%)",
+};
+
+const getSpecialtyColor = (name: string): string => {
+  if (SPECIALTY_COLORS[name]) return SPECIALTY_COLORS[name];
+  // Check partial matches for complementar group
+  const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas"];
+  if (complementar.some(c => name.toLowerCase().includes(c.toLowerCase()))) return "hsl(50, 100%, 50%)";
+  return "hsl(220, 50%, 50%)";
+};
+
 const tooltipStyle = {
   background: "hsl(220, 25%, 12%)", border: "1px solid hsl(220, 20%, 20%)",
   borderRadius: "8px", color: "#fff", fontSize: "12px",
@@ -821,7 +843,7 @@ export default function Dashboard() {
                     {paretoData.map((item, i) => (
                       <Cell
                         key={i}
-                        fill={PIE_COLORS[i % PIE_COLORS.length]}
+                        fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
                         opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1}
                       />
                     ))}
@@ -866,16 +888,27 @@ export default function Dashboard() {
             {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
           </h3>
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
-          <ResponsiveContainer width="100%" height={320}>
+           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
-              <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
+                {bySpecialty.map((item, i) => (
+                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />
+                ))}
+              </Bar>
+              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
+                {bySpecialty.map((item, i) => (
+                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.6} />
+                ))}
+              </Bar>
+              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                {bySpecialty.map((item, i) => (
+                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.3} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
