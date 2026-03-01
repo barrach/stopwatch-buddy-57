@@ -31,23 +31,25 @@ const PIE_COLORS = [
 ];
 
 const SPECIALTY_COLORS: Record<string, string> = {
-  "Elétrica": "hsl(230, 80%, 45%)",
-  "Instrumentação": "hsl(0, 100%, 45%)",
-  "Mecânica": "hsl(140, 70%, 30%)",
-  "Caldeiraria": "hsl(0, 0%, 15%)",
-  "Caldeiraria/Solda": "hsl(0, 0%, 15%)",
-  "Andaime": "hsl(0, 0%, 75%)",
+  "Elétrica": "hsl(230, 100%, 35%)",
+  "Instrumentação": "hsl(0, 100%, 50%)",
+  "Mecânica": "hsl(140, 100%, 25%)",
+  "Caldeiraria": "hsl(0, 0%, 5%)",
+  "Caldeiraria/Solda": "hsl(0, 0%, 5%)",
+  "Andaime": "hsl(0, 0%, 95%)",
   "Pintura": "hsl(50, 100%, 50%)",
   "Limpeza": "hsl(50, 100%, 50%)",
   "Isolamento": "hsl(50, 100%, 50%)",
   "Civil": "hsl(50, 100%, 50%)",
   "Máquinas": "hsl(50, 100%, 50%)",
+  "Equip./Elevação": "hsl(50, 100%, 50%)",
+  "Lubrificação": "hsl(50, 100%, 50%)",
 };
 
 const getSpecialtyColor = (name: string): string => {
   if (SPECIALTY_COLORS[name]) return SPECIALTY_COLORS[name];
   // Check partial matches for complementar group
-  const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas"];
+  const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas", "Equip./Elevação", "Lubrificação"];
   if (complementar.some(c => name.toLowerCase().includes(c.toLowerCase()))) return "hsl(50, 100%, 50%)";
   return "hsl(220, 50%, 50%)";
 };
