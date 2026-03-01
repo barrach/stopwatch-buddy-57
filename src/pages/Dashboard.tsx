@@ -908,7 +908,32 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
+                  const total = data.total || 0;
+                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
+                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
+                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  return (
+                    <div style={{ ...tooltipStyle, padding: "10px 14px", minWidth: 180 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getSpecialtyColor(data.name), display: "inline-block", border: "1px solid rgba(255,255,255,0.2)" }} />
+                        <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                      </div>
+                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div style={{ color: "hsl(142, 70%, 60%)" }}>Produtivo: {data.productive}% ({prod})</div>
+                        <div style={{ color: "hsl(32, 95%, 65%)" }}>Suplementar: {data.supplementary}% ({supl})</div>
+                        <div style={{ color: "hsl(0, 72%, 65%)" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
               <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
                 {bySpecialty.map((item, i) => (
                   <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />
