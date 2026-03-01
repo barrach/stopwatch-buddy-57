@@ -888,6 +888,21 @@ export default function Dashboard() {
             {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
           </h3>
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
+            {[
+              { name: "Elétrica", color: "hsl(230, 80%, 45%)" },
+              { name: "Instrumentação", color: "hsl(0, 100%, 45%)" },
+              { name: "Mecânica", color: "hsl(140, 70%, 30%)" },
+              { name: "Caldeiraria/Solda", color: "hsl(0, 0%, 15%)" },
+              { name: "Andaime", color: "hsl(0, 0%, 75%)" },
+              { name: "Complementar", color: "hsl(50, 100%, 50%)" },
+            ].map((item) => (
+              <div key={item.name} className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm shrink-0 border border-border" style={{ backgroundColor: item.color }} />
+                <span className="text-[11px] text-muted-foreground">{item.name}</span>
+              </div>
+            ))}
+          </div>
            <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
