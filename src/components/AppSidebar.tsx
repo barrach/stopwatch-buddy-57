@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, LogOut, Route, X, ShieldAlert, UserCog } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, UserCog } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
 
 const navItems = [
@@ -24,7 +23,7 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  
 
   const handleClick = () => {
     onNavigate?.();
@@ -86,15 +85,12 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
       <div className="px-5 py-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-primary">
-            {user?.email?.substring(0, 2).toUpperCase() || "??"}
+            PC
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-sidebar-foreground truncate">{user?.email || "Usuário"}</p>
-            <p className="text-[10px] text-sidebar-foreground/40">Autenticado</p>
+            <p className="text-xs font-medium text-sidebar-foreground truncate">ProdControl</p>
+            <p className="text-[10px] text-sidebar-foreground/40">Acesso público</p>
           </div>
-          <button onClick={signOut} className="text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors" title="Sair">
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </aside>

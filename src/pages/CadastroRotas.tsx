@@ -1,10 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import CrudPage from "@/components/CrudPage";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function CadastroRotas() {
-  const { user } = useAuth();
   const qc = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
@@ -22,7 +20,7 @@ export default function CadastroRotas() {
       nome: form.nome,
       descricao: form.descricao || null,
       status: form.status,
-      criado_por: user?.id,
+      criado_por: null,
     });
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["rotas"] });
@@ -33,7 +31,7 @@ export default function CadastroRotas() {
       nome: form.nome,
       descricao: form.descricao || null,
       status: form.status,
-      alterado_por: user?.id,
+      alterado_por: null,
     }).eq("id", id);
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["rotas"] });

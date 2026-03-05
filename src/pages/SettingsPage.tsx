@@ -4,7 +4,7 @@ import { SPECIALTIES, OBSERVATION_CATEGORIES } from "@/data/mockData";
 import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoMega from "@/assets/logo-mega.png";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -27,7 +27,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -76,8 +76,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    if (user) fetchUsers();
-  }, [user]);
+    fetchUsers();
+  }, []);
 
   const handleEditSave = async () => {
     if (!editUser) return;
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                             >
                               <KeyRound className="w-3.5 h-3.5" />
                             </Button>
-                            {u.id !== user?.id && (
+                            {true && (
                               <Button
                                 variant="ghost"
                                 size="icon"

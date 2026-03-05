@@ -19,7 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
 const PAGE_SIZE = 50;
@@ -31,7 +31,7 @@ const categoryBadgeVariant: Record<string, string> = {
 };
 
 export default function Records() {
-  const { user } = useAuth();
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +105,7 @@ export default function Records() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("observacoes")
-        .update({ deleted_at: new Date().toISOString(), deleted_by: user?.id || null })
+        .update({ deleted_at: new Date().toISOString(), deleted_by: null })
         .eq("id", id);
       if (error) throw error;
     },
@@ -180,7 +180,7 @@ export default function Records() {
         .from("observacoes")
         .update({
           deleted_at: new Date().toISOString(),
-          deleted_by: user?.id || null,
+          deleted_by: null,
         })
         .in("id", idsToDelete);
 
@@ -274,7 +274,7 @@ export default function Records() {
           empresa: String(row.Empresa || "MEGASTEM"),
           notas: row.Notas ? String(row.Notas) : null,
           contrato_id: null,
-          criado_por: user?.id || null,
+          criado_por: null,
         });
       });
 
