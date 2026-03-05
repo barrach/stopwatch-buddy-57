@@ -1,10 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import CrudPage, { type CrudField } from "@/components/CrudPage";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function CadastroCategorias() {
-  const { user } = useAuth();
   const qc = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
@@ -37,7 +35,7 @@ export default function CadastroCategorias() {
       descricao: form.descricao || null,
       status: form.status,
       categoria_pai_id: form.categoria_pai_id && form.categoria_pai_id !== "__none__" ? form.categoria_pai_id : null,
-      criado_por: user?.id,
+      criado_por: null,
     });
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["categorias_observacao"] });
@@ -49,7 +47,7 @@ export default function CadastroCategorias() {
       descricao: form.descricao || null,
       status: form.status,
       categoria_pai_id: form.categoria_pai_id && form.categoria_pai_id !== "__none__" ? form.categoria_pai_id : null,
-      alterado_por: user?.id,
+      alterado_por: null,
     }).eq("id", id);
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["categorias_observacao"] });
