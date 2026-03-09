@@ -61,8 +61,29 @@ const getSpecialtyColor = (name: string): string => {
   return color;
 };
 
-// Map description to its parent category color
-const getDescriptionCategoryColor = (cat: string): string => {
+// ── Per-description unique colors (high contrast, category-tinted) ──
+const DESCRIPTION_COLORS: Record<string, string> = {
+  // Produtivo (greens & cool tones)
+  "Trabalhando": "#16A34A",
+  "Planejando": "#2563EB",
+  // Suplementar (warm tones & purples)
+  "Aguardando Instruções": "#F59E0B",
+  "Assistindo": "#7C3AED",
+  "Aguardando Ferramenta ou Material": "#EAB308",
+  "Aguardando Liberação": "#EA580C",
+  "Transitando no local de trabalho - com ferramenta": "#0891B2",
+  "Transitando no local de trabalho - sem ferramenta": "#D946EF",
+  "Preparando, Organizando": "#0D9488",
+  // Não Produtivo (reds & dark tones)
+  "Pessoal": "#DC2626",
+  "Ocioso": "#1F2937",
+  "Retrabalho": "#9F1239",
+  "Deslocamento": "#78350F",
+};
+
+// Map description to its unique color, falling back to parent category color
+const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
+  if (descricao && DESCRIPTION_COLORS[descricao]) return DESCRIPTION_COLORS[descricao];
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
