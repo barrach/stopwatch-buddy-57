@@ -66,12 +66,20 @@ const getDescriptionCategoryColor = (cat: string): string => {
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
-const tooltipStyle = {
-  background: "hsl(220, 25%, 12%)", border: "1px solid hsl(220, 20%, 20%)",
-  borderRadius: "8px", color: "#fff", fontSize: "12px",
+const tooltipStyle: React.CSSProperties = {
+  background: "#111827", border: "1px solid #374151",
+  borderRadius: "8px", color: "#F9FAFB", fontSize: "12px",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 
 const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
+
+// ── Auto-highlight helpers (Power BI style) ──────────────────────
+const getHighlightBorder = (type: "best" | "worst" | "none") => {
+  if (type === "best") return "ring-2 ring-green-500/50 shadow-green-500/10 shadow-lg";
+  if (type === "worst") return "ring-2 ring-red-500/50 shadow-red-500/10 shadow-lg";
+  return "";
+};
 
 type ParetoMode = "especialidade" | "categoria" | "funcao";
 
