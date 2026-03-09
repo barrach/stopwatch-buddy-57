@@ -272,6 +272,10 @@ export default function Dashboard() {
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const externalCount = useMemo(
+    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    [records, isExternalRecord]
+  );
   const productiveCount = useMemo(
     () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
@@ -284,9 +288,12 @@ export default function Dashboard() {
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
-  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
+  // Adjusted productivity: excludes external non-productive
+  const controllableTotal = totalSamples - externalCount;
+  const productivePercent = controllableTotal > 0 ? Math.round((productiveCount / controllableTotal) * 100) : 0;
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
-  const unproductivePercent = totalSamples > 0 ? Math.round((unproductiveCount / totalSamples) * 100) : 0;
+  const unproductivePercent = controllableTotal > 0 ? Math.round((unproductiveCount / controllableTotal) * 100) : 0;
+  const externalPercent = totalSamples > 0 ? Math.round((externalCount / totalSamples) * 100) : 0;
 
   // ── Chart data ─────────────────────────────────────────────────
 
