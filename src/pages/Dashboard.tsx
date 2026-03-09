@@ -909,23 +909,23 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
-                    tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
-                  <YAxis yAxisId="right" hide />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
-                    if (name === "% Acumulado") return [`${value}%`, name];
-                    return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
-                  }} />
-                  <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                    {paretoData.map((item, i) => (
-                      <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
-                        opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
-                    ))}
-                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  </Bar>
-                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(0, 72%, 51%)" }} activeDot={{ r: 5 }} />
+                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "#6B7280" }}
+                     tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
+                   <YAxis yAxisId="right" hide />
+                   <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
+                     if (name === "% Acumulado") return [`${value}%`, name];
+                     return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
+                   }} />
+                   <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                     {paretoData.map((item, i) => (
+                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
+                         opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
+                     ))}
+                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                   </Bar>
+                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#DC2626" strokeWidth={2} dot={{ r: 3, fill: "#DC2626" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
