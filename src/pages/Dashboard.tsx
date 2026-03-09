@@ -298,13 +298,31 @@ export default function Dashboard() {
   // ── Chart data ─────────────────────────────────────────────────
 
   const categoryTotals = useMemo(() => {
-    const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0 };
+    const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
     records.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
     });
-    return Object.entries(totals).map(([name, value]) => ({ name, value }));
+    return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
+
+  // External causes chart data
+  const externalCausas = useMemo(() => {
+    const totals: Record<string, number> = {};
+    records.forEach((r: any) => {
+      if (!isExternalRecord(r)) return;
+      const desc = r.descricao || "Sem descrição";
+      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+    });
+    const sorted = Object.entries(totals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    return sorted.map(item => ({
+      ...item,
+      percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+    }));
+  }, [records, isExternalRecord]);
 
   // 1) Causas de Observação — horizontal bars sorted desc
   const byCausa = useMemo(() => {
