@@ -1200,6 +1200,33 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Causas Externas de Parada */}
+        {externalCausas.length > 0 && (
+          <div className="stat-card animate-fade-in mb-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <CloudRain className="w-4 h-4 text-muted-foreground" />
+              Causas Externas de Parada
+            </h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
+            <ResponsiveContainer width="100%" height={Math.max(150, externalCausas.length * 40)}>
+              <BarChart data={externalCausas} layout="vertical" margin={{ left: 10, right: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
+                  `${value} amostras (${entry.payload.percent}%)`, "Causa externa — não impacta produtividade"
+                ]} />
+                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]}>
+                  {externalCausas.map((_, i) => (
+                    <Cell key={i} fill={i % 2 === 0 ? "#64748B" : "#475569"} />
+                  ))}
+                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         {/* 6) Amostras por Horário — chronological + stacked */}
         <div className={chartCardClass("horario")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
