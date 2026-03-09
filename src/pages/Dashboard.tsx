@@ -1221,7 +1221,7 @@ export default function Dashboard() {
                 ]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]}>
                   {externalCausas.map((_, i) => (
-                    <Cell key={i} fill={i % 2 === 0 ? "#64748B" : "#475569"} />
+                    <Cell key={i} fill="#3B82F6" />
                   ))}
                   <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
                 </Bar>
