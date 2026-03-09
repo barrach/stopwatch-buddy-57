@@ -691,21 +691,24 @@ export default function Dashboard() {
     if (!active || !payload?.length) return null;
     const data = payload[0]?.payload;
     if (!data) return null;
-    const categories = ["Produtivo", "Suplementar", "Não Produtivo"] as const;
-    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod" } as const;
-    const pctKeys = { Produtivo: "productive", Suplementar: "supplementary", "Não Produtivo": "unproductive" } as const;
+    const categories = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
+    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod", "Não Produtivo Externo": "rawExternal" } as const;
     return (
       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 300 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
         <div style={{ fontSize: 11, marginBottom: 4 }}>Total: <strong>{data.total} amostras</strong></div>
         {categories.map(cat => {
-          const pct = data[pctKeys[cat]];
-          const raw = data[rawKeys[cat]];
+          const raw = data[rawKeys[cat]] || 0;
+          if (raw === 0) return null;
+          const pct = data.total > 0 ? ((raw / data.total) * 100).toFixed(1) : "0";
           const descs = data.descByCategory?.[cat] as Record<string, number> | undefined;
           const topDescs = descs ? Object.entries(descs).sort(([,a],[,b]) => b - a).slice(0, 3) : [];
           return (
             <div key={cat} style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ color: CATEGORY_COLORS[cat], fontWeight: 600 }}>{cat} — {pct}% ({raw})</div>
+              <div style={{ color: CATEGORY_COLORS[cat] || "#64748B", fontWeight: 600 }}>
+                {cat} — {pct}% ({raw})
+                {cat === "Não Produtivo Externo" && <span style={{ fontSize: 9, opacity: 0.7 }}> (não impacta prod.)</span>}
+              </div>
               {topDescs.length > 0 && (
                 <div style={{ marginLeft: 8, marginTop: 2, fontSize: 10, opacity: 0.8 }}>
                   {topDescs.map(([desc, qty]) => (
