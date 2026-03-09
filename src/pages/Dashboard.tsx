@@ -835,9 +835,9 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-15} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip content={<ContratoTooltip />} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
