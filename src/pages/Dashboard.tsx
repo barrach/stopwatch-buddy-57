@@ -216,6 +216,12 @@ export default function Dashboard() {
     return map;
   }, [parentCats]);
 
+  const parentCatImpactMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    parentCats.forEach((c: any) => { map[c.id] = c.impacta_produtividade !== false; });
+    return map;
+  }, [parentCats]);
+
   const getParentCatName = useCallback((r: any) => {
     const catData = r.categorias_observacao as any;
     if (!catData) return "Sem categoria";
@@ -224,6 +230,16 @@ export default function Dashboard() {
     }
     return catData.nome;
   }, [parentCatMap]);
+
+  const isExternalRecord = useCallback((r: any) => {
+    const catData = r.categorias_observacao as any;
+    if (!catData) return false;
+    // Check the record's own flag first
+    if (catData.impacta_produtividade === false) return true;
+    // Check parent category flag
+    if (catData.categoria_pai_id && parentCatImpactMap[catData.categoria_pai_id] === false) return true;
+    return false;
+  }, [parentCatImpactMap]);
 
   // ── Filtering ──────────────────────────────────────────────────
   const baseRecords = useMemo(() => {
