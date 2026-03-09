@@ -24,6 +24,7 @@ export type Database = {
           criado_por: string | null
           descricao: string | null
           id: string
+          impacta_produtividade: boolean
           nome: string
           status: string
         }
@@ -36,6 +37,7 @@ export type Database = {
           criado_por?: string | null
           descricao?: string | null
           id?: string
+          impacta_produtividade?: boolean
           nome: string
           status?: string
         }
@@ -48,6 +50,7 @@ export type Database = {
           criado_por?: string | null
           descricao?: string | null
           id?: string
+          impacta_produtividade?: boolean
           nome?: string
           status?: string
         }

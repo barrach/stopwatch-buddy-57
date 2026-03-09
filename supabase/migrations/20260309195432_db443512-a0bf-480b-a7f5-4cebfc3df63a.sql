@@ -1,0 +1,1 @@
+ALTER TABLE public.categorias_observacao ADD COLUMN impacta_produtividade boolean NOT NULL DEFAULT true;

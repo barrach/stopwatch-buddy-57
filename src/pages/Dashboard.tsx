@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, Target, Gauge } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, Target, Gauge, CloudRain, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -23,6 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "#16A34A",
   Suplementar: "#F59E0B",
   "Não Produtivo": "#DC2626",
+  "Não Produtivo Externo": "#64748B",
 };
 
 const PIE_COLORS = [
@@ -79,6 +80,9 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#1F2937",
   "Retrabalho": "#9F1239",
   "Deslocamento": "#78350F",
+  // Não Produtivo Externo (neutral blues/grays)
+  "Causas Naturais": "#64748B",
+  "Vazamento / Interferência da Planta": "#475569",
 };
 
 // Map description to its unique color, falling back to parent category color
@@ -189,7 +193,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome), funcoes(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome), funcoes(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false });
       if (error) throw error;
@@ -200,7 +204,7 @@ export default function Dashboard() {
   const { data: parentCats = [] } = useQuery({
     queryKey: ["categorias_observacao", "parents"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome").is("categoria_pai_id", null);
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, impacta_produtividade").is("categoria_pai_id", null);
       if (error) throw error;
       return data;
     },
@@ -212,6 +216,12 @@ export default function Dashboard() {
     return map;
   }, [parentCats]);
 
+  const parentCatImpactMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    parentCats.forEach((c: any) => { map[c.id] = c.impacta_produtividade !== false; });
+    return map;
+  }, [parentCats]);
+
   const getParentCatName = useCallback((r: any) => {
     const catData = r.categorias_observacao as any;
     if (!catData) return "Sem categoria";
@@ -220,6 +230,16 @@ export default function Dashboard() {
     }
     return catData.nome;
   }, [parentCatMap]);
+
+  const isExternalRecord = useCallback((r: any) => {
+    const catData = r.categorias_observacao as any;
+    if (!catData) return false;
+    // Check the record's own flag first
+    if (catData.impacta_produtividade === false) return true;
+    // Check parent category flag
+    if (catData.categoria_pai_id && parentCatImpactMap[catData.categoria_pai_id] === false) return true;
+    return false;
+  }, [parentCatImpactMap]);
 
   // ── Filtering ──────────────────────────────────────────────────
   const baseRecords = useMemo(() => {
@@ -252,6 +272,10 @@ export default function Dashboard() {
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const externalCount = useMemo(
+    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    [records, isExternalRecord]
+  );
   const productiveCount = useMemo(
     () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
@@ -264,20 +288,41 @@ export default function Dashboard() {
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
-  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
+  // Adjusted productivity: excludes external non-productive
+  const controllableTotal = totalSamples - externalCount;
+  const productivePercent = controllableTotal > 0 ? Math.round((productiveCount / controllableTotal) * 100) : 0;
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
-  const unproductivePercent = totalSamples > 0 ? Math.round((unproductiveCount / totalSamples) * 100) : 0;
+  const unproductivePercent = controllableTotal > 0 ? Math.round((unproductiveCount / controllableTotal) * 100) : 0;
+  const externalPercent = totalSamples > 0 ? Math.round((externalCount / totalSamples) * 100) : 0;
 
   // ── Chart data ─────────────────────────────────────────────────
 
   const categoryTotals = useMemo(() => {
-    const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0 };
+    const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
     records.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
     });
-    return Object.entries(totals).map(([name, value]) => ({ name, value }));
+    return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
+
+  // External causes chart data
+  const externalCausas = useMemo(() => {
+    const totals: Record<string, number> = {};
+    records.forEach((r: any) => {
+      if (!isExternalRecord(r)) return;
+      const desc = r.descricao || "Sem descrição";
+      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+    });
+    const sorted = Object.entries(totals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    return sorted.map(item => ({
+      ...item,
+      percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+    }));
+  }, [records, isExternalRecord]);
 
   // 1) Causas de Observação — horizontal bars sorted desc
   const byCausa = useMemo(() => {
@@ -349,15 +394,16 @@ export default function Dashboard() {
 
   // By Contrato — with description breakdown for tooltip
   const byObra = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number; descByCategory: Record<string, Record<string, number>> }> = {};
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number; external: number; descByCategory: Record<string, Record<string, number>> }> = {};
     records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {} } };
+      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, external: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {}, "Não Produtivo Externo": {} } };
       const cat = getParentCatName(r);
       const qty = r.quantidade || 0;
       const desc = r.descricao || "Sem descrição";
       if (cat === "Produtivo") result[oName].productive += qty;
       else if (cat === "Suplementar") result[oName].supplementary += qty;
+      else if (cat === "Não Produtivo Externo") result[oName].external += qty;
       else result[oName].unproductive += qty;
       if (result[oName].descByCategory[cat]) {
         result[oName].descByCategory[cat][desc] = (result[oName].descByCategory[cat][desc] || 0) + qty;
@@ -365,14 +411,15 @@ export default function Dashboard() {
     });
     return Object.entries(result)
       .map(([name, v]) => {
-        const total = v.productive + v.supplementary + v.unproductive;
+        const controllable = v.productive + v.supplementary + v.unproductive;
+        const total = controllable + v.external;
         return {
           name, total,
-          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-          prodPercent: total > 0 ? Math.round((v.productive / total) * 100) : 0,
-          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive,
+          productive: controllable > 0 ? +((v.productive / controllable) * 100).toFixed(1) : 0,
+          supplementary: controllable > 0 ? +((v.supplementary / controllable) * 100).toFixed(1) : 0,
+          unproductive: controllable > 0 ? +((v.unproductive / controllable) * 100).toFixed(1) : 0,
+          prodPercent: controllable > 0 ? Math.round((v.productive / controllable) * 100) : 0,
+          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive, rawExternal: v.external,
           descByCategory: v.descByCategory,
         };
       })
@@ -644,21 +691,24 @@ export default function Dashboard() {
     if (!active || !payload?.length) return null;
     const data = payload[0]?.payload;
     if (!data) return null;
-    const categories = ["Produtivo", "Suplementar", "Não Produtivo"] as const;
-    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod" } as const;
-    const pctKeys = { Produtivo: "productive", Suplementar: "supplementary", "Não Produtivo": "unproductive" } as const;
+    const categories = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
+    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod", "Não Produtivo Externo": "rawExternal" } as const;
     return (
       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 300 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
         <div style={{ fontSize: 11, marginBottom: 4 }}>Total: <strong>{data.total} amostras</strong></div>
         {categories.map(cat => {
-          const pct = data[pctKeys[cat]];
-          const raw = data[rawKeys[cat]];
+          const raw = data[rawKeys[cat]] || 0;
+          if (raw === 0) return null;
+          const pct = data.total > 0 ? ((raw / data.total) * 100).toFixed(1) : "0";
           const descs = data.descByCategory?.[cat] as Record<string, number> | undefined;
           const topDescs = descs ? Object.entries(descs).sort(([,a],[,b]) => b - a).slice(0, 3) : [];
           return (
             <div key={cat} style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ color: CATEGORY_COLORS[cat], fontWeight: 600 }}>{cat} — {pct}% ({raw})</div>
+              <div style={{ color: CATEGORY_COLORS[cat] || "#64748B", fontWeight: 600 }}>
+                {cat} — {pct}% ({raw})
+                {cat === "Não Produtivo Externo" && <span style={{ fontSize: 9, opacity: 0.7 }}> (não impacta prod.)</span>}
+              </div>
               {topDescs.length > 0 && (
                 <div style={{ marginLeft: 8, marginTop: 2, fontSize: 10, opacity: 0.8 }}>
                   {topDescs.map(([desc, qty]) => (
@@ -799,13 +849,15 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
-          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Produtivo / Total" icon={TrendingUp} variant="success" />
-          <StatCard title="Eficiência" value={`${efficiencyPercent}%`} subtitle="Produtivo / (Prod + Supl)" icon={Target} variant="success" />
-          <StatCard title="Improdutividade" value={`${unproductivePercent}%`} subtitle="Não Produtivo / Total" icon={AlertTriangle} variant="danger" />
+          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Prod / (Total - Externo)" icon={TrendingUp} variant="success" />
+          <StatCard title="Eficiência" value={`${efficiencyPercent}%`} subtitle="Prod / (Prod + Supl)" icon={Target} variant="success" />
+          <StatCard title="Improdutividade" value={`${unproductivePercent}%`} subtitle="Não Prod / Controlável" icon={AlertTriangle} variant="danger" />
           <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0}% do total`} icon={Clock} variant="warning" />
           <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={Gauge} variant="danger" />
+          <StatCard title="Paradas Externas" value={externalCount} subtitle={`${externalPercent}% do total`} icon={CloudRain} />
+          <StatCard title="Impacto Externo" value={`${externalPercent}%`} subtitle="Externo / Total" icon={ShieldAlert} />
         </div>
 
         {/* AI Analysis Section */}
@@ -972,9 +1024,11 @@ export default function Dashboard() {
                 <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
                 <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "#6B7280" }}
                   tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
-                  `${value} amostras (${entry.payload.percent}%)`, entry.payload.cat
-                ]} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => {
+                  const isExternal = entry.payload.cat === "Não Produtivo Externo";
+                  const label = isExternal ? "⚠ Causa externa — não impacta produtividade" : entry.payload.cat;
+                  return [`${value} amostras (${entry.payload.percent}%)`, label];
+                }} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                   {byCausa.map((item, i) => (
                     <Cell key={i} fill={getDescriptionCategoryColor(item.cat, item.name)}
@@ -1152,6 +1206,33 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Causas Externas de Parada */}
+        {externalCausas.length > 0 && (
+          <div className="stat-card animate-fade-in mb-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <CloudRain className="w-4 h-4 text-muted-foreground" />
+              Causas Externas de Parada
+            </h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
+            <ResponsiveContainer width="100%" height={Math.max(150, externalCausas.length * 40)}>
+              <BarChart data={externalCausas} layout="vertical" margin={{ left: 10, right: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
+                  `${value} amostras (${entry.payload.percent}%)`, "Causa externa — não impacta produtividade"
+                ]} />
+                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]}>
+                  {externalCausas.map((_, i) => (
+                    <Cell key={i} fill={i % 2 === 0 ? "#64748B" : "#475569"} />
+                  ))}
+                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* 6) Amostras por Horário — chronological + stacked */}
         <div className={chartCardClass("horario")}>
