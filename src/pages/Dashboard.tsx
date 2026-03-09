@@ -1111,21 +1111,21 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={nonprodCausas} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleNonprodClick}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis yAxisId="right" hide />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
-                    if (name === "% Acumulado") return [`${value}%`, name];
-                    return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
-                  }} />
-                  <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                    {nonprodCausas.map((_, i) => (
-                      <Cell key={i} fill={`hsl(0, ${60 + i * 10}%, ${55 - i * 5}%)`} />
-                    ))}
-                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  </Bar>
-                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(220, 70%, 55%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(220, 70%, 55%)" }} />
+                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                   <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "#6B7280" }} />
+                   <YAxis yAxisId="right" hide />
+                   <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
+                     if (name === "% Acumulado") return [`${value}%`, name];
+                     return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
+                   }} />
+                   <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                     {nonprodCausas.map((item, i) => (
+                       <Cell key={i} fill={i === 0 ? "#DC2626" : i === 1 ? "#EF4444" : "#F87171"} />
+                     ))}
+                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                   </Bar>
+                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
