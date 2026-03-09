@@ -18,40 +18,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-// ── Color constants ──────────────────────────────────────────────
+// ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: "hsl(142, 70%, 45%)",
-  Suplementar: "hsl(32, 95%, 50%)",
-  "Não Produtivo": "hsl(0, 72%, 51%)",
+  Produtivo: "#16A34A",
+  Suplementar: "#F59E0B",
+  "Não Produtivo": "#DC2626",
 };
 
 const PIE_COLORS = [
-  "hsl(32, 95%, 50%)", "hsl(220, 70%, 55%)", "hsl(142, 70%, 45%)",
-  "hsl(0, 72%, 51%)", "hsl(280, 65%, 55%)", "hsl(180, 60%, 45%)",
-  "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)", "hsl(160, 60%, 40%)", "hsl(200, 70%, 50%)",
+  "#2563EB", "#B91C1C", "#047857", "#1F2937", "#9CA3AF",
+  "#EAB308", "#7C3AED", "#EC4899", "#38BDF8", "#22C55E",
 ];
 
 const SPECIALTY_COLORS: Record<string, string> = {
-  "Elétrica": "hsl(230, 100%, 35%)",
-  "Instrumentação": "hsl(0, 100%, 50%)",
-  "Mecânica": "hsl(140, 100%, 25%)",
-  "Caldeiraria": "hsl(0, 0%, 5%)",
-  "Caldeiraria/Solda": "hsl(0, 0%, 5%)",
-  "Andaime": "hsl(0, 0%, 95%)",
-  "Pintura": "hsl(50, 100%, 50%)",
-  "Limpeza": "hsl(50, 100%, 50%)",
-  "Isolamento": "hsl(50, 100%, 50%)",
-  "Civil": "hsl(50, 100%, 50%)",
-  "Máquinas": "hsl(50, 100%, 50%)",
-  "Equip./Elevação": "hsl(50, 100%, 50%)",
-  "Lubrificação": "hsl(50, 100%, 50%)",
+  "Elétrica": "#2563EB",
+  "Instrumentação": "#B91C1C",
+  "Mecânica": "#047857",
+  "Caldeiraria": "#1F2937",
+  "Caldeiraria/Solda": "#1F2937",
+  "Andaime": "#9CA3AF",
+  "Civil": "#EAB308",
+  "Isolamento": "#7C3AED",
+  "Pintura": "#EC4899",
+  "Equip./Elevação": "#38BDF8",
+  "Equipamentos / Elevação": "#38BDF8",
+  "Lubrificação": "#22C55E",
 };
 
+// Auto-generate contrasting colors for unknown specialties
+const AUTO_COLORS = ["#0EA5E9", "#D946EF", "#F97316", "#14B8A6", "#6366F1", "#A3E635", "#FB7185", "#FBBF24"];
+let autoColorIdx = 0;
 const getSpecialtyColor = (name: string): string => {
   if (SPECIALTY_COLORS[name]) return SPECIALTY_COLORS[name];
-  const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas", "Equip./Elevação", "Lubrificação"];
-  if (complementar.some(c => name.toLowerCase().includes(c.toLowerCase()))) return "hsl(50, 100%, 50%)";
-  return "hsl(220, 50%, 50%)";
+  // Check partial matches
+  for (const [key, color] of Object.entries(SPECIALTY_COLORS)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+  // Generate and cache a new contrasting color
+  const color = AUTO_COLORS[autoColorIdx % AUTO_COLORS.length];
+  SPECIALTY_COLORS[name] = color;
+  autoColorIdx++;
+  return color;
+};
+
+// Map description to its parent category color
+const getDescriptionCategoryColor = (cat: string): string => {
+  return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
 const tooltipStyle = {
