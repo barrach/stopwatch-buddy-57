@@ -864,7 +864,7 @@ export default function Dashboard() {
                   {categoryTotals.map((entry) => (
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
                       opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
-                      stroke={crossFilters.categoria === entry.name ? "hsl(220, 70%, 30%)" : "none"}
+                      stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : "none"}
                       strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
                     />
                   ))}
