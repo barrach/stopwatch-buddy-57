@@ -13,11 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, Target, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
+// ── Color constants ──────────────────────────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "hsl(142, 70%, 45%)",
   Suplementar: "hsl(32, 95%, 50%)",
@@ -27,7 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 const PIE_COLORS = [
   "hsl(32, 95%, 50%)", "hsl(220, 70%, 55%)", "hsl(142, 70%, 45%)",
   "hsl(0, 72%, 51%)", "hsl(280, 65%, 55%)", "hsl(180, 60%, 45%)",
-  "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)",
+  "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)", "hsl(160, 60%, 40%)", "hsl(200, 70%, 50%)",
 ];
 
 const SPECIALTY_COLORS: Record<string, string> = {
@@ -48,7 +49,6 @@ const SPECIALTY_COLORS: Record<string, string> = {
 
 const getSpecialtyColor = (name: string): string => {
   if (SPECIALTY_COLORS[name]) return SPECIALTY_COLORS[name];
-  // Check partial matches for complementar group
   const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas", "Equip./Elevação", "Lubrificação"];
   if (complementar.some(c => name.toLowerCase().includes(c.toLowerCase()))) return "hsl(50, 100%, 50%)";
   return "hsl(220, 50%, 50%)";
@@ -73,6 +73,13 @@ interface CrossFilters {
   pareto?: string;
   funcao?: string;
 }
+
+// Chronological time ordering helper
+const TIME_ORDER = ["06:00","07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+const timeIndex = (t: string) => {
+  const idx = TIME_ORDER.indexOf(t);
+  return idx >= 0 ? idx : 999;
+};
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -112,7 +119,6 @@ export default function Dashboard() {
   const handleParetoModeChange = (mode: ParetoMode) => {
     setParetoMode(mode);
     try { sessionStorage.setItem("paretoMode", mode); } catch {}
-    // Clear pareto cross-filter when switching mode
     setCrossFilters(prev => ({ ...prev, pareto: undefined }));
   };
 
@@ -127,6 +133,7 @@ export default function Dashboard() {
 
   const clearAllFilters = () => setCrossFilters({});
 
+  // ── Data fetching ──────────────────────────────────────────────
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
     queryFn: async () => {
@@ -173,7 +180,7 @@ export default function Dashboard() {
     return catData.nome;
   }, [parentCatMap]);
 
-  // Base records filtered by top-level filters (date, obra)
+  // ── Filtering ──────────────────────────────────────────────────
   const baseRecords = useMemo(() => {
     let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
@@ -184,7 +191,6 @@ export default function Dashboard() {
     return filtered;
   }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
 
-  // Cross-filtered records: apply all active cross-filters
   const records = useMemo(() => {
     return baseRecords.filter((r: any) => {
       if (crossFilters.categoria && getParentCatName(r) !== crossFilters.categoria) return false;
@@ -193,6 +199,7 @@ export default function Dashboard() {
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
       if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
       if (crossFilters.funcao && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.funcao) return false;
+      if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
         if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
@@ -202,16 +209,25 @@ export default function Dashboard() {
     });
   }, [baseRecords, crossFilters, getParentCatName, paretoMode]);
 
+  // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
   const productiveCount = useMemo(
     () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
-  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
+  const supplementaryCount = useMemo(
+    () => records.filter((r: any) => getParentCatName(r) === "Suplementar").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    [records, getParentCatName]
+  );
   const unproductiveCount = useMemo(
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
+  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
+  const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
+  const unproductivePercent = totalSamples > 0 ? Math.round((unproductiveCount / totalSamples) * 100) : 0;
+
+  // ── Chart data ─────────────────────────────────────────────────
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0 };
@@ -222,36 +238,107 @@ export default function Dashboard() {
     return Object.entries(totals).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
 
-  // Pareto data: dynamic by mode (especialidade or categoria/description)
+  // 1) Causas de Observação — horizontal bars sorted desc
+  const byCausa = useMemo(() => {
+    const totals: Record<string, { value: number; cat: string }> = {};
+    records.forEach((r: any) => {
+      const desc = r.descricao || "Sem descrição";
+      const cat = getParentCatName(r);
+      if (!totals[desc]) totals[desc] = { value: 0, cat };
+      totals[desc].value += r.quantidade || 0;
+    });
+    const sorted = Object.entries(totals)
+      .map(([name, { value, cat }]) => ({ name, value, cat }))
+      .sort((a, b) => b.value - a.value);
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    return sorted.map(item => ({
+      ...item,
+      percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+    }));
+  }, [records, getParentCatName]);
+
+  // 5) Causas de Não Produtividade — Pareto
+  const nonprodCausas = useMemo(() => {
+    const totals: Record<string, number> = {};
+    records.forEach((r: any) => {
+      const cat = getParentCatName(r);
+      if (cat !== "Não Produtivo") return;
+      const desc = r.descricao || "Sem descrição";
+      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+    });
+    const sorted = Object.entries(totals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    let cumulative = 0;
+    return sorted.map(item => {
+      cumulative += item.value;
+      return {
+        ...item,
+        percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+        cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
+      };
+    });
+  }, [records, getParentCatName]);
+
+  // Pareto data
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       let key: string;
-      if (paretoMode === "especialidade") {
-        key = (r.especialidades as any)?.nome || "Sem especialidade";
-      } else if (paretoMode === "funcao") {
-        key = (r as any).funcoes?.nome || "Sem função";
-      } else {
-        key = r.descricao || "Sem descrição";
-      }
+      if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
+      else if (paretoMode === "funcao") key = (r as any).funcoes?.nome || "Sem função";
+      else key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
-
-    // Sort descending, tie-break alphabetically
     const sorted = Object.entries(totals)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-
     const total = sorted.reduce((s, c) => s + c.value, 0);
     let cumulative = 0;
     return sorted.slice(0, 10).map((item) => {
       cumulative += item.value;
-      const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
-      const cumPercent = total > 0 ? parseFloat(((cumulative / total) * 100).toFixed(1)) : 0;
-      return { ...item, percent, cumPercent };
+      return {
+        ...item,
+        percent: total > 0 ? Math.round((item.value / total) * 100) : 0,
+        cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
+      };
     });
   }, [records, paretoMode]);
 
+  // By Contrato — with description breakdown for tooltip
+  const byObra = useMemo(() => {
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number; descByCategory: Record<string, Record<string, number>> }> = {};
+    records.forEach((r: any) => {
+      const oName = (r.obras as any)?.nome || "Sem contrato";
+      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {} } };
+      const cat = getParentCatName(r);
+      const qty = r.quantidade || 0;
+      const desc = r.descricao || "Sem descrição";
+      if (cat === "Produtivo") result[oName].productive += qty;
+      else if (cat === "Suplementar") result[oName].supplementary += qty;
+      else result[oName].unproductive += qty;
+      if (result[oName].descByCategory[cat]) {
+        result[oName].descByCategory[cat][desc] = (result[oName].descByCategory[cat][desc] || 0) + qty;
+      }
+    });
+    return Object.entries(result)
+      .map(([name, v]) => {
+        const total = v.productive + v.supplementary + v.unproductive;
+        return {
+          name, total,
+          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+          prodPercent: total > 0 ? Math.round((v.productive / total) * 100) : 0,
+          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive,
+          descByCategory: v.descByCategory,
+        };
+      })
+      .sort((a, b) => b.prodPercent - a.prodPercent);
+  }, [records, getParentCatName]);
+
+  // By Route — sorted desc
   const byRoute = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
@@ -265,15 +352,15 @@ export default function Dashboard() {
     return Object.entries(result).map(([name, v]) => {
       const total = v.productive + v.supplementary + v.unproductive;
       return {
-        name,
+        name, total,
         productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
         supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
         unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        total,
       };
-    });
+    }).sort((a, b) => b.productive - a.productive);
   }, [records, getParentCatName]);
 
+  // By Specialty — sorted by productivity desc
   const bySpecialty = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
@@ -284,27 +371,21 @@ export default function Dashboard() {
       else if (cat === "Suplementar") result[sName].supplementary += r.quantidade || 0;
       else result[sName].unproductive += r.quantidade || 0;
     });
-    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => {
-      const total = v.productive + v.supplementary + v.unproductive;
-      return {
-        name,
-        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        total,
-      };
-    });
+    return Object.entries(result)
+      .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
+      .map(([name, v]) => {
+        const total = v.productive + v.supplementary + v.unproductive;
+        return {
+          name, total,
+          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        };
+      })
+      .sort((a, b) => b.productive - a.productive);
   }, [records, getParentCatName]);
 
-  const byTime = useMemo(() => {
-    const result: Record<string, number> = {};
-    records.forEach((r: any) => {
-      const t = r.horario || "";
-      result[t] = (result[t] || 0) + (r.quantidade || 0);
-    });
-    return Object.entries(result).sort(([a], [b]) => a.localeCompare(b)).map(([time, total]) => ({ time, total }));
-  }, [records]);
-
+  // By Function — sorted by productivity desc
   const byFunction = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
@@ -315,42 +396,39 @@ export default function Dashboard() {
       else if (cat === "Suplementar") result[fName].supplementary += r.quantidade || 0;
       else result[fName].unproductive += r.quantidade || 0;
     });
-    return Object.entries(result).filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0).map(([name, v]) => {
-      const total = v.productive + v.supplementary + v.unproductive;
-      return {
-        name,
-        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        total,
-      };
-    });
+    return Object.entries(result)
+      .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
+      .map(([name, v]) => {
+        const total = v.productive + v.supplementary + v.unproductive;
+        return {
+          name, total,
+          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
+          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
+          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
+        };
+      })
+      .sort((a, b) => b.productive - a.productive);
   }, [records, getParentCatName]);
 
-  const byObra = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+  // 6) By Time — chronological order
+  const byTime = useMemo(() => {
+    const result: Record<string, { total: number; productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
-      const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0 };
+      const t = r.horario || "";
+      if (!result[t]) result[t] = { total: 0, productive: 0, supplementary: 0, unproductive: 0 };
+      const qty = r.quantidade || 0;
+      result[t].total += qty;
       const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[oName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[oName].supplementary += r.quantidade || 0;
-      else result[oName].unproductive += r.quantidade || 0;
+      if (cat === "Produtivo") result[t].productive += qty;
+      else if (cat === "Suplementar") result[t].supplementary += qty;
+      else result[t].unproductive += qty;
     });
-    return Object.entries(result).map(([name, v]) => {
-      const total = v.productive + v.supplementary + v.unproductive;
-      return {
-        name,
-        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        total,
-        prodPercent: total > 0 ? Math.round((v.productive / total) * 100) : 0,
-      };
-    });
+    return Object.entries(result)
+      .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
+      .map(([time, v]) => ({ time, ...v }));
   }, [records, getParentCatName]);
 
-  // Handlers
+  // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("contrato", e.activePayload[0].payload.name);
@@ -379,15 +457,24 @@ export default function Dashboard() {
     const entry = categoryTotals[index];
     if (entry) toggleCrossFilter("categoria", entry.name);
   };
+  const handleCausaClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
+  };
+  const handleNonprodClick = (e: any) => {
+    if (!e?.activePayload?.[0]?.payload) return;
+    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
+  };
 
+  // ── Export ─────────────────────────────────────────────────────
   const exportToExcel = () => {
     import("xlsx").then((XLSX) => {
       const exportData = records.map((r: any) => ({
-        Data: r.data,
-        Horário: r.horario,
+        Data: r.data, Horário: r.horario,
         Contrato: (r.obras as any)?.nome || "",
         Rota: (r.rotas as any)?.nome || "",
         Especialidade: (r.especialidades as any)?.nome || "",
+        Função: (r as any).funcoes?.nome || "",
         Categoria: getParentCatName(r),
         Descrição: r.descricao,
         Quantidade: r.quantidade,
@@ -401,51 +488,39 @@ export default function Dashboard() {
 
   const exportToPDF = () => window.print();
 
-  // ---- AI Report ----
+  // ── AI Report ──────────────────────────────────────────────────
   const aiStats = useMemo(() => {
     const total = records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
     let prod = 0, supl = 0, naoProd = 0;
     const byEsp: Record<string, { prod: number; total: number }> = {};
     const byCat: Record<string, number> = {};
-
     records.forEach((r: any) => {
       const qty = r.quantidade || 0;
       const cat = getParentCatName(r);
       if (cat === "Produtivo") prod += qty;
       else if (cat === "Suplementar") supl += qty;
       else naoProd += qty;
-
       const espName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!byEsp[espName]) byEsp[espName] = { prod: 0, total: 0 };
       byEsp[espName].total += qty;
       if (cat === "Produtivo") byEsp[espName].prod += qty;
-
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
-
     const porEspecialidade = Object.entries(byEsp)
       .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
       .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
       .join("\n");
-
     const topCategorias = Object.entries(byCat)
       .sort(([, a], [, b]) => b - a).slice(0, 8)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`).join("\n");
-
     const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
-
     return {
-      totalAmostras: total,
-      produtivo: prod,
-      suplementar: supl,
-      naoProdutivo: naoProd,
+      totalAmostras: total, produtivo: prod, suplementar: supl, naoProdutivo: naoProd,
       produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
       suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
       naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
-      obra: obraName,
-      porEspecialidade,
-      topCategorias,
+      obra: obraName, porEspecialidade, topCategorias,
     };
   }, [records, getParentCatName, obraFilter, obras, dateMode, selectedDate, startDate, endDate]);
 
@@ -521,19 +596,53 @@ export default function Dashboard() {
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
 
-  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : "Categorias";
+  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : paretoMode === "funcao" ? "Funções" : "Categorias";
+
+  // ── Custom tooltip for Contrato chart ──────────────────────────
+  const ContratoTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const data = payload[0]?.payload;
+    if (!data) return null;
+    const categories = ["Produtivo", "Suplementar", "Não Produtivo"] as const;
+    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod" } as const;
+    const pctKeys = { Produtivo: "productive", Suplementar: "supplementary", "Não Produtivo": "unproductive" } as const;
+    return (
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 300 }}>
+        <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
+        <div style={{ fontSize: 11, marginBottom: 4 }}>Total: <strong>{data.total} amostras</strong></div>
+        {categories.map(cat => {
+          const pct = data[pctKeys[cat]];
+          const raw = data[rawKeys[cat]];
+          const descs = data.descByCategory?.[cat] as Record<string, number> | undefined;
+          const topDescs = descs ? Object.entries(descs).sort(([,a],[,b]) => b - a).slice(0, 3) : [];
+          return (
+            <div key={cat} style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ color: CATEGORY_COLORS[cat], fontWeight: 600 }}>{cat} — {pct}% ({raw})</div>
+              {topDescs.length > 0 && (
+                <div style={{ marginLeft: 8, marginTop: 2, fontSize: 10, opacity: 0.8 }}>
+                  {topDescs.map(([desc, qty]) => (
+                    <div key={desc}>• {desc}: {qty}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
+        {/* Header + Filters */}
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
-            <p className="text-sm text-muted-foreground mt-1">Visão geral da medição de produtividade — MEGASTEAM</p>
+            <p className="text-sm text-muted-foreground mt-1">Painel analítico de produtividade industrial — MEGASTEAM</p>
           </div>
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex gap-2 items-end flex-wrap">
-              {/* Quick presets */}
               <div>
                 <Label className="text-xs text-muted-foreground">Atalhos</Label>
                 <div className="flex gap-1 mt-1">
@@ -632,6 +741,11 @@ export default function Dashboard() {
                 Função: {crossFilters.funcao} <X className="w-3 h-3" />
               </Badge>
             )}
+            {crossFilters.descricao && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("descricao", crossFilters.descricao!)}>
+                Descrição: {crossFilters.descricao} <X className="w-3 h-3" />
+              </Badge>
+            )}
             {crossFilters.pareto && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("pareto", crossFilters.pareto!)}>
                 Pareto ({paretoLabel}): {crossFilters.pareto} <X className="w-3 h-3" />
@@ -643,12 +757,14 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* 7) Strategic KPI Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
-          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Trabalhando + Planejando" icon={BarChart3} variant="success" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
-          <StatCard title="Registros" value={allRecords.length} subtitle={`${allRecords.length} observações`} icon={Clock} />
+          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Produtivo / Total" icon={TrendingUp} variant="success" />
+          <StatCard title="Eficiência" value={`${efficiencyPercent}%`} subtitle="Produtivo / (Prod + Supl)" icon={Target} variant="success" />
+          <StatCard title="Improdutividade" value={`${unproductivePercent}%`} subtitle="Não Produtivo / Total" icon={AlertTriangle} variant="danger" />
+          <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0}% do total`} icon={Clock} variant="warning" />
+          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={Gauge} variant="danger" />
         </div>
 
         {/* AI Analysis Section */}
@@ -661,12 +777,7 @@ export default function Dashboard() {
                 <p className="text-[11px] text-muted-foreground">A IA analisa os dados do período atual e gera insights acionáveis</p>
               </div>
             </div>
-            <Button
-              onClick={handleGenerateAIReport}
-              disabled={isGeneratingReport || records.length === 0}
-              size="sm"
-              className="gap-2"
-            >
+            <Button onClick={handleGenerateAIReport} disabled={isGeneratingReport || records.length === 0} size="sm" className="gap-2">
               {isGeneratingReport ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
               ) : (
@@ -674,7 +785,6 @@ export default function Dashboard() {
               )}
             </Button>
           </div>
-
           {(aiReport || isGeneratingReport) && (
             <div className="mt-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2 mb-3">
@@ -682,49 +792,33 @@ export default function Dashboard() {
                 <span className="text-xs font-semibold text-muted-foreground">Análise gerada — {aiStats.periodo} {aiStats.obra && `• ${aiStats.obra}`}</span>
                 {isGeneratingReport && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
                 {!isGeneratingReport && aiReport && (
-                  <button
-                    onClick={() => setAiReportExpanded((v) => !v)}
-                    className="ml-auto flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
-                  >
-                    {aiReportExpanded ? (
-                      <><ChevronUp className="w-4 h-4" /> Recolher</>
-                    ) : (
-                      <><ChevronDown className="w-4 h-4" /> Expandir</>
-                    )}
+                  <button onClick={() => setAiReportExpanded((v) => !v)} className="ml-auto flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium">
+                    {aiReportExpanded ? <><ChevronUp className="w-4 h-4" /> Recolher</> : <><ChevronDown className="w-4 h-4" /> Expandir</>}
                   </button>
                 )}
               </div>
-              {aiReportExpanded && (
-                <div className="prose prose-sm max-w-none">
-                  {formatAIReport(aiReport)}
-                </div>
-              )}
+              {aiReportExpanded && <div className="prose prose-sm max-w-none">{formatAIReport(aiReport)}</div>}
               {isGeneratingReport && !aiReport && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...
-                </div>
+                <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Analisando dados...</div>
               )}
             </div>
           )}
-
-          {records.length === 0 && (
-            <p className="text-xs text-muted-foreground mt-3">Selecione um período com dados para habilitar a análise.</p>
-          )}
+          {records.length === 0 && <p className="text-xs text-muted-foreground mt-3">Selecione um período com dados para habilitar a análise.</p>}
         </div>
 
-        {/* Visão Geral por Contrato */}
+        {/* 2) Visão Geral por Contrato — enhanced tooltip */}
         <div className={chartCardClass("contrato")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Visão Geral por Contrato
             {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar todos os gráficos</p>
+          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+              <Tooltip content={<ContratoTooltip />} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
               <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
@@ -735,7 +829,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Charts Grid */}
+        {/* Row: Pie + Pareto */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Distribution Pie */}
           <div className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
@@ -746,16 +840,9 @@ export default function Dashboard() {
             <p className="text-[10px] text-muted-foreground mb-2">Clique em uma fatia para filtrar</p>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie
-                  data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100}
-                  paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false}
-                  onClick={handlePieClick}
-                >
+                <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
                   {categoryTotals.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={CATEGORY_COLORS[entry.name] || "#666"}
-                      className="cursor-pointer"
+                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
                       opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
                       stroke={crossFilters.categoria === entry.name ? "hsl(220, 70%, 30%)" : "none"}
                       strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
@@ -781,115 +868,91 @@ export default function Dashboard() {
                 </h3>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar</p>
               </div>
-              {/* Pareto mode toggle */}
               <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[10px] text-muted-foreground mr-1">Pareto por:</span>
-                <button
-                  onClick={() => handleParetoModeChange("categoria")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
-                    paretoMode === "categoria"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  Categorias
-                </button>
-                <button
-                  onClick={() => handleParetoModeChange("especialidade")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
-                    paretoMode === "especialidade"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  Especialidades
-                </button>
-                <button
-                  onClick={() => handleParetoModeChange("funcao")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
-                    paretoMode === "funcao"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  Funções
-                </button>
+                <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
+                {(["categoria", "especialidade", "funcao"] as ParetoMode[]).map(mode => (
+                  <button key={mode} onClick={() => handleParetoModeChange(mode)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
+                      paretoMode === mode ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {mode === "categoria" ? "Categorias" : mode === "especialidade" ? "Especialidades" : "Funções"}
+                  </button>
+                ))}
               </div>
             </div>
-
             {paretoData.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
                 <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground">Sem dados para o Pareto</p>
-                <p className="text-xs text-muted-foreground/70">Ajuste os filtros para ver dados</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis
-                    dataKey="name" type="category" width={160}
-                    tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
-                    tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v}
-                  />
+                  <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+                    tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                   <YAxis yAxisId="right" hide />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    formatter={(value: number, name: string, entry: any) => {
-                      if (name === "% Acumulado") return [`${value}%`, name];
-                      return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
-                    }}
-                  />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
+                    if (name === "% Acumulado") return [`${value}%`, name];
+                    return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
+                  }} />
                   <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                     {paretoData.map((item, i) => (
-                      <Cell
-                        key={i}
-                        fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
-                        opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1}
-                      />
+                      <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
+                        opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                     ))}
                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
                   </Bar>
-                  <Line
-                    yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado"
-                    stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(0, 72%, 51%)" }}
-                    activeDot={{ r: 5 }}
-                  />
+                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(0, 72%, 51%)" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
           </div>
         </div>
 
-        {/* Route Chart */}
-        <div className={chartCardClass("rota")}>
+        {/* 1) Causas de Observação — horizontal bars */}
+        <div className={chartCardClass("descricao")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
-            Produtividade por Rota
-            {crossFilters.rota && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.rota}</span>}
+            Causas de Observação
+            {crossFilters.descricao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.descricao}</span>}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byRoute} onClick={handleRouteClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
-              <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="text-[10px] text-muted-foreground mb-2">Barras horizontais ordenadas por frequência — clique para filtrar</p>
+          {byCausa.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[200px] text-center gap-2">
+              <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">Sem dados</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(200, byCausa.length * 36)}>
+              <BarChart data={byCausa} layout="vertical" margin={{ left: 10, right: 80 }} onClick={handleCausaClick}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+                  tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
+                  `${value} amostras (${entry.payload.percent}%)`, entry.payload.cat
+                ]} />
+                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                  {byCausa.map((item, i) => (
+                    <Cell key={i} fill={CATEGORY_COLORS[item.cat] || PIE_COLORS[i % PIE_COLORS.length]}
+                      opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1} />
+                  ))}
+                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        {/* Specialty Chart */}
+        {/* 3) Produtividade por Especialidade */}
         <div className={chartCardClass("especialidade")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Produtividade por Especialidade
             {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
+          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
             {[
               { name: "Elétrica", color: "hsl(230, 80%, 45%)" },
@@ -905,13 +968,12 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-           <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
-                contentStyle={tooltipStyle}
+              <Tooltip contentStyle={tooltipStyle}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const data = payload[0]?.payload;
@@ -937,31 +999,25 @@ export default function Dashboard() {
                 }}
               />
               <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => (
-                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />
-                ))}
+                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />)}
               </Bar>
               <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => (
-                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.6} />
-                ))}
+                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.6} />)}
               </Bar>
               <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((item, i) => (
-                  <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.3} />
-                ))}
+                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.3} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* By Function */}
+        {/* 4) Produtividade por Função */}
         <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Produtividade por Função
             {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
+          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
@@ -976,20 +1032,79 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* By Time Slot */}
+        {/* Row: Route + Non-productivity Pareto */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Route Chart */}
+          <div className={`stat-card animate-fade-in transition-all ${crossFilters.rota ? "ring-2 ring-primary/50" : ""}`}>
+            <h3 className="text-sm font-semibold text-foreground mb-4">
+              Produtividade por Rota
+              {crossFilters.rota && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.rota}</span>}
+            </h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Clique para filtrar</p>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={byRoute} onClick={handleRouteClick}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
+                <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
+                <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* 5) Causas de Não Produtividade */}
+          <div className={`stat-card animate-fade-in transition-all`}>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
+            <p className="text-[10px] text-muted-foreground mb-2">Apenas registros "Não Produtivo" — clique para filtrar</p>
+            {nonprodCausas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
+                <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Sem registros de não produtividade</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={nonprodCausas} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleNonprodClick}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
+                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                  <YAxis yAxisId="right" hide />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
+                    if (name === "% Acumulado") return [`${value}%`, name];
+                    return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
+                  }} />
+                  <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                    {nonprodCausas.map((_, i) => (
+                      <Cell key={i} fill={`hsl(0, ${60 + i * 10}%, ${55 - i * 5}%)`} />
+                    ))}
+                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                  </Bar>
+                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(220, 70%, 55%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(220, 70%, 55%)" }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* 6) Amostras por Horário — chronological + stacked */}
         <div className={chartCardClass("horario")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Amostras por Horário
             {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar</p>
-          <ResponsiveContainer width="100%" height={240}>
+          <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={byTime} onClick={handleTimeClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="total" name="Total" fill="hsl(220, 70%, 55%)" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}`, name]} />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
