@@ -849,15 +849,11 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Prod / (Total - Externo)" icon={TrendingUp} variant="success" />
-          <StatCard title="Eficiência" value={`${efficiencyPercent}%`} subtitle="Prod / (Prod + Supl)" icon={Target} variant="success" />
-          <StatCard title="Improdutividade" value={`${unproductivePercent}%`} subtitle="Não Prod / Controlável" icon={AlertTriangle} variant="danger" />
           <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0}% do total`} icon={Clock} variant="warning" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={Gauge} variant="danger" />
-          <StatCard title="Paradas Externas" value={externalCount} subtitle={`${externalPercent}% do total`} icon={CloudRain} />
-          <StatCard title="Impacto Externo" value={`${externalPercent}%`} subtitle="Externo / Total" icon={ShieldAlert} />
+          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
         </div>
 
         {/* AI Analysis Section */}
