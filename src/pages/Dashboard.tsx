@@ -18,48 +18,68 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-// ── Color constants ──────────────────────────────────────────────
+// ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: "hsl(142, 70%, 45%)",
-  Suplementar: "hsl(32, 95%, 50%)",
-  "Não Produtivo": "hsl(0, 72%, 51%)",
+  Produtivo: "#16A34A",
+  Suplementar: "#F59E0B",
+  "Não Produtivo": "#DC2626",
 };
 
 const PIE_COLORS = [
-  "hsl(32, 95%, 50%)", "hsl(220, 70%, 55%)", "hsl(142, 70%, 45%)",
-  "hsl(0, 72%, 51%)", "hsl(280, 65%, 55%)", "hsl(180, 60%, 45%)",
-  "hsl(45, 93%, 47%)", "hsl(340, 70%, 50%)", "hsl(160, 60%, 40%)", "hsl(200, 70%, 50%)",
+  "#2563EB", "#B91C1C", "#047857", "#1F2937", "#9CA3AF",
+  "#EAB308", "#7C3AED", "#EC4899", "#38BDF8", "#22C55E",
 ];
 
 const SPECIALTY_COLORS: Record<string, string> = {
-  "Elétrica": "hsl(230, 100%, 35%)",
-  "Instrumentação": "hsl(0, 100%, 50%)",
-  "Mecânica": "hsl(140, 100%, 25%)",
-  "Caldeiraria": "hsl(0, 0%, 5%)",
-  "Caldeiraria/Solda": "hsl(0, 0%, 5%)",
-  "Andaime": "hsl(0, 0%, 95%)",
-  "Pintura": "hsl(50, 100%, 50%)",
-  "Limpeza": "hsl(50, 100%, 50%)",
-  "Isolamento": "hsl(50, 100%, 50%)",
-  "Civil": "hsl(50, 100%, 50%)",
-  "Máquinas": "hsl(50, 100%, 50%)",
-  "Equip./Elevação": "hsl(50, 100%, 50%)",
-  "Lubrificação": "hsl(50, 100%, 50%)",
+  "Elétrica": "#2563EB",
+  "Instrumentação": "#B91C1C",
+  "Mecânica": "#047857",
+  "Caldeiraria": "#1F2937",
+  "Caldeiraria/Solda": "#1F2937",
+  "Andaime": "#9CA3AF",
+  "Civil": "#EAB308",
+  "Isolamento": "#7C3AED",
+  "Pintura": "#EC4899",
+  "Equip./Elevação": "#38BDF8",
+  "Equipamentos / Elevação": "#38BDF8",
+  "Lubrificação": "#22C55E",
 };
 
+// Auto-generate contrasting colors for unknown specialties
+const AUTO_COLORS = ["#0EA5E9", "#D946EF", "#F97316", "#14B8A6", "#6366F1", "#A3E635", "#FB7185", "#FBBF24"];
+let autoColorIdx = 0;
 const getSpecialtyColor = (name: string): string => {
   if (SPECIALTY_COLORS[name]) return SPECIALTY_COLORS[name];
-  const complementar = ["Pintura", "Limpeza", "Isolamento", "Civil", "Máquinas", "Equip./Elevação", "Lubrificação"];
-  if (complementar.some(c => name.toLowerCase().includes(c.toLowerCase()))) return "hsl(50, 100%, 50%)";
-  return "hsl(220, 50%, 50%)";
+  // Check partial matches
+  for (const [key, color] of Object.entries(SPECIALTY_COLORS)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+  // Generate and cache a new contrasting color
+  const color = AUTO_COLORS[autoColorIdx % AUTO_COLORS.length];
+  SPECIALTY_COLORS[name] = color;
+  autoColorIdx++;
+  return color;
 };
 
-const tooltipStyle = {
-  background: "hsl(220, 25%, 12%)", border: "1px solid hsl(220, 20%, 20%)",
-  borderRadius: "8px", color: "#fff", fontSize: "12px",
+// Map description to its parent category color
+const getDescriptionCategoryColor = (cat: string): string => {
+  return CATEGORY_COLORS[cat] || "#6B7280";
+};
+
+const tooltipStyle: React.CSSProperties = {
+  background: "#111827", border: "1px solid #374151",
+  borderRadius: "8px", color: "#F9FAFB", fontSize: "12px",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 
 const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
+
+// ── Auto-highlight helpers (Power BI style) ──────────────────────
+const getHighlightBorder = (type: "best" | "worst" | "none") => {
+  if (type === "best") return "ring-2 ring-green-500/50 shadow-green-500/10 shadow-lg";
+  if (type === "worst") return "ring-2 ring-red-500/50 shadow-red-500/10 shadow-lg";
+  return "";
+};
 
 type ParetoMode = "especialidade" | "categoria" | "funcao";
 
@@ -815,15 +835,15 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-15} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip content={<ContratoTooltip />} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: "#6B7280" }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -844,7 +864,7 @@ export default function Dashboard() {
                   {categoryTotals.map((entry) => (
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
                       opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
-                      stroke={crossFilters.categoria === entry.name ? "hsl(220, 70%, 30%)" : "none"}
+                      stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : "none"}
                       strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
                     />
                   ))}
@@ -889,23 +909,23 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
-                    tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
-                  <YAxis yAxisId="right" hide />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
-                    if (name === "% Acumulado") return [`${value}%`, name];
-                    return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
-                  }} />
-                  <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                    {paretoData.map((item, i) => (
-                      <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
-                        opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
-                    ))}
-                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  </Bar>
-                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(0, 72%, 51%)" }} activeDot={{ r: 5 }} />
+                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "#6B7280" }}
+                     tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
+                   <YAxis yAxisId="right" hide />
+                   <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
+                     if (name === "% Acumulado") return [`${value}%`, name];
+                     return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
+                   }} />
+                   <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                     {paretoData.map((item, i) => (
+                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
+                         opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
+                     ))}
+                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                   </Bar>
+                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#DC2626" strokeWidth={2} dot={{ r: 3, fill: "#DC2626" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -927,19 +947,19 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(200, byCausa.length * 36)}>
               <BarChart data={byCausa} layout="vertical" margin={{ left: 10, right: 80 }} onClick={handleCausaClick}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "#6B7280" }}
                   tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
                   `${value} amostras (${entry.payload.percent}%)`, entry.payload.cat
                 ]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                   {byCausa.map((item, i) => (
-                    <Cell key={i} fill={CATEGORY_COLORS[item.cat] || PIE_COLORS[i % PIE_COLORS.length]}
+                    <Cell key={i} fill={getDescriptionCategoryColor(item.cat)}
                       opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1} />
                   ))}
-                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -955,12 +975,16 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
             {[
-              { name: "Elétrica", color: "hsl(230, 80%, 45%)" },
-              { name: "Instrumentação", color: "hsl(0, 100%, 45%)" },
-              { name: "Mecânica", color: "hsl(140, 70%, 30%)" },
-              { name: "Caldeiraria/Solda", color: "hsl(0, 0%, 15%)" },
-              { name: "Andaime", color: "hsl(0, 0%, 75%)" },
-              { name: "Complementar", color: "hsl(50, 100%, 50%)" },
+              { name: "Elétrica", color: "#2563EB" },
+              { name: "Instrumentação", color: "#B91C1C" },
+              { name: "Mecânica", color: "#047857" },
+              { name: "Caldeiraria/Solda", color: "#1F2937" },
+              { name: "Andaime", color: "#9CA3AF" },
+              { name: "Civil", color: "#EAB308" },
+              { name: "Isolamento", color: "#7C3AED" },
+              { name: "Pintura", color: "#EC4899" },
+              { name: "Equip./Elevação", color: "#38BDF8" },
+              { name: "Lubrificação", color: "#22C55E" },
             ].map((item) => (
               <div key={item.name} className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-sm shrink-0 border border-border" style={{ backgroundColor: item.color }} />
@@ -970,10 +994,10 @@ export default function Dashboard() {
           </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle}
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const data = payload[0]?.payload;
@@ -982,31 +1006,30 @@ export default function Dashboard() {
                   const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
                   const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
                   const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  const isBest = bySpecialty.length > 0 && data.name === bySpecialty[0]?.name;
+                  const isWorst = bySpecialty.length > 1 && data.name === bySpecialty[bySpecialty.length - 1]?.name;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "10px 14px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200, borderLeft: isBest ? "3px solid #16A34A" : isWorst ? "3px solid #DC2626" : undefined }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                         <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getSpecialtyColor(data.name), display: "inline-block", border: "1px solid rgba(255,255,255,0.2)" }} />
                         <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                        {isBest && <span style={{ fontSize: 10, color: "#4ADE80", fontWeight: 600 }}>★ Melhor</span>}
+                        {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
                       </div>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                         <div>Total: <strong>{total} amostras</strong></div>
-                        <div style={{ color: "hsl(142, 70%, 60%)" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "hsl(32, 95%, 65%)" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "hsl(0, 72%, 65%)" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
+                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
+                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
                       </div>
                     </div>
                   );
                 }}
               />
-              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />)}
-              </Bar>
-              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.6} />)}
-              </Bar>
-              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.3} />)}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1020,14 +1043,35 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
+                  const total = data.total || 0;
+                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
+                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
+                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  return (
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
+                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
+                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1043,14 +1087,14 @@ export default function Dashboard() {
             <p className="text-[10px] text-muted-foreground mb-2">Clique para filtrar</p>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={byRoute} onClick={handleRouteClick}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+                <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+                <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1067,21 +1111,21 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={nonprodCausas} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleNonprodClick}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  <YAxis yAxisId="right" hide />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
-                    if (name === "% Acumulado") return [`${value}%`, name];
-                    return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
-                  }} />
-                  <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                    {nonprodCausas.map((_, i) => (
-                      <Cell key={i} fill={`hsl(0, ${60 + i * 10}%, ${55 - i * 5}%)`} />
-                    ))}
-                    <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
-                  </Bar>
-                  <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="hsl(220, 70%, 55%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(220, 70%, 55%)" }} />
+                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                   <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "#6B7280" }} />
+                   <YAxis yAxisId="right" hide />
+                   <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
+                     if (name === "% Acumulado") return [`${value}%`, name];
+                     return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
+                   }} />
+                   <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                     {nonprodCausas.map((item, i) => (
+                       <Cell key={i} fill={i === 0 ? "#DC2626" : i === 1 ? "#EF4444" : "#F87171"} />
+                     ))}
+                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                   </Bar>
+                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -1097,14 +1141,14 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={byTime} onClick={handleTimeClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}`, name]} />
-              <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#6B7280" }} />
+               <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
+               <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}`, name]} />
+               <Legend wrapperStyle={{ fontSize: "12px" }} />
+               <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+               <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+               <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
