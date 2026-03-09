@@ -947,19 +947,19 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(200, byCausa.length * 36)}>
               <BarChart data={byCausa} layout="vertical" margin={{ left: 10, right: 80 }} onClick={handleCausaClick}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} />
-                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }}
+               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "#6B7280" }}
                   tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
                   `${value} amostras (${entry.payload.percent}%)`, entry.payload.cat
                 ]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                   {byCausa.map((item, i) => (
-                    <Cell key={i} fill={CATEGORY_COLORS[item.cat] || PIE_COLORS[i % PIE_COLORS.length]}
+                    <Cell key={i} fill={getDescriptionCategoryColor(item.cat)}
                       opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1} />
                   ))}
-                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} />
+                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
