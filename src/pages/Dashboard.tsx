@@ -394,15 +394,16 @@ export default function Dashboard() {
 
   // By Contrato — with description breakdown for tooltip
   const byObra = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number; descByCategory: Record<string, Record<string, number>> }> = {};
+    const result: Record<string, { productive: number; supplementary: number; unproductive: number; external: number; descByCategory: Record<string, Record<string, number>> }> = {};
     records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {} } };
+      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, external: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {}, "Não Produtivo Externo": {} } };
       const cat = getParentCatName(r);
       const qty = r.quantidade || 0;
       const desc = r.descricao || "Sem descrição";
       if (cat === "Produtivo") result[oName].productive += qty;
       else if (cat === "Suplementar") result[oName].supplementary += qty;
+      else if (cat === "Não Produtivo Externo") result[oName].external += qty;
       else result[oName].unproductive += qty;
       if (result[oName].descByCategory[cat]) {
         result[oName].descByCategory[cat][desc] = (result[oName].descByCategory[cat][desc] || 0) + qty;
@@ -410,14 +411,15 @@ export default function Dashboard() {
     });
     return Object.entries(result)
       .map(([name, v]) => {
-        const total = v.productive + v.supplementary + v.unproductive;
+        const controllable = v.productive + v.supplementary + v.unproductive;
+        const total = controllable + v.external;
         return {
           name, total,
-          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-          prodPercent: total > 0 ? Math.round((v.productive / total) * 100) : 0,
-          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive,
+          productive: controllable > 0 ? +((v.productive / controllable) * 100).toFixed(1) : 0,
+          supplementary: controllable > 0 ? +((v.supplementary / controllable) * 100).toFixed(1) : 0,
+          unproductive: controllable > 0 ? +((v.unproductive / controllable) * 100).toFixed(1) : 0,
+          prodPercent: controllable > 0 ? Math.round((v.productive / controllable) * 100) : 0,
+          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive, rawExternal: v.external,
           descByCategory: v.descByCategory,
         };
       })
