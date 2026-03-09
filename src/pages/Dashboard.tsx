@@ -193,7 +193,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome), funcoes(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome), funcoes(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false });
       if (error) throw error;
