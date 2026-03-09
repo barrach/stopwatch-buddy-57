@@ -204,7 +204,7 @@ export default function Dashboard() {
   const { data: parentCats = [] } = useQuery({
     queryKey: ["categorias_observacao", "parents"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome").is("categoria_pai_id", null);
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, impacta_produtividade").is("categoria_pai_id", null);
       if (error) throw error;
       return data;
     },
