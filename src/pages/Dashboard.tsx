@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, Target, Gauge, CloudRain, ShieldAlert } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -23,7 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "#16A34A",
   Suplementar: "#F59E0B",
   "Não Produtivo": "#DC2626",
-  "Não Produtivo Externo": "#64748B",
+  "Não Produtivo Externo": "#3B82F6",
 };
 
 const PIE_COLORS = [
@@ -80,9 +80,9 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#1F2937",
   "Retrabalho": "#9F1239",
   "Deslocamento": "#78350F",
-  // Não Produtivo Externo (neutral blues/grays)
-  "Causas Naturais": "#64748B",
-  "Vazamento / Interferência da Planta": "#475569",
+  // Não Produtivo Externo (blue)
+  "Causas Naturais": "#3B82F6",
+  "Vazamento / Interferência da Planta": "#2563EB",
 };
 
 // Map description to its unique color, falling back to parent category color
@@ -849,15 +849,11 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Prod / (Total - Externo)" icon={TrendingUp} variant="success" />
-          <StatCard title="Eficiência" value={`${efficiencyPercent}%`} subtitle="Prod / (Prod + Supl)" icon={Target} variant="success" />
-          <StatCard title="Improdutividade" value={`${unproductivePercent}%`} subtitle="Não Prod / Controlável" icon={AlertTriangle} variant="danger" />
           <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0}% do total`} icon={Clock} variant="warning" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={Gauge} variant="danger" />
-          <StatCard title="Paradas Externas" value={externalCount} subtitle={`${externalPercent}% do total`} icon={CloudRain} />
-          <StatCard title="Impacto Externo" value={`${externalPercent}%`} subtitle="Externo / Total" icon={ShieldAlert} />
+          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
         </div>
 
         {/* AI Analysis Section */}
@@ -1225,7 +1221,7 @@ export default function Dashboard() {
                 ]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]}>
                   {externalCausas.map((_, i) => (
-                    <Cell key={i} fill={i % 2 === 0 ? "#64748B" : "#475569"} />
+                    <Cell key={i} fill="#3B82F6" />
                   ))}
                   <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
                 </Bar>
