@@ -975,12 +975,16 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
             {[
-              { name: "Elétrica", color: "hsl(230, 80%, 45%)" },
-              { name: "Instrumentação", color: "hsl(0, 100%, 45%)" },
-              { name: "Mecânica", color: "hsl(140, 70%, 30%)" },
-              { name: "Caldeiraria/Solda", color: "hsl(0, 0%, 15%)" },
-              { name: "Andaime", color: "hsl(0, 0%, 75%)" },
-              { name: "Complementar", color: "hsl(50, 100%, 50%)" },
+              { name: "Elétrica", color: "#2563EB" },
+              { name: "Instrumentação", color: "#B91C1C" },
+              { name: "Mecânica", color: "#047857" },
+              { name: "Caldeiraria/Solda", color: "#1F2937" },
+              { name: "Andaime", color: "#9CA3AF" },
+              { name: "Civil", color: "#EAB308" },
+              { name: "Isolamento", color: "#7C3AED" },
+              { name: "Pintura", color: "#EC4899" },
+              { name: "Equip./Elevação", color: "#38BDF8" },
+              { name: "Lubrificação", color: "#22C55E" },
             ].map((item) => (
               <div key={item.name} className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-sm shrink-0 border border-border" style={{ backgroundColor: item.color }} />
@@ -990,10 +994,10 @@ export default function Dashboard() {
           </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle}
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const data = payload[0]?.payload;
@@ -1002,31 +1006,30 @@ export default function Dashboard() {
                   const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
                   const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
                   const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  const isBest = bySpecialty.length > 0 && data.name === bySpecialty[0]?.name;
+                  const isWorst = bySpecialty.length > 1 && data.name === bySpecialty[bySpecialty.length - 1]?.name;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "10px 14px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200, borderLeft: isBest ? "3px solid #16A34A" : isWorst ? "3px solid #DC2626" : undefined }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                         <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getSpecialtyColor(data.name), display: "inline-block", border: "1px solid rgba(255,255,255,0.2)" }} />
                         <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                        {isBest && <span style={{ fontSize: 10, color: "#4ADE80", fontWeight: 600 }}>★ Melhor</span>}
+                        {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
                       </div>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                         <div>Total: <strong>{total} amostras</strong></div>
-                        <div style={{ color: "hsl(142, 70%, 60%)" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "hsl(32, 95%, 65%)" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "hsl(0, 72%, 65%)" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
+                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
+                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
                       </div>
                     </div>
                   );
                 }}
               />
-              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.9} />)}
-              </Bar>
-              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.6} />)}
-              </Bar>
-              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((item, i) => <Cell key={i} fill={getSpecialtyColor(item.name)} opacity={0.3} />)}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
