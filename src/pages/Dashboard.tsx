@@ -1043,14 +1043,35 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 88%)" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
+                  const total = data.total || 0;
+                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
+                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
+                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  return (
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
+                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
+                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="hsl(142, 70%, 45%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="hsl(32, 95%, 50%)" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="hsl(0, 72%, 51%)" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
