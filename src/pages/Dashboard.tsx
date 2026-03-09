@@ -23,6 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "#16A34A",
   Suplementar: "#F59E0B",
   "Não Produtivo": "#DC2626",
+  "Não Produtivo Externo": "#64748B",
 };
 
 const PIE_COLORS = [
