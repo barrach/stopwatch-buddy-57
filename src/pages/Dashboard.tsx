@@ -1019,9 +1019,11 @@ export default function Dashboard() {
                 <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
                 <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "#6B7280" }}
                   tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
-                  `${value} amostras (${entry.payload.percent}%)`, entry.payload.cat
-                ]} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => {
+                  const isExternal = entry.payload.cat === "Não Produtivo Externo";
+                  const label = isExternal ? "⚠ Causa externa — não impacta produtividade" : entry.payload.cat;
+                  return [`${value} amostras (${entry.payload.percent}%)`, label];
+                }} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                   {byCausa.map((item, i) => (
                     <Cell key={i} fill={getDescriptionCategoryColor(item.cat, item.name)}
