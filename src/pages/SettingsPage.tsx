@@ -44,12 +44,15 @@ export default function SettingsPage() {
 
   const callAdmin = async (action: string, body?: Record<string, unknown>) => {
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Não autenticado");
+    }
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users?action=${action}`,
       {
         method: body ? "POST" : "GET",
         headers: {
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
@@ -65,6 +68,12 @@ export default function SettingsPage() {
 
   const fetchUsers = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
       const data = await callAdmin("list");
       setUsers(data);
       setIsAdmin(true);
