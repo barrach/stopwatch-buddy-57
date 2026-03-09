@@ -977,7 +977,7 @@ export default function Dashboard() {
                 ]} />
                 <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                   {byCausa.map((item, i) => (
-                    <Cell key={i} fill={getDescriptionCategoryColor(item.cat)}
+                    <Cell key={i} fill={getDescriptionCategoryColor(item.cat, item.name)}
                       opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1} />
                   ))}
                   <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
