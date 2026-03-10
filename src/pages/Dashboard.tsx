@@ -1170,21 +1170,34 @@ export default function Dashboard() {
               Causas Externas de Parada
             </h3>
             <p className="text-[10px] text-muted-foreground mb-2">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
-            <ResponsiveContainer width="100%" height={Math.max(150, externalCausas.length * 40)}>
-              <BarChart data={externalCausas} layout="vertical" margin={{ left: 10, right: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
-                <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 11, fill: "#6B7280" }} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => [
-                  `${value} amostras (${entry.payload.percent}%)`, "Causa externa — não impacta produtividade"
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={externalCausas}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label={({ name, percent }: { name: string; percent: number }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                  labelLine
+                >
+                  {externalCausas.map((_: any, i: number) => {
+                    const PIE_COLORS = ["#3B82F6", "#60A5FA", "#2563EB", "#1D4ED8", "#93C5FD", "#1E40AF"];
+                    return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
+                  })}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => [
+                  `${value} amostras (${entry.payload.percent}%)`, "Causa externa"
                 ]} />
-                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]}>
-                  {externalCausas.map((_, i) => (
-                    <Cell key={i} fill="#3B82F6" />
-                  ))}
-                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
-                </Bar>
-              </BarChart>
+                <Legend
+                  wrapperStyle={{ fontSize: "12px" }}
+                  formatter={(value: string, entry: any) => {
+                    const item = externalCausas.find((c: any) => c.name === value);
+                    return `${value} — ${item?.percent ?? 0}%`;
+                  }}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         )}
