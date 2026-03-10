@@ -1229,7 +1229,7 @@ export default function Dashboard() {
                   })}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => [
-                  `${value} amostras (~${value}h perdidas) · ${entry.payload.percent}%`, "Causa externa"
+                  `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
                   wrapperStyle={{ fontSize: "12px" }}
