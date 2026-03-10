@@ -964,7 +964,7 @@ export default function Dashboard() {
                    <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
                      tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number, name: string, entry: any) => {
+                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
                    }} />
