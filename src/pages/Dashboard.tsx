@@ -310,18 +310,25 @@ export default function Dashboard() {
   // External causes chart data
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
+    const hoursSet: Record<string, Set<string>> = {};
+    const totalHoursSet = new Set<string>();
     records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+      if (!hoursSet[desc]) hoursSet[desc] = new Set();
+      const key = `${r.data}_${r.horario}`;
+      hoursSet[desc].add(key);
+      totalHoursSet.add(key);
     });
     const sorted = Object.entries(totals)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ name, value, hours: hoursSet[name]?.size || 0 }))
       .sort((a, b) => b.value - a.value);
     const total = sorted.reduce((s, c) => s + c.value, 0);
     return sorted.map(item => ({
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+      _totalHours: totalHoursSet.size,
     }));
   }, [records, isExternalRecord]);
 
