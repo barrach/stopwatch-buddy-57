@@ -1207,7 +1207,7 @@ export default function Dashboard() {
                   `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
-                  wrapperStyle={{ fontSize: "12px" }}
+                  wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }}
                   formatter={(value: string) => {
                     const item = externalCausas.find((c: any) => c.name === value);
                     return `${value} — ${item?.percent ?? 0}%`;
