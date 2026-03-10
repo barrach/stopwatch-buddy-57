@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Camera, Save, RotateCcw, Loader2, Sparkles } from "lucide-react";
+import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
@@ -30,6 +31,8 @@ export default function NewObservation() {
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("");
+  const [timeEnd, setTimeEnd] = useState("");
+  const [isRangeMode, setIsRangeMode] = useState(false);
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
@@ -115,6 +118,7 @@ export default function NewObservation() {
       setRotaId("");
       setObraId("");
       setTime("");
+      setTimeEnd("");
       setQuantity("1");
       setNotes("");
     },
@@ -123,26 +127,46 @@ export default function NewObservation() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getTimeSlotsInRange = (start: string, end: string): string[] => {
+    const startIdx = TIME_SLOTS.indexOf(start as any);
+    const endIdx = TIME_SLOTS.indexOf(end as any);
+    if (startIdx === -1 || endIdx === -1 || startIdx > endIdx) return [];
+    return TIME_SLOTS.slice(startIdx, endIdx + 1) as unknown as string[];
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!especialidadeId || !rotaId || !obraId || !time || !categoriaId || !descricao || !quantity) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
-    saveObservation({
-      data: date,
-      horario: time,
-      rota_id: rotaId,
-      obra_id: obraId,
-      contrato_id: null,
-      especialidade_id: especialidadeId,
-      funcao_id: funcaoId || null,
-      categoria_id: categoriaId,
-      descricao,
-      empresa: "MEGASTEAM",
-      quantidade: parseInt(quantity, 10),
-      notas: notes || null,
-    });
+    if (isRangeMode && !timeEnd) {
+      toast({ title: "Campos obrigatórios", description: "Selecione o horário final do intervalo.", variant: "destructive" });
+      return;
+    }
+
+    const slots = isRangeMode ? getTimeSlotsInRange(time, timeEnd) : [time];
+    if (isRangeMode && slots.length === 0) {
+      toast({ title: "Intervalo inválido", description: "O horário inicial deve ser anterior ao final.", variant: "destructive" });
+      return;
+    }
+
+    for (const slot of slots) {
+      saveObservation({
+        data: date,
+        horario: slot,
+        rota_id: rotaId,
+        obra_id: obraId,
+        contrato_id: null,
+        especialidade_id: especialidadeId,
+        funcao_id: funcaoId || null,
+        categoria_id: categoriaId,
+        descricao,
+        empresa: "MEGASTEAM",
+        quantidade: parseInt(quantity, 10),
+        notas: notes || null,
+      });
+    }
   };
 
   const handleRepeat = () => {
@@ -254,14 +278,56 @@ export default function NewObservation() {
                 <Label htmlFor="date" className="text-xs text-muted-foreground">Data</Label>
                 <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="mt-1" />
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Horário *</Label>
-                <Select value={time} onValueChange={setTime}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className={isRangeMode ? "sm:col-span-2" : ""}>
+                <div className="flex items-center justify-between mb-1">
+                  <Label className="text-xs text-muted-foreground">
+                    {isRangeMode ? "Intervalo de Horário *" : "Horário *"}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <CalendarRange className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Label htmlFor="range-mode" className="text-xs text-muted-foreground cursor-pointer">Intervalo</Label>
+                    <Switch
+                      id="range-mode"
+                      checked={isRangeMode}
+                      onCheckedChange={(checked) => {
+                        setIsRangeMode(checked);
+                        if (!checked) setTimeEnd("");
+                      }}
+                      className="scale-75"
+                    />
+                  </div>
+                </div>
+                {isRangeMode ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Select value={time} onValueChange={(v) => { setTime(v); if (timeEnd && TIME_SLOTS.indexOf(v as any) > TIME_SLOTS.indexOf(timeEnd as any)) setTimeEnd(""); }}>
+                      <SelectTrigger><SelectValue placeholder="De..." /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground font-medium">até</span>
+                    <Select value={timeEnd} onValueChange={setTimeEnd}>
+                      <SelectTrigger><SelectValue placeholder="Até..." /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.filter((t) => !time || TIME_SLOTS.indexOf(t) >= TIME_SLOTS.indexOf(time as any)).map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {time && timeEnd && (
+                      <span className="text-xs text-primary font-semibold whitespace-nowrap">
+                        ({TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} horários)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <Select value={time} onValueChange={setTime}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Contrato *</Label>
@@ -374,7 +440,9 @@ export default function NewObservation() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button type="submit" className="flex-1 gap-2" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Salvar Observação
+              {isRangeMode && time && timeEnd
+                ? `Salvar ${TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} Observações`
+                : "Salvar Observação"}
             </Button>
             <Button type="button" variant="outline" onClick={handleRepeat} className="gap-2">
               <RotateCcw className="w-4 h-4" />
