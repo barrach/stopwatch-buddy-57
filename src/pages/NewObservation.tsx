@@ -97,10 +97,14 @@ export default function NewObservation() {
       const { error } = await supabase.from("observacoes").insert([payload]);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       if (navigator.onLine) {
         queryClient.invalidateQueries({ queryKey: ["observacoes"] });
       }
+      // Save last observation for repeat
+      setLastObs({
+        time, rotaId, obraId, especialidadeId, funcaoId, categoriaId, descricao, quantity, notes,
+      });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
       toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantity} amostras)` });
