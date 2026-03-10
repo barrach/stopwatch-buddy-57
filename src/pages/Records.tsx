@@ -52,7 +52,46 @@ export default function Records() {
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [editRecord, setEditRecord] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [editSaving, setEditSaving] = useState(false);
+
+  const { data: rotas = [] } = useQuery({
+    queryKey: ["rotas", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("rotas").select("id, nome").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: allCategorias = [] } = useQuery({
+    queryKey: ["categorias_observacao", "all_for_edit"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, status");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ["funcoes", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("funcoes").select("id, nome, especialidade_id").eq("status", "Ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const parentCategorias = useMemo(() => allCategorias.filter(c => !c.categoria_pai_id && c.status === "Ativo"), [allCategorias]);
+  const editSubcategorias = useMemo(() => {
+    if (!editForm.categoria_id) return [];
+    return allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo");
+  }, [allCategorias, editForm.categoria_id]);
+  const editFilteredFuncoes = useMemo(() => {
+    if (!editForm.especialidade_id) return funcoes;
+    return funcoes.filter(f => f.especialidade_id === editForm.especialidade_id || !f.especialidade_id);
+  }, [funcoes, editForm.especialidade_id]);
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
