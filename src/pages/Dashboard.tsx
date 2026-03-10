@@ -98,7 +98,11 @@ const tooltipStyle: React.CSSProperties = {
   boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 
-const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
+const renderPieLabel = ({ percent, x, y, textAnchor }: any) => (
+  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
+    {(percent * 100).toFixed(1)}%
+  </text>
+);
 
 // ── Auto-highlight helpers (Power BI style) ──────────────────────
 const getHighlightBorder = (type: "best" | "worst" | "none") => {
