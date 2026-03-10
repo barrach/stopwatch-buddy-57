@@ -120,11 +120,11 @@ interface CrossFilters {
   funcao?: string;
 }
 
-// Chronological time ordering helper
-const TIME_ORDER = ["06:00","07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+// Chronological time ordering helper — parses "8:00" or "08:00" to minutes
 const timeIndex = (t: string) => {
-  const idx = TIME_ORDER.indexOf(t);
-  return idx >= 0 ? idx : 999;
+  const parts = t.split(":");
+  if (parts.length < 2) return 9999;
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
 };
 
 export default function Dashboard() {
