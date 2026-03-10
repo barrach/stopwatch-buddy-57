@@ -98,6 +98,9 @@ const tooltipStyle: React.CSSProperties = {
   boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 
+const TICK_COLOR = "#9CA3AF";
+const GRID_COLOR = "#374151";
+
 const renderPieLabel = ({ percent, x, y, textAnchor }: any) => (
   <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
     {(percent * 100).toFixed(1)}%
