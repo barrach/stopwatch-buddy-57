@@ -1148,29 +1148,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Row: Route + Non-productivity Pareto */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Route Chart */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.rota ? "ring-2 ring-primary/50" : ""}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Produtividade por Rota
-              {crossFilters.rota && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.rota}</span>}
-            </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Clique para filtrar</p>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={byRoute} onClick={handleRouteClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6B7280" }} />
-                <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
+        {/* 5) Causas de Não Produtividade */}
+        <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
           <div className={`stat-card animate-fade-in transition-all`}>
             <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
