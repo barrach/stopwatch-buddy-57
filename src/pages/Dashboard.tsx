@@ -971,41 +971,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 1) Causas de Observação — horizontal bars */}
-        <div className={chartCardClass("descricao")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Causas de Observação
-            {crossFilters.descricao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.descricao}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Barras horizontais ordenadas por frequência — clique para filtrar</p>
-          {byCausa.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[200px] text-center gap-2">
-              <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Sem dados</p>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={Math.max(200, byCausa.length * 36)}>
-              <BarChart data={byCausa} layout="vertical" margin={{ left: 10, right: 80 }} onClick={handleCausaClick}>
-               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
-                <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10, fill: "#6B7280" }}
-                  tickFormatter={(v: string) => v.length > 30 ? v.substring(0, 30) + "…" : v} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, entry: any) => {
-                  const isExternal = entry.payload.cat === "Não Produtivo Externo";
-                  const label = isExternal ? "⚠ Causa externa — não impacta produtividade" : entry.payload.cat;
-                  return [`${value} amostras (${entry.payload.percent}%)`, label];
-                }} />
-                <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
-                  {byCausa.map((item, i) => (
-                    <Cell key={i} fill={getDescriptionCategoryColor(item.cat, item.name)}
-                      opacity={crossFilters.descricao && crossFilters.descricao !== item.name ? 0.3 : 1} />
-                  ))}
-                  <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
 
         {/* 3) Produtividade por Especialidade */}
         <div className={chartCardClass("especialidade")}>
