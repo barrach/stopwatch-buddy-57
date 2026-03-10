@@ -1184,7 +1184,7 @@ export default function Dashboard() {
                   labelLine
                 >
                   {externalCausas.map((_: any, i: number) => {
-                    const PIE_COLORS = ["#3B82F6", "#60A5FA", "#2563EB", "#1D4ED8", "#93C5FD", "#1E40AF"];
+                    const PIE_COLORS = ["#DC2626", "#F59E0B", "#7C3AED", "#2563EB", "#EC4899", "#059669"];
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
