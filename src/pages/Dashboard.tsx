@@ -332,24 +332,6 @@ export default function Dashboard() {
     }));
   }, [records, isExternalRecord]);
 
-  // 1) Causas de Observação — horizontal bars sorted desc
-  const byCausa = useMemo(() => {
-    const totals: Record<string, { value: number; cat: string }> = {};
-    records.forEach((r: any) => {
-      const desc = r.descricao || "Sem descrição";
-      const cat = getParentCatName(r);
-      if (!totals[desc]) totals[desc] = { value: 0, cat };
-      totals[desc].value += r.quantidade || 0;
-    });
-    const sorted = Object.entries(totals)
-      .map(([name, { value, cat }]) => ({ name, value, cat }))
-      .sort((a, b) => b.value - a.value);
-    const total = sorted.reduce((s, c) => s + c.value, 0);
-    return sorted.map(item => ({
-      ...item,
-      percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
-    }));
-  }, [records, getParentCatName]);
 
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
   const nonprodCausas = useMemo(() => {
