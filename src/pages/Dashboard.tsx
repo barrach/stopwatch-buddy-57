@@ -503,10 +503,8 @@ export default function Dashboard() {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("contrato", e.activePayload[0].payload.name);
   };
-  const handleRouteClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("rota", e.activePayload[0].payload.name);
-  };
+
+
   const handleSpecialtyClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("especialidade", e.activePayload[0].payload.name);
