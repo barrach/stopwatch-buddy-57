@@ -54,9 +54,16 @@ export default function NewObservation() {
     ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
   );
 
-  const { data: funcoes = [] } = useOfflineQuery<{ id: string; nome: string }>(
-    ["funcoes", "ativas"], "funcoes" as any, "id, nome",
+  const { data: funcoes = [] } = useOfflineQuery<{ id: string; nome: string; especialidade_id: string | null }>(
+    ["funcoes", "ativas"], "funcoes" as any, "id, nome, especialidade_id",
     [{ column: "status", value: "Ativo" }], "nome"
+  );
+
+  const filteredFuncoes = useMemo(
+    () => especialidadeId
+      ? funcoes.filter((f) => f.especialidade_id === especialidadeId || !f.especialidade_id)
+      : funcoes,
+    [funcoes, especialidadeId]
   );
 
   const parentCategorias = useMemo(
@@ -276,7 +283,7 @@ export default function NewObservation() {
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Especialidade *</Label>
-                <Select value={especialidadeId} onValueChange={setEspecialidadeId}>
+                <Select value={especialidadeId} onValueChange={(v) => { setEspecialidadeId(v); setFuncaoId(""); }}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a especialidade..." /></SelectTrigger>
                   <SelectContent>
                     {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
@@ -287,9 +294,9 @@ export default function NewObservation() {
               <div>
                 <Label className="text-xs text-muted-foreground">Função</Label>
                 <Select value={funcaoId} onValueChange={setFuncaoId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a função..." /></SelectTrigger>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={especialidadeId ? "Selecione a função..." : "Selecione a especialidade primeiro"} /></SelectTrigger>
                   <SelectContent>
-                    {funcoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                    {filteredFuncoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

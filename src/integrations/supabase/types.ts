@@ -155,6 +155,7 @@ export type Database = {
           criado_em: string
           criado_por: string | null
           descricao: string | null
+          especialidade_id: string | null
           id: string
           nome: string
           status: string
@@ -166,6 +167,7 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
+          especialidade_id?: string | null
           id?: string
           nome: string
           status?: string
@@ -177,11 +179,20 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
+          especialidade_id?: string | null
           id?: string
           nome?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "funcoes_especialidade_id_fkey"
+            columns: ["especialidade_id"]
+            isOneToOne: false
+            referencedRelation: "especialidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       obras: {
         Row: {

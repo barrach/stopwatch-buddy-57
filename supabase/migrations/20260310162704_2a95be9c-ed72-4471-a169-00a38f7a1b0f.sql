@@ -1,0 +1,1 @@
+ALTER TABLE public.funcoes ADD COLUMN especialidade_id uuid REFERENCES public.especialidades(id) ON DELETE SET NULL;
