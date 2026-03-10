@@ -431,6 +431,7 @@ export default function Dashboard() {
   const bySpecialty = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from specialty productivity
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) result[sName] = { productive: 0, supplementary: 0, unproductive: 0 };
       const cat = getParentCatName(r);
@@ -450,7 +451,7 @@ export default function Dashboard() {
         };
       })
       .sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName]);
+  }, [records, getParentCatName, isExternalRecord]);
 
   // By Function — sorted by productivity desc
   const byFunction = useMemo(() => {
