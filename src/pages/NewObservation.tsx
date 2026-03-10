@@ -294,9 +294,9 @@ export default function NewObservation() {
               <div>
                 <Label className="text-xs text-muted-foreground">Função</Label>
                 <Select value={funcaoId} onValueChange={setFuncaoId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a função..." /></SelectTrigger>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={especialidadeId ? "Selecione a função..." : "Selecione a especialidade primeiro"} /></SelectTrigger>
                   <SelectContent>
-                    {funcoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                    {filteredFuncoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
