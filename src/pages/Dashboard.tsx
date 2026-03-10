@@ -98,7 +98,14 @@ const tooltipStyle: React.CSSProperties = {
   boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 
-const renderPieLabel = ({ percent }: { percent: number }) => `${(percent * 100).toFixed(1)}%`;
+const TICK_COLOR = "#9CA3AF";
+const GRID_COLOR = "#374151";
+
+const renderPieLabel = ({ percent, x, y, textAnchor }: any) => (
+  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
+    {(percent * 100).toFixed(1)}%
+  </text>
+);
 
 // ── Auto-highlight helpers (Power BI style) ──────────────────────
 const getHighlightBorder = (type: "best" | "worst" | "none") => {
@@ -874,15 +881,15 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip content={<ContratoTooltip />} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
               <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
               <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: TICK_COLOR }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -948,9 +955,9 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
-                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#6B7280" }} />
-                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "#6B7280" }}
+                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: TICK_COLOR }} />
+                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
                      tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => {
@@ -962,7 +969,7 @@ export default function Dashboard() {
                        <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                      ))}
-                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: TICK_COLOR }} />
                    </Bar>
                    <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#DC2626" strokeWidth={2} dot={{ r: 3, fill: "#DC2626" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
@@ -1000,9 +1007,9 @@ export default function Dashboard() {
           </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
@@ -1049,9 +1056,9 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
@@ -1096,17 +1103,17 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={320}>
                 <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 60 }} onClick={handleNonprodClick}>
-                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                    <XAxis dataKey="name" tick={(props: any) => {
                      const { x, y, payload } = props;
                      return (
-                       <text x={x} y={y + 10} textAnchor="end" fill="#6B7280" fontSize={9} transform={`rotate(-45, ${x}, ${y})`}>
+                       <text x={x} y={y + 10} textAnchor="end" fill={TICK_COLOR} fontSize={9} transform={`rotate(-45, ${x}, ${y})`}>
                          {payload.value.length > 20 ? payload.value.slice(0, 20) + "…" : payload.value}
                        </text>
                      );
                    }} interval={0} height={80} />
-                   <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
-                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} unit="%" />
+                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
+                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
@@ -1116,7 +1123,7 @@ export default function Dashboard() {
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
-                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: "#6B7280" }} />
+                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
                    <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
                 </ComposedChart>
@@ -1158,7 +1165,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {externalCausas.map((causa: any, i: number) => {
-                const PIE_COLORS = ["#DC2626", "#F59E0B", "#7C3AED", "#2563EB", "#EC4899", "#059669"];
+                const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                 return (
                   <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
@@ -1180,11 +1187,15 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, payload }: any) => `${name} (${payload.percent.toFixed(1)}%)`}
-                  labelLine
+                  label={({ name, payload, x, y, textAnchor }: any) => (
+                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
+                      {name} ({payload.percent.toFixed(1)}%)
+                    </text>
+                  )}
+                  labelLine={{ stroke: "#6B7280" }}
                 >
                   {externalCausas.map((_: any, i: number) => {
-                    const PIE_COLORS = ["#DC2626", "#F59E0B", "#7C3AED", "#2563EB", "#EC4899", "#059669"];
+                    const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
@@ -1212,9 +1223,9 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={byTime} onClick={handleTimeClick}>
-               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#6B7280" }} />
-               <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
+               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+               <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}`, name]} />
                <Legend wrapperStyle={{ fontSize: "12px" }} />
                <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
