@@ -1140,33 +1140,38 @@ export default function Dashboard() {
           {/* 5) Causas de Não Produtividade */}
           <div className={`stat-card animate-fade-in transition-all`}>
             <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Apenas registros "Não Produtivo" — clique para filtrar</p>
+            <p className="text-[10px] text-muted-foreground mb-2">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
             {nonprodCausas.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
                 <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground">Sem registros de não produtividade</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={nonprodCausas} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleNonprodClick}>
+              <ResponsiveContainer width="100%" height={320}>
+                <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 60 }} onClick={handleNonprodClick}>
                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                   <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280" }} />
-                   <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: "#6B7280" }} />
-                   <YAxis yAxisId="right" hide />
+                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#6B7280", angle: -45, textAnchor: "end" }} interval={0} height={80} />
+                   <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
+                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} unit="%" />
                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
-                     return [`${value} amostras (${(nonprodCausas.find(c => c.value === value)?.percent || 0)}%)`, ""];
+                     const item = nonprodCausas.find(c => c.value === value);
+                     return [`${value} amostras (${item?.percent || 0}%) — ${item?.cat || ""}`, ""];
                    }} />
-                   <Bar dataKey="value" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                   <Bar dataKey="value" name="Amostras" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
-                       <Cell key={i} fill={i === 0 ? "#DC2626" : i === 1 ? "#EF4444" : "#F87171"} />
+                       <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
-                     <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: "#6B7280" }} />
+                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: "#6B7280" }} />
                    </Bar>
                    <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
+            <div className="flex items-center gap-4 mt-2 justify-center">
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#F59E0B" }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC2626" }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
+            </div>
           </div>
         </div>
 
