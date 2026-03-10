@@ -118,6 +118,7 @@ export default function NewObservation() {
       setRotaId("");
       setObraId("");
       setTime("");
+      setTimeEnd("");
       setQuantity("1");
       setNotes("");
     },
