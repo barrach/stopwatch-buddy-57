@@ -80,9 +80,10 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#1F2937",
   "Retrabalho": "#9F1239",
   "Deslocamento": "#78350F",
-  // Não Produtivo Externo (blue)
+  // Não Produtivo Externo (blue tones)
   "Causas Naturais": "#3B82F6",
   "Vazamento / Interferência da Planta": "#2563EB",
+  "Cliente": "#6366F1",
 };
 
 // Map description to its unique color, falling back to parent category color
@@ -426,27 +427,8 @@ export default function Dashboard() {
       .sort((a, b) => b.prodPercent - a.prodPercent);
   }, [records, getParentCatName]);
 
-  // By Route — sorted desc
-  const byRoute = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
-    records.forEach((r: any) => {
-      const rName = (r.rotas as any)?.nome || "Sem rota";
-      if (!result[rName]) result[rName] = { productive: 0, supplementary: 0, unproductive: 0 };
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[rName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[rName].supplementary += r.quantidade || 0;
-      else result[rName].unproductive += r.quantidade || 0;
-    });
-    return Object.entries(result).map(([name, v]) => {
-      const total = v.productive + v.supplementary + v.unproductive;
-      return {
-        name, total,
-        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-      };
-    }).sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName]);
+
+
 
   // By Specialty — sorted by productivity desc
   const bySpecialty = useMemo(() => {
@@ -521,10 +503,8 @@ export default function Dashboard() {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("contrato", e.activePayload[0].payload.name);
   };
-  const handleRouteClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("rota", e.activePayload[0].payload.name);
-  };
+
+
   const handleSpecialtyClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("especialidade", e.activePayload[0].payload.name);
@@ -1147,29 +1127,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Row: Route + Non-productivity Pareto */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Route Chart */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.rota ? "ring-2 ring-primary/50" : ""}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Produtividade por Rota
-              {crossFilters.rota && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.rota}</span>}
-            </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Clique para filtrar</p>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={byRoute} onClick={handleRouteClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6B7280" }} />
-                <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name]} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-                <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
+        {/* 5) Causas de Não Produtividade */}
+        <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
           <div className={`stat-card animate-fade-in transition-all`}>
             <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
