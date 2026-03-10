@@ -1169,8 +1169,42 @@ export default function Dashboard() {
               <CloudRain className="w-4 h-4 text-muted-foreground" />
               Causas Externas de Parada
             </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
-            <ResponsiveContainer width="100%" height={300}>
+            <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
+            
+            {/* Summary: total lost hours */}
+            {(() => {
+              const totalSamples = externalCausas.reduce((s: number, c: any) => s + c.value, 0);
+              return (
+                <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {totalSamples} amostras perdidas
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Equivalente a aproximadamente <strong className="text-blue-500">{totalSamples} horas</strong> de trabalho improdutivo por causas externas
+                  </span>
+                </div>
+              );
+            })()}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              {externalCausas.map((causa: any, i: number) => {
+                const PIE_COLORS = ["#3B82F6", "#60A5FA", "#2563EB", "#1D4ED8", "#93C5FD", "#1E40AF"];
+                return (
+                  <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · ~{causa.value}h perdidas · {causa.percent}%</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={externalCausas}
@@ -1188,11 +1222,11 @@ export default function Dashboard() {
                   })}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => [
-                  `${value} amostras (${entry.payload.percent}%)`, "Causa externa"
+                  `${value} amostras (~${value}h perdidas) · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
                   wrapperStyle={{ fontSize: "12px" }}
-                  formatter={(value: string, entry: any) => {
+                  formatter={(value: string) => {
                     const item = externalCausas.find((c: any) => c.name === value);
                     return `${value} — ${item?.percent ?? 0}%`;
                   }}
