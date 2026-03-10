@@ -1103,17 +1103,17 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={320}>
                 <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 60 }} onClick={handleNonprodClick}>
-                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
+                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                    <XAxis dataKey="name" tick={(props: any) => {
                      const { x, y, payload } = props;
                      return (
-                       <text x={x} y={y + 10} textAnchor="end" fill="#6B7280" fontSize={9} transform={`rotate(-45, ${x}, ${y})`}>
+                       <text x={x} y={y + 10} textAnchor="end" fill={TICK_COLOR} fontSize={9} transform={`rotate(-45, ${x}, ${y})`}>
                          {payload.value.length > 20 ? payload.value.slice(0, 20) + "…" : payload.value}
                        </text>
                      );
                    }} interval={0} height={80} />
-                   <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
-                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} unit="%" />
+                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
+                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
@@ -1123,7 +1123,7 @@ export default function Dashboard() {
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
-                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: "#6B7280" }} />
+                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
                    <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
                 </ComposedChart>
