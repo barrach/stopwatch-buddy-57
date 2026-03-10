@@ -80,9 +80,10 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#1F2937",
   "Retrabalho": "#9F1239",
   "Deslocamento": "#78350F",
-  // Não Produtivo Externo (blue)
+  // Não Produtivo Externo (blue tones)
   "Causas Naturais": "#3B82F6",
   "Vazamento / Interferência da Planta": "#2563EB",
+  "Cliente": "#6366F1",
 };
 
 // Map description to its unique color, falling back to parent category color
