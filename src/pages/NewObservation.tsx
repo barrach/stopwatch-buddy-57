@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Camera, Save, RotateCcw, Loader2, Sparkles } from "lucide-react";
+import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
