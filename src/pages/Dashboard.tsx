@@ -1180,17 +1180,17 @@ export default function Dashboard() {
             
             {/* Summary: total lost hours */}
             {(() => {
-              const totalSamples = externalCausas.reduce((s: number, c: any) => s + c.value, 0);
+              const totalHours = externalCausas.length > 0 ? externalCausas[0]._totalHours : 0;
               return (
                 <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span className="text-sm font-semibold text-foreground">
-                      {totalSamples} amostras perdidas
+                      {totalHours} hora{totalHours !== 1 ? "s" : ""} perdida{totalHours !== 1 ? "s" : ""}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Equivalente a aproximadamente <strong className="text-blue-500">{totalSamples} horas</strong> de trabalho improdutivo por causas externas
+                    Baseado em <strong className="text-blue-500">{totalHours} horário{totalHours !== 1 ? "s" : ""}</strong> com registros de causas externas
                   </span>
                 </div>
               );
@@ -1204,7 +1204,7 @@ export default function Dashboard() {
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · ~{causa.value}h perdidas · {causa.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · {causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
                     </div>
                   </div>
                 );
