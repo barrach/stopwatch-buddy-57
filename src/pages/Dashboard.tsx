@@ -919,7 +919,7 @@ export default function Dashboard() {
                     />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number) => {
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number) => {
                   const total = categoryTotals.reduce((s, c) => s + c.value, 0);
                   return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, "Amostras"];
                 }} />
@@ -964,7 +964,7 @@ export default function Dashboard() {
                    <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
                      tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number, name: string, entry: any) => {
+                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
                    }} />
@@ -1118,7 +1118,7 @@ export default function Dashboard() {
                    }} interval={0} height={80} />
                    <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number, name: string) => {
+                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
                      return [`${value} amostras (${item?.percent || 0}%) — ${item?.cat || ""}`, ""];
@@ -1203,7 +1203,7 @@ export default function Dashboard() {
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number, name: string, entry: any) => [
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => [
                   `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
