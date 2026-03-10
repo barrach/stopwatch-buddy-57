@@ -277,14 +277,56 @@ export default function NewObservation() {
                 <Label htmlFor="date" className="text-xs text-muted-foreground">Data</Label>
                 <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="mt-1" />
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Horário *</Label>
-                <Select value={time} onValueChange={setTime}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className={isRangeMode ? "sm:col-span-2" : ""}>
+                <div className="flex items-center justify-between mb-1">
+                  <Label className="text-xs text-muted-foreground">
+                    {isRangeMode ? "Intervalo de Horário *" : "Horário *"}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <CalendarRange className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Label htmlFor="range-mode" className="text-xs text-muted-foreground cursor-pointer">Intervalo</Label>
+                    <Switch
+                      id="range-mode"
+                      checked={isRangeMode}
+                      onCheckedChange={(checked) => {
+                        setIsRangeMode(checked);
+                        if (!checked) setTimeEnd("");
+                      }}
+                      className="scale-75"
+                    />
+                  </div>
+                </div>
+                {isRangeMode ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Select value={time} onValueChange={(v) => { setTime(v); if (timeEnd && TIME_SLOTS.indexOf(v as any) > TIME_SLOTS.indexOf(timeEnd as any)) setTimeEnd(""); }}>
+                      <SelectTrigger><SelectValue placeholder="De..." /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground font-medium">até</span>
+                    <Select value={timeEnd} onValueChange={setTimeEnd}>
+                      <SelectTrigger><SelectValue placeholder="Até..." /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.filter((t) => !time || TIME_SLOTS.indexOf(t) >= TIME_SLOTS.indexOf(time as any)).map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {time && timeEnd && (
+                      <span className="text-xs text-primary font-semibold whitespace-nowrap">
+                        ({TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} horários)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <Select value={time} onValueChange={setTime}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Contrato *</Label>
