@@ -31,6 +31,8 @@ export default function NewObservation() {
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("");
+  const [timeEnd, setTimeEnd] = useState("");
+  const [isRangeMode, setIsRangeMode] = useState(false);
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
