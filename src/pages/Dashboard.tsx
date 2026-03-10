@@ -1180,11 +1180,15 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, payload }: any) => `${name} (${payload.percent.toFixed(1)}%)`}
-                  labelLine
+                  label={({ name, payload, x, y, textAnchor }: any) => (
+                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
+                      {name} ({payload.percent.toFixed(1)}%)
+                    </text>
+                  )}
+                  labelLine={{ stroke: "#6B7280" }}
                 >
                   {externalCausas.map((_: any, i: number) => {
-                    const PIE_COLORS = ["#DC2626", "#F59E0B", "#7C3AED", "#2563EB", "#EC4899", "#059669"];
+                    const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
