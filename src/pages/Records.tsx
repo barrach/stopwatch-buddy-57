@@ -24,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Label } from "@/components/ui/label";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
