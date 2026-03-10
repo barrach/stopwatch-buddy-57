@@ -1007,9 +1007,9 @@ export default function Dashboard() {
           </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
