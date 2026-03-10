@@ -146,6 +146,20 @@ export default function NewObservation() {
   };
 
   const handleRepeat = () => {
+    if (!lastObs) {
+      toast({ title: "Nenhum registro anterior", description: "Salve uma observação primeiro para poder repetir.", variant: "destructive" });
+      return;
+    }
+    setTime(lastObs.time);
+    setRotaId(lastObs.rotaId);
+    setObraId(lastObs.obraId);
+    setEspecialidadeId(lastObs.especialidadeId);
+    setFuncaoId(lastObs.funcaoId);
+    setCategoriaId(lastObs.categoriaId);
+    setQuantity(lastObs.quantity);
+    setNotes(lastObs.notes);
+    // Set descricao after a tick so subcategorias recompute with the new categoriaId
+    setTimeout(() => setDescricao(lastObs.descricao), 50);
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 
