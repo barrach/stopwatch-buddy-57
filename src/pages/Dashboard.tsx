@@ -923,7 +923,7 @@ export default function Dashboard() {
                   const total = categoryTotals.reduce((s, c) => s + c.value, 0);
                   return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, "Amostras"];
                 }} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
+                <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </div>
