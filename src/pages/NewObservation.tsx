@@ -283,7 +283,7 @@ export default function NewObservation() {
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Especialidade *</Label>
-                <Select value={especialidadeId} onValueChange={setEspecialidadeId}>
+                <Select value={especialidadeId} onValueChange={(v) => { setEspecialidadeId(v); setFuncaoId(""); }}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a especialidade..." /></SelectTrigger>
                   <SelectContent>
                     {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
