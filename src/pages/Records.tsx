@@ -160,6 +160,37 @@ export default function Records() {
     },
   });
 
+  const openEdit = (r: any) => {
+    setEditRecord(r);
+    setEditForm({
+      data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
+      especialidade_id: r.especialidade_id, funcao_id: r.funcao_id || "",
+      categoria_id: r.categoria_id, descricao: r.descricao,
+      quantidade: r.quantidade, notas: r.notas || "",
+    });
+  };
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    try {
+      const { error } = await supabase.from("observacoes").update({
+        data: editForm.data, horario: editForm.horario, obra_id: editForm.obra_id,
+        rota_id: editForm.rota_id, especialidade_id: editForm.especialidade_id,
+        funcao_id: editForm.funcao_id || null, categoria_id: editForm.categoria_id,
+        descricao: editForm.descricao, quantidade: parseInt(editForm.quantidade, 10),
+        notas: editForm.notas || null,
+      }).eq("id", editRecord.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      toast({ title: "Registro atualizado", description: "Dados atualizados — cálculos recalculados automaticamente." });
+      setEditRecord(null);
+    } catch (e: any) {
+      toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" });
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   const filtered = records.filter((r: any) => {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
     if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
