@@ -98,7 +98,6 @@ const tooltipStyle: React.CSSProperties = {
   boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
 };
 const tooltipLabelStyle: React.CSSProperties = { color: "#F9FAFB" };
-const tooltipItemStyle: React.CSSProperties = { color: "#D1D5DB" };
 
 const TICK_COLOR = "#9CA3AF";
 const GRID_COLOR = "#374151";
