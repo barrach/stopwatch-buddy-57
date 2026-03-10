@@ -128,6 +128,12 @@ export default function Records() {
       return desc.includes(q) || esp.includes(q);
     }
     return true;
+  }).sort((a: any, b: any) => {
+    // Sort by date descending, then by time descending (parsing minutes for correct order)
+    const dateCmp = b.data.localeCompare(a.data);
+    if (dateCmp !== 0) return dateCmp;
+    const parseMin = (t: string) => { const p = t.split(":"); return parseInt(p[0], 10) * 60 + parseInt(p[1] || "0", 10); };
+    return parseMin(b.horario) - parseMin(a.horario);
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
