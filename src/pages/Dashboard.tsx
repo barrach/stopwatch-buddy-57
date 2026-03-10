@@ -483,6 +483,7 @@ export default function Dashboard() {
   const byTime = useMemo(() => {
     const result: Record<string, { total: number; productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from time-based productivity
       const t = r.horario || "";
       if (!result[t]) result[t] = { total: 0, productive: 0, supplementary: 0, unproductive: 0 };
       const qty = r.quantidade || 0;
@@ -495,7 +496,7 @@ export default function Dashboard() {
     return Object.entries(result)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
       .map(([time, v]) => ({ time, ...v }));
-  }, [records, getParentCatName]);
+  }, [records, getParentCatName, isExternalRecord]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
