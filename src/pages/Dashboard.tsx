@@ -1223,9 +1223,9 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={byTime} onClick={handleTimeClick}>
-               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.3} />
-               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#6B7280" }} />
-               <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} />
+               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+               <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [`${value}`, name]} />
                <Legend wrapperStyle={{ fontSize: "12px" }} />
                <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
