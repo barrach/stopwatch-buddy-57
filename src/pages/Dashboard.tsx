@@ -1203,7 +1203,7 @@ export default function Dashboard() {
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} formatter={(value: number, name: string, entry: any) => [
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => [
                   `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
