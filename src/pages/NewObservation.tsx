@@ -19,6 +19,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
 
+interface LastObservation {
+  time: string; rotaId: string; obraId: string; especialidadeId: string;
+  funcaoId: string; categoriaId: string; descricao: string; quantity: string; notes: string;
+}
+
 export default function NewObservation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -34,6 +39,7 @@ export default function NewObservation() {
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [lastObs, setLastObs] = useState<LastObservation | null>(null);
 
   const { data: rotas = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["rotas", "ativas"], "rotas", "id, nome",
