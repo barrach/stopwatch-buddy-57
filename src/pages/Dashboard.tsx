@@ -457,6 +457,7 @@ export default function Dashboard() {
   const byFunction = useMemo(() => {
     const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from function productivity
       const fName = (r as any).funcoes?.nome || "Sem função";
       if (!result[fName]) result[fName] = { productive: 0, supplementary: 0, unproductive: 0 };
       const cat = getParentCatName(r);
@@ -476,7 +477,7 @@ export default function Dashboard() {
         };
       })
       .sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName]);
+  }, [records, getParentCatName, isExternalRecord]);
 
   // 6) By Time — chronological order
   const byTime = useMemo(() => {
