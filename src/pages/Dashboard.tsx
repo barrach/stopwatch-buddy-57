@@ -427,27 +427,8 @@ export default function Dashboard() {
       .sort((a, b) => b.prodPercent - a.prodPercent);
   }, [records, getParentCatName]);
 
-  // By Route — sorted desc
-  const byRoute = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
-    records.forEach((r: any) => {
-      const rName = (r.rotas as any)?.nome || "Sem rota";
-      if (!result[rName]) result[rName] = { productive: 0, supplementary: 0, unproductive: 0 };
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[rName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[rName].supplementary += r.quantidade || 0;
-      else result[rName].unproductive += r.quantidade || 0;
-    });
-    return Object.entries(result).map(([name, v]) => {
-      const total = v.productive + v.supplementary + v.unproductive;
-      return {
-        name, total,
-        productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-        supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-        unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-      };
-    }).sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName]);
+
+
 
   // By Specialty — sorted by productivity desc
   const bySpecialty = useMemo(() => {
