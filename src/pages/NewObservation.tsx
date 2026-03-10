@@ -126,26 +126,46 @@ export default function NewObservation() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getTimeSlotsInRange = (start: string, end: string): string[] => {
+    const startIdx = TIME_SLOTS.indexOf(start as any);
+    const endIdx = TIME_SLOTS.indexOf(end as any);
+    if (startIdx === -1 || endIdx === -1 || startIdx > endIdx) return [];
+    return TIME_SLOTS.slice(startIdx, endIdx + 1) as unknown as string[];
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!especialidadeId || !rotaId || !obraId || !time || !categoriaId || !descricao || !quantity) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
-    saveObservation({
-      data: date,
-      horario: time,
-      rota_id: rotaId,
-      obra_id: obraId,
-      contrato_id: null,
-      especialidade_id: especialidadeId,
-      funcao_id: funcaoId || null,
-      categoria_id: categoriaId,
-      descricao,
-      empresa: "MEGASTEAM",
-      quantidade: parseInt(quantity, 10),
-      notas: notes || null,
-    });
+    if (isRangeMode && !timeEnd) {
+      toast({ title: "Campos obrigatórios", description: "Selecione o horário final do intervalo.", variant: "destructive" });
+      return;
+    }
+
+    const slots = isRangeMode ? getTimeSlotsInRange(time, timeEnd) : [time];
+    if (isRangeMode && slots.length === 0) {
+      toast({ title: "Intervalo inválido", description: "O horário inicial deve ser anterior ao final.", variant: "destructive" });
+      return;
+    }
+
+    for (const slot of slots) {
+      saveObservation({
+        data: date,
+        horario: slot,
+        rota_id: rotaId,
+        obra_id: obraId,
+        contrato_id: null,
+        especialidade_id: especialidadeId,
+        funcao_id: funcaoId || null,
+        categoria_id: categoriaId,
+        descricao,
+        empresa: "MEGASTEAM",
+        quantidade: parseInt(quantity, 10),
+        notas: notes || null,
+      });
+    }
   };
 
   const handleRepeat = () => {
