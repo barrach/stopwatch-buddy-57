@@ -310,18 +310,25 @@ export default function Dashboard() {
   // External causes chart data
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
+    const hoursSet: Record<string, Set<string>> = {};
+    const totalHoursSet = new Set<string>();
     records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+      if (!hoursSet[desc]) hoursSet[desc] = new Set();
+      const key = `${r.data}_${r.horario}`;
+      hoursSet[desc].add(key);
+      totalHoursSet.add(key);
     });
     const sorted = Object.entries(totals)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ name, value, hours: hoursSet[name]?.size || 0 }))
       .sort((a, b) => b.value - a.value);
     const total = sorted.reduce((s, c) => s + c.value, 0);
     return sorted.map(item => ({
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+      _totalHours: totalHoursSet.size,
     }));
   }, [records, isExternalRecord]);
 
@@ -1173,17 +1180,17 @@ export default function Dashboard() {
             
             {/* Summary: total lost hours */}
             {(() => {
-              const totalSamples = externalCausas.reduce((s: number, c: any) => s + c.value, 0);
+              const totalHours = externalCausas.length > 0 ? externalCausas[0]._totalHours : 0;
               return (
                 <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span className="text-sm font-semibold text-foreground">
-                      {totalSamples} amostras perdidas
+                      {totalHours} hora{totalHours !== 1 ? "s" : ""} perdida{totalHours !== 1 ? "s" : ""}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Equivalente a aproximadamente <strong className="text-blue-500">{totalSamples} horas</strong> de trabalho improdutivo por causas externas
+                    Baseado em <strong className="text-blue-500">{totalHours} horário{totalHours !== 1 ? "s" : ""}</strong> com registros de causas externas
                   </span>
                 </div>
               );
@@ -1197,7 +1204,7 @@ export default function Dashboard() {
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · ~{causa.value}h perdidas · {causa.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · {causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
                     </div>
                   </div>
                 );
@@ -1222,7 +1229,7 @@ export default function Dashboard() {
                   })}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string, entry: any) => [
-                  `${value} amostras (~${value}h perdidas) · ${entry.payload.percent}%`, "Causa externa"
+                  `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
                 ]} />
                 <Legend
                   wrapperStyle={{ fontSize: "12px" }}
