@@ -439,7 +439,9 @@ export default function NewObservation() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button type="submit" className="flex-1 gap-2" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Salvar Observação
+              {isRangeMode && time && timeEnd
+                ? `Salvar ${TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} Observações`
+                : "Salvar Observação"}
             </Button>
             <Button type="button" variant="outline" onClick={handleRepeat} className="gap-2">
               <RotateCcw className="w-4 h-4" />
