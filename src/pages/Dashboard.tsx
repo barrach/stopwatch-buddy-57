@@ -1119,7 +1119,7 @@ export default function Dashboard() {
                    }} interval={0} height={80} />
                    <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
-                   <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => {
+                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
                      return [`${value} amostras (${item?.percent || 0}%) — ${item?.cat || ""}`, ""];
