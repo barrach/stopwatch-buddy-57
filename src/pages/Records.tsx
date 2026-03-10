@@ -655,6 +655,89 @@ export default function Records() {
           )}
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editRecord} onOpenChange={(open) => { if (!open) setEditRecord(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Observação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Data</Label>
+                <Input type="date" value={editForm.data || ""} onChange={e => setEditForm((f: any) => ({ ...f, data: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Horário</Label>
+                <Select value={editForm.horario || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, horario: v }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>{TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Contrato</Label>
+                <Select value={editForm.obra_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, obra_id: v }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>{obras.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Rota</Label>
+                <Select value={editForm.rota_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, rota_id: v }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>{rotas.map(r => <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Especialidade</Label>
+              <Select value={editForm.especialidade_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, especialidade_id: v, funcao_id: "" }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{especialidades.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Função</Label>
+              <Select value={editForm.funcao_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, funcao_id: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>{editFilteredFuncoes.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Categoria</Label>
+              <Select value={editForm.categoria_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, categoria_id: v, descricao: "" }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{parentCategorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Descrição</Label>
+              <Select value={editForm.descricao || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, descricao: v }))} disabled={!editForm.categoria_id}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>{editSubcategorias.map(s => <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Quantidade</Label>
+              <Input type="number" min="1" value={editForm.quantidade || ""} onChange={e => setEditForm((f: any) => ({ ...f, quantidade: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Observações</Label>
+              <Textarea value={editForm.notas || ""} onChange={e => setEditForm((f: any) => ({ ...f, notas: e.target.value }))} className="mt-1" rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRecord(null)}>Cancelar</Button>
+            <Button onClick={handleEditSave} disabled={editSaving} className="gap-2">
+              {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
