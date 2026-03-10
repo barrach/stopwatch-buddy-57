@@ -19,6 +19,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
 
+interface LastObservation {
+  time: string; rotaId: string; obraId: string; especialidadeId: string;
+  funcaoId: string; categoriaId: string; descricao: string; quantity: string; notes: string;
+}
+
 export default function NewObservation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -34,6 +39,7 @@ export default function NewObservation() {
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [lastObs, setLastObs] = useState<LastObservation | null>(null);
 
   const { data: rotas = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["rotas", "ativas"], "rotas", "id, nome",
@@ -91,10 +97,14 @@ export default function NewObservation() {
       const { error } = await supabase.from("observacoes").insert([payload]);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       if (navigator.onLine) {
         queryClient.invalidateQueries({ queryKey: ["observacoes"] });
       }
+      // Save last observation for repeat
+      setLastObs({
+        time, rotaId, obraId, especialidadeId, funcaoId, categoriaId, descricao, quantity, notes,
+      });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
       toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantity} amostras)` });
@@ -136,6 +146,20 @@ export default function NewObservation() {
   };
 
   const handleRepeat = () => {
+    if (!lastObs) {
+      toast({ title: "Nenhum registro anterior", description: "Salve uma observação primeiro para poder repetir.", variant: "destructive" });
+      return;
+    }
+    setTime(lastObs.time);
+    setRotaId(lastObs.rotaId);
+    setObraId(lastObs.obraId);
+    setEspecialidadeId(lastObs.especialidadeId);
+    setFuncaoId(lastObs.funcaoId);
+    setCategoriaId(lastObs.categoriaId);
+    setQuantity(lastObs.quantity);
+    setNotes(lastObs.notes);
+    // Set descricao after a tick so subcategorias recompute with the new categoriaId
+    setTimeout(() => setDescricao(lastObs.descricao), 50);
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 
