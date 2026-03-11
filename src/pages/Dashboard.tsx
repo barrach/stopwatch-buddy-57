@@ -1188,29 +1188,22 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
+               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
+                  const item = payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+                  const desc = item.dataKey as string;
                   const total = data.total || 0;
-                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
+                  const raw = data[`raw_${desc}`] || 0;
+                  const pct = data[desc] || 0;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total}</strong></div>
-                        {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                          const pct = data[desc] || 0;
-                          const raw = data[`raw_${desc}`] || 0;
-                          if (pct === 0) return null;
-                          return (
-                            <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                              <span>{desc}: {pct}% ({raw})</span>
-                            </div>
-                          );
-                        })}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                        <span>{desc}: {pct}% ({raw})</span>
                       </div>
                     </div>
                   );
