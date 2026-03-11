@@ -770,24 +770,21 @@ export default function Dashboard() {
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
-    const data = payload[0]?.payload;
-    if (!data) return null;
-    // Collect all description entries with values
-    const entries = allDescriptions
-      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
-      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
-      .sort((a, b) => b.raw - a.raw);
+    // payload contains only the hovered series item
+    const item = payload[0];
+    const data = item?.payload;
+    if (!data || !item) return null;
+    const desc = item.dataKey as string;
+    const raw = data[`raw_${desc}`] || 0;
+    const pct = data[desc] || 0;
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
-        {entries.map(({ desc, raw, pct }) => (
-          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
-            <span style={{ flex: 1 }}>{desc}</span>
-            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-          </div>
-        ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || item.fill || "#6B7280", flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{desc}</span>
+          <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+        </div>
       </div>
     );
   };
@@ -1097,7 +1094,6 @@ export default function Dashboard() {
                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                              <div>Percentual: <strong>{data.percent}%</strong></div>
                              <div>Quantidade: <strong>{data.value}</strong></div>
-                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
                            </div>
                          </div>
                        );
@@ -1110,7 +1106,7 @@ export default function Dashboard() {
                      ))}
                      <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: TICK_COLOR }} />
                    </Bar>
-                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#DC2626" strokeWidth={2} dot={{ r: 3, fill: "#DC2626" }} activeDot={{ r: 5 }} />
+                   
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -1149,30 +1145,24 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
+               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
+                  const item = payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+                  const key = item.dataKey as string;
+                  const labelMap: Record<string, string> = { productive: "Produtivo", supplementary: "Suplementar", unproductive: "Não Produtivo" };
+                  const colorMap: Record<string, string> = { productive: "#16A34A", supplementary: "#F59E0B", unproductive: "#DC2626" };
                   const total = data.total || 0;
-                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
-                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
-                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
-                  const isBest = bySpecialty.length > 0 && data.name === bySpecialty[0]?.name;
-                  const isWorst = bySpecialty.length > 1 && data.name === bySpecialty[bySpecialty.length - 1]?.name;
+                  const pct = data[key] || 0;
+                  const qty = total > 0 ? Math.round(pct * total / 100) : 0;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200, borderLeft: isBest ? "3px solid #16A34A" : isWorst ? "3px solid #DC2626" : undefined }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getSpecialtyColor(data.name), display: "inline-block", border: "1px solid rgba(255,255,255,0.2)" }} />
-                        <strong style={{ fontSize: 13 }}>{data.name}</strong>
-                        {isBest && <span style={{ fontSize: 10, color: "#4ADE80", fontWeight: 600 }}>★ Melhor</span>}
-                        {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
-                      </div>
-                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total}</strong></div>
-                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colorMap[key] || item.fill, display: "inline-block", flexShrink: 0 }} />
+                        <span>{labelMap[key] || key}: {pct}% ({qty})</span>
                       </div>
                     </div>
                   );
@@ -1198,29 +1188,22 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
+               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
+                  const item = payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+                  const desc = item.dataKey as string;
                   const total = data.total || 0;
-                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
+                  const raw = data[`raw_${desc}`] || 0;
+                  const pct = data[desc] || 0;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total}</strong></div>
-                        {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                          const pct = data[desc] || 0;
-                          const raw = data[`raw_${desc}`] || 0;
-                          if (pct === 0) return null;
-                          return (
-                            <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                              <span>{desc}: {pct}% ({raw})</span>
-                            </div>
-                          );
-                        })}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                        <span>{desc}: {pct}% ({raw})</span>
                       </div>
                     </div>
                   );
@@ -1282,7 +1265,7 @@ export default function Dashboard() {
                              <div>Categoria: <strong>{data.cat}</strong></div>
                              <div>Quantidade: <strong>{data.value}</strong></div>
                              <div>Percentual: <strong>{data.percent}%</strong></div>
-                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                             
                            </div>
                          </div>
                        );
@@ -1294,7 +1277,7 @@ export default function Dashboard() {
                      ))}
                      <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
-                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
+                   
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -1373,21 +1356,13 @@ export default function Dashboard() {
                     if (!active || !payload?.length) return null;
                     const data = payload[0]?.payload;
                     if (!data) return null;
-                    const totalHrs = externalCausas.reduce((s: number, c: any) => s + c.hours, 0);
+                    const idx = externalCausas.findIndex((c: any) => c.name === data.name);
+                    const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return (
-                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Causas Externas</strong>
-                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                          <div>Total de horas perdidas: <strong>{totalHrs}h</strong></div>
-                          {externalCausas.map((causa: any, i: number) => {
-                            const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
-                            return (
-                              <div key={causa.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[i % colors.length], display: "inline-block", flexShrink: 0 }} />
-                                <span>{causa.name}: {causa.hours}h ({causa.percent}%)</span>
-                              </div>
-                            );
-                          })}
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[idx >= 0 ? idx % colors.length : 0], display: "inline-block", flexShrink: 0 }} />
+                          <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
                         </div>
                       </div>
                     );
@@ -1420,26 +1395,19 @@ export default function Dashboard() {
                <Tooltip
                  content={({ active, payload }) => {
                    if (!active || !payload?.length) return null;
-                   const data = payload[0]?.payload;
-                   if (!data) return null;
+                   const item = payload[0];
+                   const data = item?.payload;
+                   if (!data || !item) return null;
+                   const desc = item.dataKey as string;
+                   const qty = data[desc] || 0;
                    const total = data.total || 0;
-                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
+                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
                    return (
-                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
-                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                         <div>Total: <strong>{total} amostras</strong></div>
-                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                           const qty = data[desc] || 0;
-                           if (qty === 0) return null;
-                           const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
-                           return (
-                             <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                               <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                               <span>{desc}: {qty} ({pct}%)</span>
-                             </div>
-                           );
-                         })}
+                       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                         <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                         <span>{desc}: {qty} ({pct}%)</span>
                        </div>
                      </div>
                    );
