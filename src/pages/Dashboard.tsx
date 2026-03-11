@@ -1047,18 +1047,14 @@ export default function Dashboard() {
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
+                    const entry = payload[0].payload;
                     const total = categoryTotals.reduce((s, c) => s + c.value, 0);
+                    const pct = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0";
                     return (
-                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Distribuição por Categoria</strong>
-                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                          <div>Total: <strong>{total}</strong></div>
-                          {categoryTotals.sort((a, b) => b.value - a.value).map(cat => (
-                            <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: CATEGORY_COLORS[cat.name] || "#666", display: "inline-block", flexShrink: 0 }} />
-                              <span>{cat.name}: {cat.value} ({total > 0 ? ((cat.value / total) * 100).toFixed(1) : 0}%)</span>
-                            </div>
-                          ))}
+                      <div style={{ ...tooltipStyle, padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[entry.name] || "#666", display: "inline-block", flexShrink: 0 }} />
+                          <span><strong>{entry.name}</strong>: {entry.value} ({pct}%)</span>
                         </div>
                       </div>
                     );
