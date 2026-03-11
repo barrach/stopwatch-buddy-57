@@ -1065,26 +1065,40 @@ export default function Dashboard() {
                   const data = payload[0]?.payload;
                   if (!data) return null;
                   const total = data.total || 0;
-                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
-                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
-                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                         <div>Total: <strong>{total} amostras</strong></div>
-                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                        {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                          const pct = data[desc] || 0;
+                          const raw = data[`raw_${desc}`] || 0;
+                          if (pct === 0) return null;
+                          return (
+                            <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                              <span>{desc}: {pct}% ({raw})</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
                 }}
               />
               <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              {allDescriptions.map((desc, i) => (
+                <Bar
+                  key={desc}
+                  dataKey={desc}
+                  name={desc}
+                  fill={getDescriptionCategoryColor("", desc)}
+                  stackId="a"
+                  className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
