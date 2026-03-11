@@ -394,18 +394,21 @@ export default function Dashboard() {
   }, [records, paretoMode]);
 
   // By Contrato — description-level breakdown
+  // Descriptions for non-external charts (exclude all NPE descriptions)
   const allDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
-      if (desc !== "Causas Naturais") descs.add(desc);
+      descs.add(desc);
     });
     return Array.from(descs);
-  }, [records]);
+  }, [records, isExternalRecord]);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from contract chart
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = {};
       const desc = r.descricao || "Sem descrição";
@@ -415,7 +418,6 @@ export default function Dashboard() {
     return Object.entries(result)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
-        // Convert to percentages
         const row: any = { name, total };
         for (const [desc, qty] of Object.entries(descs)) {
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
@@ -424,12 +426,11 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => {
-        // Sort by "Trabalhando" percentage desc
         const aProd = a["Trabalhando"] || 0;
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
-  }, [records]);
+  }, [records, isExternalRecord]);
 
 
 
