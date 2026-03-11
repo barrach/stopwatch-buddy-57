@@ -143,6 +143,7 @@ export default function Dashboard() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [aiReportExpanded, setAiReportExpanded] = useState(false);
   const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
+  const [timeViewMode, setTimeViewMode] = useState<"horario" | "diasemana" | "mes">("horario");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
@@ -510,28 +511,50 @@ export default function Dashboard() {
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records, isExternalRecord]);
 
-  // 6) By Time — description-level breakdown, chronological order
-  const byTime = useMemo(() => {
+  // 6) By Time — productivity % breakdown, supports horario/weekday/month
+  const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+  const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
-      const t = r.horario || "";
-      if (!result[t]) result[t] = {};
+      let key = "";
+      if (timeViewMode === "horario") {
+        key = r.horario || "";
+      } else if (timeViewMode === "diasemana") {
+        const d = new Date(r.data + "T12:00:00");
+        key = WEEKDAY_NAMES[d.getDay()];
+      } else {
+        const d = new Date(r.data + "T12:00:00");
+        key = MONTH_NAMES[d.getMonth()];
+      }
+      if (!result[key]) result[key] = {};
       const desc = r.descricao || "Sem descrição";
       const qty = r.quantidade || 0;
-      result[t][desc] = (result[t][desc] || 0) + qty;
+      result[key][desc] = (result[key][desc] || 0) + qty;
     });
-    return Object.entries(result)
-      .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
-      .map(([time, descs]) => {
-        const total = Object.values(descs).reduce((s, v) => s + v, 0);
-        const row: any = { time, total };
-        for (const [desc, qty] of Object.entries(descs)) {
-          row[desc] = qty;
-        }
-        return row;
-      });
-  }, [records, isExternalRecord]);
+
+    const entries = Object.entries(result);
+    // Sort
+    if (timeViewMode === "horario") {
+      entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
+    } else if (timeViewMode === "diasemana") {
+      entries.sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b));
+    } else {
+      entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
+    }
+
+    return entries.map(([label, descs]) => {
+      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+      const row: any = { time: label, total };
+      for (const [desc, qty] of Object.entries(descs)) {
+        row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+        row[`raw_${desc}`] = qty;
+      }
+      return row;
+    });
+  }, [records, isExternalRecord, timeViewMode]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
@@ -1422,18 +1445,35 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 6) Amostras por Horário — chronological + stacked by description */}
+        {/* 6) Produtividade por Período — supports horario/weekday/month */}
         <div className={chartCardClass("horario")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Amostras por Horário
-            {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"}
+                {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
+            </div>
+            <div className="flex gap-1">
+              {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
+                <Button
+                  key={key}
+                  variant={timeViewMode === key ? "default" : "outline"}
+                  size="sm"
+                  className="text-[10px] h-6 px-2"
+                  onClick={() => setTimeViewMode(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byTime} onClick={handleTimeClick}>
+            <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                <Tooltip
                  shared={false}
                  content={({ active, payload }) => {
@@ -1443,9 +1483,8 @@ export default function Dashboard() {
                    if (!data || !item) return null;
 
                    const desc = item.dataKey as string;
-                   const qty = typeof item.value === "number" ? item.value : data[desc] || 0;
-                   const total = data.total || 0;
-                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                   const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                   const rawQty = data[`raw_${desc}`] || 0;
 
                    return (
                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
@@ -1453,7 +1492,7 @@ export default function Dashboard() {
                        <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
                          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
                          <span style={{ flex: 1 }}>{desc}</span>
-                         <span style={{ fontWeight: 600 }}>{qty} ({pct}%)</span>
+                         <span style={{ fontWeight: 600 }}>{rawQty} ({pct}%)</span>
                        </div>
                      </div>
                    );
