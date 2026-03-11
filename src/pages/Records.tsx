@@ -589,6 +589,7 @@ export default function Records() {
                     <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
                     <TableCell className="text-xs">{(r.rotas as any)?.nome}</TableCell>
                     <TableCell className="text-xs font-medium">{(r.especialidades as any)?.nome}</TableCell>
+                    <TableCell className="text-xs">{(r.funcoes as any)?.nome || "—"}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${categoryBadgeVariant[catNome] || ""}`}>
                         {catNome}
