@@ -62,28 +62,30 @@ const getSpecialtyColor = (name: string): string => {
   return color;
 };
 
-// ── Per-description unique colors (high contrast, category-tinted) ──
+// ── Per-description unique colors (maximally distinct) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
-  // Produtivo (greens & cool tones)
-  "Trabalhando": "#16A34A",
-  "Planejando": "#2563EB",
-  // Suplementar (warm tones & purples)
-  "Aguardando Instruções": "#F59E0B",
-  "Assistindo": "#7C3AED",
-  "Aguardando Ferramenta ou Material": "#EAB308",
-  "Aguardando Liberação": "#EA580C",
-  "Transitando no local de trabalho - com ferramenta": "#0891B2",
-  "Transitando no local de trabalho - sem ferramenta": "#D946EF",
-  "Preparando, Organizando": "#0D9488",
-  // Não Produtivo (reds & dark tones)
-  "Pessoal": "#DC2626",
-  "Ocioso": "#1F2937",
-  "Retrabalho": "#9F1239",
-  "Deslocamento": "#78350F",
-  // Não Produtivo Externo (blue tones)
-  "Causas Naturais": "#3B82F6",
-  "Vazamento / Interferência da Planta": "#2563EB",
-  "Cliente": "#6366F1",
+  // Produtivo
+  "Trabalhando": "#16A34A",       // verde
+  "Planejando": "#2563EB",        // azul
+  // Suplementar
+  "Aguardando Instruções": "#F59E0B",  // amarelo/âmbar
+  "Assistindo": "#7C3AED",             // roxo
+  "Aguardando Ferramenta ou Material": "#E11D48", // rosa escuro
+  "Aguardando Liberação": "#EA580C",   // laranja
+  "Transitando no local de trabalho - com ferramenta": "#0891B2",  // ciano
+  "Transitando no local de trabalho - sem ferramenta": "#D946EF",  // magenta
+  "Transitando fora do local de trabalho - com ferramenta": "#0D9488", // teal
+  "Transitando fora do local de trabalho - sem ferramenta": "#A3631A", // marrom
+  "Preparando, Organizando": "#64748B", // cinza ardósia
+  // Não Produtivo
+  "Pessoal": "#DC2626",           // vermelho
+  "Ocioso": "#1F2937",            // cinza escuro
+  "Retrabalho": "#9F1239",        // bordô
+  "Deslocamento": "#78350F",      // marrom escuro
+  // Não Produtivo Externo
+  "Causas Naturais": "#38BDF8",          // azul claro (sky)
+  "Vazamento / Interferência da Planta": "#6366F1", // índigo
+  "Cliente": "#A855F7",                  // violeta
 };
 
 // Map description to its unique color, falling back to parent category color
