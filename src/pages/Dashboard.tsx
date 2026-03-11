@@ -1176,25 +1176,6 @@ export default function Dashboard() {
             {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
           </h3>
           <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
-            {[
-              { name: "Elétrica", color: "#2563EB" },
-              { name: "Instrumentação", color: "#B91C1C" },
-              { name: "Mecânica", color: "#047857" },
-              { name: "Caldeiraria/Solda", color: "#1F2937" },
-              { name: "Andaime", color: "#9CA3AF" },
-              { name: "Civil", color: "#EAB308" },
-              { name: "Isolamento", color: "#7C3AED" },
-              { name: "Pintura", color: "#EC4899" },
-              { name: "Equip./Elevação", color: "#38BDF8" },
-              { name: "Lubrificação", color: "#22C55E" },
-            ].map((item) => (
-              <div key={item.name} className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm shrink-0 border border-border" style={{ backgroundColor: item.color }} />
-                <span className="text-[11px] text-muted-foreground">{item.name}</span>
-              </div>
-            ))}
-          </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1207,9 +1188,9 @@ export default function Dashboard() {
                   if (!data) return null;
                   const total = data.total || 0;
                   const items = [
-                    { key: "productive", label: "Produtivo", color: "#16A34A" },
-                    { key: "supplementary", label: "Suplementar", color: "#F59E0B" },
-                    { key: "unproductive", label: "Não Produtivo", color: "#DC2626" },
+                    { key: "productive", label: "Produtivo", color: CATEGORY_COLORS["Produtivo"] },
+                    { key: "supplementary", label: "Suplementar", color: CATEGORY_COLORS["Suplementar"] },
+                    { key: "unproductive", label: "Não Produtivo", color: CATEGORY_COLORS["Não Produtivo"] },
                   ].filter(i => (data[i.key] || 0) > 0);
                   return (
                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
@@ -1234,9 +1215,9 @@ export default function Dashboard() {
                 content={() => (
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-3">
                     {[
-                      { label: "Produtivo", color: "#16A34A" },
-                      { label: "Suplementar", color: "#F59E0B" },
-                      { label: "Não Produtivo", color: "#DC2626" },
+                      { label: "Produtivo", color: CATEGORY_COLORS["Produtivo"] },
+                      { label: "Suplementar", color: CATEGORY_COLORS["Suplementar"] },
+                      { label: "Não Produtivo", color: CATEGORY_COLORS["Não Produtivo"] },
                     ].map(item => (
                       <div key={item.label} className="flex items-center gap-1.5">
                         <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.color, display: "inline-block" }} />
@@ -1246,21 +1227,9 @@ export default function Dashboard() {
                   </div>
                 )}
               />
-              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={1} />
-                ))}
-              </Bar>
-              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.55} />
-                ))}
-              </Bar>
-              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.25} />
-                ))}
-              </Bar>
+              <Bar dataKey="productive" name="Produtivo" stackId="a" fill={CATEGORY_COLORS["Produtivo"]} className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" stackId="a" fill={CATEGORY_COLORS["Suplementar"]} className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" fill={CATEGORY_COLORS["Não Produtivo"]} radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
