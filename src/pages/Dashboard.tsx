@@ -220,6 +220,16 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch ALL categories (parents + subcategories) so we can build a complete NPE lookup
+  const { data: allCats = [] } = useQuery({
+    queryKey: ["categorias_observacao", "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, impacta_produtividade");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const parentCatMap = useMemo(() => {
     const map: Record<string, string> = {};
     parentCats.forEach((c) => { map[c.id] = c.nome; });
@@ -231,6 +241,18 @@ export default function Dashboard() {
     parentCats.forEach((c: any) => { map[c.id] = c.impacta_produtividade !== false; });
     return map;
   }, [parentCats]);
+
+  // Build a set of NPE description names from subcategories under NPE parent
+  const npeDescriptions = useMemo(() => {
+    const npeParentIds = new Set(parentCats.filter((c: any) => c.impacta_produtividade === false).map(c => c.id));
+    const descs = new Set<string>();
+    allCats.forEach((c: any) => {
+      if (c.impacta_produtividade === false || (c.categoria_pai_id && npeParentIds.has(c.categoria_pai_id))) {
+        descs.add(c.nome);
+      }
+    });
+    return descs;
+  }, [allCats, parentCats]);
 
   const getParentCatName = useCallback((r: any) => {
     const catData = r.categorias_observacao as any;
@@ -248,8 +270,10 @@ export default function Dashboard() {
     if (catData.impacta_produtividade === false) return true;
     // Check parent category flag
     if (catData.categoria_pai_id && parentCatImpactMap[catData.categoria_pai_id] === false) return true;
+    // Fallback: check description against known NPE subcategory names
+    if (r.descricao && npeDescriptions.has(r.descricao)) return true;
     return false;
-  }, [parentCatImpactMap]);
+  }, [parentCatImpactMap, npeDescriptions]);
 
   // ── Filtering ──────────────────────────────────────────────────
   const baseRecords = useMemo(() => {
