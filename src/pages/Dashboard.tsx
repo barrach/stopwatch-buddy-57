@@ -398,7 +398,7 @@ export default function Dashboard() {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       const desc = r.descricao || "Sem descrição";
-      descs.add(desc);
+      if (desc !== "Causas Naturais") descs.add(desc);
     });
     return Array.from(descs);
   }, [records]);
