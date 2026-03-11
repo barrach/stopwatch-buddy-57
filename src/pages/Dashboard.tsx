@@ -1467,7 +1467,8 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex items-center gap-2">
+              <ZoomButton onClick={() => setZoomChart("tempo")} />
               {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
                 <Button
                   key={key}
