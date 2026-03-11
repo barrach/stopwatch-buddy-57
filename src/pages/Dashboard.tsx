@@ -484,7 +484,7 @@ export default function Dashboard() {
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records, isExternalRecord]);
-  }, [records, getParentCatName, isExternalRecord]);
+  
 
   // By Function — description-level breakdown, sorted by "Trabalhando" desc
   const byFunction = useMemo(() => {
