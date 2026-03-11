@@ -379,7 +379,6 @@ export default function Dashboard() {
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
-      .filter(([name]) => name !== "Causas Naturais")
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
     const total = sorted.reduce((s, c) => s + c.value, 0);
