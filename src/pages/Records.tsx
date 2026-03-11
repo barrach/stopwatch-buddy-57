@@ -44,7 +44,6 @@ export default function Records() {
   const [filterEspecialidade, setFilterEspecialidade] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
-  const [filterFuncao, setFilterFuncao] = useState("all");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
   const [importing, setImporting] = useState(false);
@@ -138,7 +137,7 @@ export default function Records() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome), funcoes(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false })
         .order("horario", { ascending: false });
@@ -196,7 +195,6 @@ export default function Records() {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
     if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
     if (filterObra !== "all" && r.obra_id !== filterObra) return false;
-    if (filterFuncao !== "all" && r.funcao_id !== filterFuncao) return false;
     if (filterDateStart && r.data < filterDateStart) return false;
     if (filterDateEnd && r.data > filterDateEnd) return false;
     if (search) {
@@ -222,7 +220,7 @@ export default function Records() {
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterEspecialidade, filterCategoria, filterObra, filterFuncao, filterDateStart, filterDateEnd]);
+  }, [search, filterEspecialidade, filterCategoria, filterObra, filterDateStart, filterDateEnd]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((r: any) => selectedIds.has(r.id));
   const someSelected = selectedIds.size > 0;
@@ -439,15 +437,6 @@ export default function Records() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-44">
-              <Select value={filterFuncao} onValueChange={setFilterFuncao}>
-                <SelectTrigger><SelectValue placeholder="Função" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas Funções</SelectItem>
-                  {funcoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
             {/* Date range */}
             <div>
               <Label className="text-xs text-muted-foreground">De</Label>
@@ -558,7 +547,6 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
                 <TableHead className="text-xs font-semibold">Rota</TableHead>
                 <TableHead className="text-xs font-semibold">Especialidade</TableHead>
-                <TableHead className="text-xs font-semibold">Função</TableHead>
                 <TableHead className="text-xs font-semibold">Categoria</TableHead>
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
@@ -589,7 +577,6 @@ export default function Records() {
                     <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
                     <TableCell className="text-xs">{(r.rotas as any)?.nome}</TableCell>
                     <TableCell className="text-xs font-medium">{(r.especialidades as any)?.nome}</TableCell>
-                    <TableCell className="text-xs">{(r.funcoes as any)?.nome || "—"}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${categoryBadgeVariant[catNome] || ""}`}>
                         {catNome}
@@ -629,7 +616,7 @@ export default function Records() {
               })}
               {paginated.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
