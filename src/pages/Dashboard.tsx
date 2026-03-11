@@ -222,7 +222,7 @@ export default function Dashboard() {
 
   // Fetch ALL categories (parents + subcategories) so we can build a complete NPE lookup
   const { data: allCats = [] } = useQuery({
-    queryKey: ["categorias_observacao", "all"],
+    queryKey: ["categorias_observacao", "all_with_impact"],
     queryFn: async () => {
       const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, impacta_produtividade");
       if (error) throw error;
