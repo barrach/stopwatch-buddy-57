@@ -1121,7 +1121,8 @@ export default function Dashboard() {
                 </h3>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar</p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                <ZoomButton onClick={() => setZoomChart("pareto")} />
                 <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
                 {(["categoria", "especialidade", "funcao"] as ParetoMode[]).map(mode => (
                   <button key={mode} onClick={() => handleParetoModeChange(mode)}
