@@ -780,7 +780,7 @@ export default function Dashboard() {
     return (
       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total} amostras</strong></div>
+        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
         {entries.map(({ desc, raw, pct }) => (
           <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
