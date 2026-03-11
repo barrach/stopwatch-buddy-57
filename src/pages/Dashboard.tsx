@@ -368,10 +368,11 @@ export default function Dashboard() {
     });
   }, [records, getParentCatName]);
 
-  // Pareto data
+  // Pareto data — excludes NPE
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from Pareto
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
       else if (paretoMode === "funcao") key = (r as any).funcoes?.nome || "Sem função";
@@ -648,7 +649,14 @@ export default function Dashboard() {
       .map(([h, v]) => `${h}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
       .join("\n");
 
-    const topCategorias = Object.entries(byCat)
+    // topCategorias excludes NPE descriptions for the AI report
+    const controlDescriptions: Record<string, number> = {};
+    records.forEach((r: any) => {
+      if (isExternalRecord(r)) return;
+      const desc = r.descricao || "Sem descrição";
+      controlDescriptions[desc] = (controlDescriptions[desc] || 0) + (r.quantidade || 0);
+    });
+    const topCategorias = Object.entries(controlDescriptions)
       .sort(([, a], [, b]) => b - a).slice(0, 10)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`).join("\n");
 
