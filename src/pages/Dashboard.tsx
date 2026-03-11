@@ -1058,11 +1058,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Distribution Pie */}
           <div className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Distribuição por Categoria
-              {crossFilters.categoria && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.categoria}</span>}
-            </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Clique em uma fatia para filtrar</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Distribuição por Categoria
+                  {crossFilters.categoria && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.categoria}</span>}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma fatia para filtrar</p>
+              </div>
+              <ZoomButton onClick={() => setZoomChart("categoria")} />
+            </div>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
