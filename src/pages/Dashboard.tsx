@@ -780,7 +780,7 @@ export default function Dashboard() {
     return (
       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total} amostras</strong></div>
+        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
         {entries.map(({ desc, raw, pct }) => (
           <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
@@ -1022,9 +1022,9 @@ export default function Dashboard() {
                     />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number) => {
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
                   const total = categoryTotals.reduce((s, c) => s + c.value, 0);
-                  return [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, "Amostras"];
+                  return [`${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%`, name];
                 }} />
                 <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
               </PieChart>
@@ -1069,9 +1069,9 @@ export default function Dashboard() {
                    <YAxis yAxisId="right" hide />
                    <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
-                     return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
+                     return [`${value}%`, entry.payload.name];
                    }} />
-                   <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                   <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
                        <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
@@ -1137,7 +1137,7 @@ export default function Dashboard() {
                         {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
                       </div>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div>Total: <strong>{total}</strong></div>
                         <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
                         <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
                         <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
@@ -1177,7 +1177,7 @@ export default function Dashboard() {
                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div>Total: <strong>{total}</strong></div>
                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
                           const pct = data[desc] || 0;
                           const raw = data[`raw_${desc}`] || 0;
@@ -1238,9 +1238,9 @@ export default function Dashboard() {
                    <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
-                     return [`${value} amostras (${item?.percent || 0}%) — ${item?.cat || ""}`, ""];
+                     return [`${value} (${item?.percent || 0}%) — ${item?.cat || ""}`, item?.name || ""];
                    }} />
-                   <Bar dataKey="value" name="Amostras" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                   <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
