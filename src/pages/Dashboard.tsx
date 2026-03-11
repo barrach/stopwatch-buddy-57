@@ -1200,20 +1200,26 @@ export default function Dashboard() {
                <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const item = payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
-                  const desc = item.dataKey as string;
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
                   const total = data.total || 0;
-                  const raw = data[`raw_${desc}`] || 0;
-                  const pct = data[desc] || 0;
+                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                        <span>{desc}: {pct}% ({raw})</span>
-                      </div>
+                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
+                      {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                        const pct = data[desc] || 0;
+                        const raw = data[`raw_${desc}`] || 0;
+                        if (pct === 0) return null;
+                        return (
+                          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                            <span style={{ flex: 1 }}>{desc}</span>
+                            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }}
