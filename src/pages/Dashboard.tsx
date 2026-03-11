@@ -1201,66 +1201,41 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                <Tooltip
+                shared={false}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
-                  const total = data.total || 0;
-                  const items = [
-                    { key: "productive", label: "Produtivo", color: "#16A34A" },
-                    { key: "supplementary", label: "Suplementar", color: "#F59E0B" },
-                    { key: "unproductive", label: "Não Produtivo", color: "#DC2626" },
-                  ].filter(i => (data[i.key] || 0) > 0);
+                  const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+
+                  const desc = item.dataKey as string;
+                  const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                  const raw = data[`raw_${desc}`] || 0;
+
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
-                      {items.map(({ key, label, color }) => {
-                        const pct = data[key] || 0;
-                        const qty = total > 0 ? Math.round(pct * total / 100) : 0;
-                        return (
-                          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color, display: "inline-block", flexShrink: 0 }} />
-                            <span style={{ flex: 1 }}>{label}</span>
-                            <span style={{ fontWeight: 600 }}>{pct}% ({qty})</span>
-                          </div>
-                        );
-                      })}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{desc}</span>
+                        <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                      </div>
                     </div>
                   );
                 }}
               />
-              <Legend
-                content={() => (
-                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-3">
-                    {[
-                      { label: "Produtivo", color: "#16A34A" },
-                      { label: "Suplementar", color: "#F59E0B" },
-                      { label: "Não Produtivo", color: "#DC2626" },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center gap-1.5">
-                        <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.color, display: "inline-block" }} />
-                        <span className="text-xs text-muted-foreground">{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              />
-              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={1} />
-                ))}
-              </Bar>
-              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.55} />
-                ))}
-              </Bar>
-              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((entry) => (
-                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.25} />
-                ))}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
+              {allDescriptions.map((desc, i) => (
+                <Bar
+                  key={desc}
+                  dataKey={desc}
+                  name={desc}
+                  fill={getDescriptionCategoryColor("", desc)}
+                  stackId="a"
+                  className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
