@@ -770,24 +770,21 @@ export default function Dashboard() {
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
-    const data = payload[0]?.payload;
-    if (!data) return null;
-    // Collect all description entries with values
-    const entries = allDescriptions
-      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
-      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
-      .sort((a, b) => b.raw - a.raw);
+    // payload contains only the hovered series item
+    const item = payload[0];
+    const data = item?.payload;
+    if (!data || !item) return null;
+    const desc = item.dataKey as string;
+    const raw = data[`raw_${desc}`] || 0;
+    const pct = data[desc] || 0;
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
-        {entries.map(({ desc, raw, pct }) => (
-          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
-            <span style={{ flex: 1 }}>{desc}</span>
-            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-          </div>
-        ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || item.fill || "#6B7280", flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{desc}</span>
+          <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+        </div>
       </div>
     );
   };
