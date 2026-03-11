@@ -1498,7 +1498,7 @@ export default function Dashboard() {
             <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
                <Tooltip
                  shared={false}
                  content={({ active, payload }) => {
