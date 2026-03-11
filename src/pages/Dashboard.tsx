@@ -368,10 +368,11 @@ export default function Dashboard() {
     });
   }, [records, getParentCatName]);
 
-  // Pareto data
+  // Pareto data — excludes NPE
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
+      if (isExternalRecord(r)) return; // Exclude NPE from Pareto
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
       else if (paretoMode === "funcao") key = (r as any).funcoes?.nome || "Sem função";
