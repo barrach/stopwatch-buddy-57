@@ -830,12 +830,11 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
-          <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
-          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle={`Prod / (Total - Externo) = ${productiveCount}/${controllableTotal}`} icon={TrendingUp} variant="success" />
-          <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${controllableTotal > 0 ? Math.round((supplementaryCount / controllableTotal) * 100) : 0}% (s/ NPE)`} icon={Clock} variant="warning" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle={`${unproductivePercent}% (s/ NPE)`} icon={AlertTriangle} variant="danger" />
-          <StatCard title="Não Prod. Externo" value={externalCount} subtitle={`${externalPercent}% do total — não penaliza`} icon={CloudRain} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <StatCard title="Total de Amostras" value={totalSamples} subtitle={`${externalCount > 0 ? `${externalCount} externas excluídas` : "Observações registradas"}`} icon={Users} />
+          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle={`${productiveCount} de ${controllableTotal} amostras`} icon={TrendingUp} variant="success" />
+          <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${controllableTotal > 0 ? Math.round((supplementaryCount / controllableTotal) * 100) : 0}% do total`} icon={Clock} variant="warning" />
+          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle={`${unproductivePercent}% do total`} icon={AlertTriangle} variant="danger" />
         </div>
 
         {/* AI Analysis Section */}
