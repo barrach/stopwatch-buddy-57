@@ -830,11 +830,12 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} subtitle="Observações registradas" icon={Users} />
-          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle="Prod / (Total - Externo)" icon={TrendingUp} variant="success" />
-          <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0}% do total`} icon={Clock} variant="warning" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle="Pessoal + Ocioso" icon={AlertTriangle} variant="danger" />
+          <StatCard title="Produtividade" value={`${productivePercent}%`} subtitle={`Prod / (Total - Externo) = ${productiveCount}/${controllableTotal}`} icon={TrendingUp} variant="success" />
+          <StatCard title="Suplementar" value={supplementaryCount} subtitle={`${controllableTotal > 0 ? Math.round((supplementaryCount / controllableTotal) * 100) : 0}% (s/ NPE)`} icon={Clock} variant="warning" />
+          <StatCard title="Não Produtivo" value={unproductiveCount} subtitle={`${unproductivePercent}% (s/ NPE)`} icon={AlertTriangle} variant="danger" />
+          <StatCard title="Não Prod. Externo" value={externalCount} subtitle={`${externalPercent}% do total — não penaliza`} icon={CloudRain} />
         </div>
 
         {/* AI Analysis Section */}
