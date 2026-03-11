@@ -1445,18 +1445,35 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 6) Amostras por Horário — chronological + stacked by description */}
+        {/* 6) Produtividade por Período — supports horario/weekday/month */}
         <div className={chartCardClass("horario")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Amostras por Horário
-            {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenação cronológica — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"}
+                {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
+            </div>
+            <div className="flex gap-1">
+              {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
+                <Button
+                  key={key}
+                  variant={timeViewMode === key ? "default" : "outline"}
+                  size="sm"
+                  className="text-[10px] h-6 px-2"
+                  onClick={() => setTimeViewMode(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byTime} onClick={handleTimeClick}>
+            <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                <Tooltip
                  shared={false}
                  content={({ active, payload }) => {
@@ -1466,9 +1483,8 @@ export default function Dashboard() {
                    if (!data || !item) return null;
 
                    const desc = item.dataKey as string;
-                   const qty = typeof item.value === "number" ? item.value : data[desc] || 0;
-                   const total = data.total || 0;
-                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                   const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                   const rawQty = data[`raw_${desc}`] || 0;
 
                    return (
                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
@@ -1476,7 +1492,7 @@ export default function Dashboard() {
                        <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
                          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
                          <span style={{ flex: 1 }}>{desc}</span>
-                         <span style={{ fontWeight: 600 }}>{qty} ({pct}%)</span>
+                         <span style={{ fontWeight: 600 }}>{rawQty} ({pct}%)</span>
                        </div>
                      </div>
                    );
