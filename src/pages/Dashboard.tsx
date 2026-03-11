@@ -1183,11 +1183,16 @@ export default function Dashboard() {
 
         {/* 3) Produtividade por Especialidade */}
         <div className={chartCardClass("especialidade")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Produtividade por Especialidade
-            {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Produtividade por Especialidade
+                {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("especialidade")} />
+          </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
