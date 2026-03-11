@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, UserCog } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, UserCog, LogOut } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
@@ -23,11 +24,15 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
-  
+  const { user, signOut } = useAuth();
 
   const handleClick = () => {
     onNavigate?.();
   };
+
+  const userEmail = user?.email || "";
+  const userName = user?.user_metadata?.nome || userEmail.split("@")[0] || "Usuário";
+  const initials = userName.slice(0, 2).toUpperCase();
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-50">
@@ -81,16 +86,23 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
         </NavLink>
       </nav>
 
-      {/* Footer */}
+      {/* Footer - User info */}
       <div className="px-5 py-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-primary">
-            PC
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-sidebar-foreground truncate">ProdControl</p>
-            <p className="text-[10px] text-sidebar-foreground/40">Acesso público</p>
+            <p className="text-xs font-medium text-sidebar-foreground truncate">{userName}</p>
+            <p className="text-[10px] text-sidebar-foreground/40 truncate">{userEmail}</p>
           </div>
+          <button
+            onClick={signOut}
+            className="text-sidebar-foreground/40 hover:text-destructive transition-colors"
+            title="Sair"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>
