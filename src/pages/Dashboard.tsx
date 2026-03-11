@@ -770,21 +770,23 @@ export default function Dashboard() {
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
-    // payload contains only the hovered series item
-    const item = payload[0];
-    const data = item?.payload;
-    if (!data || !item) return null;
-    const desc = item.dataKey as string;
-    const raw = data[`raw_${desc}`] || 0;
-    const pct = data[desc] || 0;
+    const data = payload[0]?.payload;
+    if (!data) return null;
+    const entries = allDescriptions
+      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
+      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
+      .sort((a, b) => b.raw - a.raw);
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || item.fill || "#6B7280", flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>{desc}</span>
-          <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-        </div>
+        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
+        {entries.map(({ desc, raw, pct }) => (
+          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>{desc}</span>
+            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+          </div>
+        ))}
       </div>
     );
   };
@@ -1148,22 +1150,29 @@ export default function Dashboard() {
                <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const item = payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
-                  const key = item.dataKey as string;
-                  const labelMap: Record<string, string> = { productive: "Produtivo", supplementary: "Suplementar", unproductive: "Não Produtivo" };
-                  const colorMap: Record<string, string> = { productive: "#16A34A", supplementary: "#F59E0B", unproductive: "#DC2626" };
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
                   const total = data.total || 0;
-                  const pct = data[key] || 0;
-                  const qty = total > 0 ? Math.round(pct * total / 100) : 0;
+                  const items = [
+                    { key: "productive", label: "Produtivo", color: "#16A34A" },
+                    { key: "supplementary", label: "Suplementar", color: "#F59E0B" },
+                    { key: "unproductive", label: "Não Produtivo", color: "#DC2626" },
+                  ].filter(i => (data[i.key] || 0) > 0);
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colorMap[key] || item.fill, display: "inline-block", flexShrink: 0 }} />
-                        <span>{labelMap[key] || key}: {pct}% ({qty})</span>
-                      </div>
+                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
+                      {items.map(({ key, label, color }) => {
+                        const pct = data[key] || 0;
+                        const qty = total > 0 ? Math.round(pct * total / 100) : 0;
+                        return (
+                          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color, display: "inline-block", flexShrink: 0 }} />
+                            <span style={{ flex: 1 }}>{label}</span>
+                            <span style={{ fontWeight: 600 }}>{pct}% ({qty})</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }}
@@ -1191,20 +1200,26 @@ export default function Dashboard() {
                <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const item = payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
-                  const desc = item.dataKey as string;
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
                   const total = data.total || 0;
-                  const raw = data[`raw_${desc}`] || 0;
-                  const pct = data[desc] || 0;
+                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                        <span>{desc}: {pct}% ({raw})</span>
-                      </div>
+                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
+                      {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                        const pct = data[desc] || 0;
+                        const raw = data[`raw_${desc}`] || 0;
+                        if (pct === 0) return null;
+                        return (
+                          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                            <span style={{ flex: 1 }}>{desc}</span>
+                            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }}
@@ -1395,20 +1410,26 @@ export default function Dashboard() {
                <Tooltip
                  content={({ active, payload }) => {
                    if (!active || !payload?.length) return null;
-                   const item = payload[0];
-                   const data = item?.payload;
-                   if (!data || !item) return null;
-                   const desc = item.dataKey as string;
-                   const qty = data[desc] || 0;
+                   const data = payload[0]?.payload;
+                   if (!data) return null;
                    const total = data.total || 0;
-                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
                    return (
-                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
-                       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                         <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                         <span>{desc}: {qty} ({pct}%)</span>
-                       </div>
+                       <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
+                       {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                         const qty = data[desc] || 0;
+                         if (qty === 0) return null;
+                         const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                         return (
+                           <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
+                             <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                             <span style={{ flex: 1 }}>{desc}</span>
+                             <span style={{ fontWeight: 600 }}>{qty} ({pct}%)</span>
+                           </div>
+                         );
+                       })}
                      </div>
                    );
                  }}
