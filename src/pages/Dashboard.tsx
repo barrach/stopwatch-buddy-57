@@ -1137,7 +1137,7 @@ export default function Dashboard() {
                         {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
                       </div>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div>Total: <strong>{total}</strong></div>
                         <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
                         <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
                         <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
