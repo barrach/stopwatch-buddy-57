@@ -71,7 +71,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Instruções": "#F59E0B",  // amarelo/âmbar
   "Assistindo": "#7C3AED",             // roxo
   "Aguardando Ferramenta ou Material": "#E11D48", // rosa escuro
-  "Aguardando Liberação": "#EA580C",   // laranja
   "Transitando no local de trabalho - com ferramenta": "#0891B2",  // ciano
   "Transitando no local de trabalho - sem ferramenta": "#D946EF",  // magenta
   "Transitando fora do local de trabalho - com ferramenta": "#0D9488", // teal
@@ -85,7 +84,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   // Não Produtivo Externo
   "Causas Naturais": "#38BDF8",          // azul claro (sky)
   "Vazamento / Interferência da Planta": "#6366F1", // índigo
-  "Cliente": "#A855F7",                  // violeta
+  "Aguardando Liberação de PT": "#A855F7",  // violeta
 };
 
 // Map description to its unique color, falling back to parent category color
