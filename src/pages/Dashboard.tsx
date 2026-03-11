@@ -568,39 +568,121 @@ export default function Dashboard() {
 
   // ── AI Report ──────────────────────────────────────────────────
   const aiStats = useMemo(() => {
-    const total = records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
-    let prod = 0, supl = 0, naoProd = 0;
-    const byEsp: Record<string, { prod: number; total: number }> = {};
+    let total = 0, prod = 0, supl = 0, naoProd = 0, externo = 0;
+    const byEsp: Record<string, { prod: number; supl: number; naoProd: number; total: number }> = {};
+    const byFunc: Record<string, { prod: number; total: number }> = {};
     const byCat: Record<string, number> = {};
+    const byParentCat: Record<string, number> = {};
+    const byHour: Record<string, { prod: number; total: number }> = {};
+
     records.forEach((r: any) => {
       const qty = r.quantidade || 0;
+      total += qty;
       const cat = getParentCatName(r);
-      if (cat === "Produtivo") prod += qty;
-      else if (cat === "Suplementar") supl += qty;
-      else naoProd += qty;
-      const espName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!byEsp[espName]) byEsp[espName] = { prod: 0, total: 0 };
-      byEsp[espName].total += qty;
-      if (cat === "Produtivo") byEsp[espName].prod += qty;
+      const isExt = isExternalRecord(r);
+
+      if (isExt) {
+        externo += qty;
+      } else if (cat === "Produtivo") {
+        prod += qty;
+      } else if (cat === "Suplementar") {
+        supl += qty;
+      } else if (cat === "Não Produtivo") {
+        naoProd += qty;
+      }
+
+      // Track parent category
+      byParentCat[cat] = (byParentCat[cat] || 0) + qty;
+
+      // Per specialty (exclude external)
+      if (!isExt) {
+        const espName = (r.especialidades as any)?.nome || "Sem especialidade";
+        if (!byEsp[espName]) byEsp[espName] = { prod: 0, supl: 0, naoProd: 0, total: 0 };
+        byEsp[espName].total += qty;
+        if (cat === "Produtivo") byEsp[espName].prod += qty;
+        else if (cat === "Suplementar") byEsp[espName].supl += qty;
+        else byEsp[espName].naoProd += qty;
+      }
+
+      // Per function (exclude external)
+      if (!isExt) {
+        const fName = (r as any).funcoes?.nome || "Sem função";
+        if (!byFunc[fName]) byFunc[fName] = { prod: 0, total: 0 };
+        byFunc[fName].total += qty;
+        if (cat === "Produtivo") byFunc[fName].prod += qty;
+      }
+
+      // Per hour (exclude external)
+      if (!isExt) {
+        const h = r.horario || "";
+        if (!byHour[h]) byHour[h] = { prod: 0, total: 0 };
+        byHour[h].total += qty;
+        if (cat === "Produtivo") byHour[h].prod += qty;
+      }
+
+      // Description breakdown
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
+
+    // Controllable total = total - external (same formula as KPI cards)
+    const controllable = total - externo;
+
     const porEspecialidade = Object.entries(byEsp)
       .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
+      .map(([nome, v]) => {
+        const prodPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
+        const suplPct = v.total > 0 ? Math.round((v.supl / v.total) * 100) : 0;
+        const npPct = v.total > 0 ? Math.round((v.naoProd / v.total) * 100) : 0;
+        return `${nome}: ${v.total} amostras (Prod ${prodPct}%, Supl ${suplPct}%, NP ${npPct}%)`;
+      })
+      .join("\n");
+
+    const porFuncao = Object.entries(byFunc)
+      .sort(([, a], [, b]) => b.total - a.total).slice(0, 6)
       .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
       .join("\n");
+
+    const porHorario = Object.entries(byHour)
+      .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
+      .map(([h, v]) => `${h}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
+      .join("\n");
+
     const topCategorias = Object.entries(byCat)
-      .sort(([, a], [, b]) => b - a).slice(0, 8)
+      .sort(([, a], [, b]) => b - a).slice(0, 10)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`).join("\n");
+
+    const causasExternas = Object.entries(byCat)
+      .filter(([nome]) => {
+        // Only external descriptions
+        return records.some((r: any) => r.descricao === nome && isExternalRecord(r));
+      })
+      .sort(([, a], [, b]) => b - a)
+      .map(([nome, qty]) => `${nome}: ${qty} amostras`)
+      .join("\n");
+
     const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
+
     return {
-      totalAmostras: total, produtivo: prod, suplementar: supl, naoProdutivo: naoProd,
-      produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
-      suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
-      naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
+      totalAmostras: total,
+      totalControlaveis: controllable,
+      produtivo: prod,
+      suplementar: supl,
+      naoProdutivo: naoProd,
+      externo,
+      // Adjusted percentages (excluding external) — same as KPI cards
+      produtivoPct: controllable > 0 ? Math.round((prod / controllable) * 100) : 0,
+      suplementarPct: controllable > 0 ? Math.round((supl / controllable) * 100) : 0,
+      naoProdutivoPct: controllable > 0 ? Math.round((naoProd / controllable) * 100) : 0,
+      externoPct: total > 0 ? Math.round((externo / total) * 100) : 0,
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
-      obra: obraName, porEspecialidade, topCategorias,
+      obra: obraName,
+      porEspecialidade,
+      porFuncao,
+      porHorario,
+      topCategorias,
+      causasExternas,
     };
-  }, [records, getParentCatName, obraFilter, obras, dateMode, selectedDate, startDate, endDate]);
+  }, [records, getParentCatName, isExternalRecord, obraFilter, obras, dateMode, selectedDate, startDate, endDate]);
 
   const handleGenerateAIReport = async () => {
     if (records.length === 0) {
