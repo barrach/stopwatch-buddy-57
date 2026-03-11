@@ -459,50 +459,53 @@ export default function Dashboard() {
       .sort((a, b) => b.productive - a.productive);
   }, [records, getParentCatName, isExternalRecord]);
 
-  // By Function — sorted by productivity desc
+  // By Function — description-level breakdown, sorted by "Trabalhando" desc
   const byFunction = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from function productivity
+      if (isExternalRecord(r)) return;
       const fName = (r as any).funcoes?.nome || "Sem função";
-      if (!result[fName]) result[fName] = { productive: 0, supplementary: 0, unproductive: 0 };
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[fName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[fName].supplementary += r.quantidade || 0;
-      else result[fName].unproductive += r.quantidade || 0;
+      if (!result[fName]) result[fName] = {};
+      const desc = r.descricao || "Sem descrição";
+      const qty = r.quantidade || 0;
+      result[fName][desc] = (result[fName][desc] || 0) + qty;
     });
     return Object.entries(result)
-      .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
-      .map(([name, v]) => {
-        const total = v.productive + v.supplementary + v.unproductive;
-        return {
-          name, total,
-          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        };
+      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
+      .map(([name, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { name, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+          row[`raw_${desc}`] = qty;
+        }
+        return row;
       })
-      .sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName, isExternalRecord]);
+      .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
+  }, [records, isExternalRecord]);
 
-  // 6) By Time — chronological order
+  // 6) By Time — description-level breakdown, chronological order
   const byTime = useMemo(() => {
-    const result: Record<string, { total: number; productive: number; supplementary: number; unproductive: number }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from time-based productivity
+      if (isExternalRecord(r)) return;
       const t = r.horario || "";
-      if (!result[t]) result[t] = { total: 0, productive: 0, supplementary: 0, unproductive: 0 };
+      if (!result[t]) result[t] = {};
+      const desc = r.descricao || "Sem descrição";
       const qty = r.quantidade || 0;
-      result[t].total += qty;
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[t].productive += qty;
-      else if (cat === "Suplementar") result[t].supplementary += qty;
-      else result[t].unproductive += qty;
+      result[t][desc] = (result[t][desc] || 0) + qty;
     });
     return Object.entries(result)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
-      .map(([time, v]) => ({ time, ...v }));
-  }, [records, getParentCatName, isExternalRecord]);
+      .map(([time, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { time, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = qty;
+        }
+        return row;
+      });
+  }, [records, isExternalRecord]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
@@ -1062,26 +1065,40 @@ export default function Dashboard() {
                   const data = payload[0]?.payload;
                   if (!data) return null;
                   const total = data.total || 0;
-                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
-                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
-                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
+                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                         <div>Total: <strong>{total} amostras</strong></div>
-                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                        {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                          const pct = data[desc] || 0;
+                          const raw = data[`raw_${desc}`] || 0;
+                          if (pct === 0) return null;
+                          return (
+                            <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                              <span>{desc}: {pct}% ({raw})</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
                 }}
               />
               <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              {allDescriptions.map((desc, i) => (
+                <Bar
+                  key={desc}
+                  dataKey={desc}
+                  name={desc}
+                  fill={getDescriptionCategoryColor("", desc)}
+                  stackId="a"
+                  className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1211,7 +1228,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 6) Amostras por Horário — chronological + stacked */}
+        {/* 6) Amostras por Horário — chronological + stacked by description */}
         <div className={chartCardClass("horario")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Amostras por Horário
@@ -1223,11 +1240,46 @@ export default function Dashboard() {
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => [`${value}`, name]} />
+               <Tooltip
+                 content={({ active, payload }) => {
+                   if (!active || !payload?.length) return null;
+                   const data = payload[0]?.payload;
+                   if (!data) return null;
+                   const total = data.total || 0;
+                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
+                   return (
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
+                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                         <div>Total: <strong>{total} amostras</strong></div>
+                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                           const qty = data[desc] || 0;
+                           if (qty === 0) return null;
+                           const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                           return (
+                             <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                               <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                               <span>{desc}: {qty} ({pct}%)</span>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   );
+                 }}
+               />
                <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-               <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-               <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-               <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+               {allDescriptions.map((desc, i) => (
+                 <Bar
+                   key={desc}
+                   dataKey={desc}
+                   name={desc}
+                   fill={getDescriptionCategoryColor("", desc)}
+                   stackId="a"
+                   className="cursor-pointer"
+                   radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                 />
+               ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
