@@ -377,6 +377,7 @@ export default function Dashboard() {
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
+      .filter(([name]) => name !== "Causas Naturais")
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
     const total = sorted.reduce((s, c) => s + c.value, 0);
@@ -391,39 +392,43 @@ export default function Dashboard() {
     });
   }, [records, paretoMode]);
 
-  // By Contrato — with description breakdown for tooltip
+  // By Contrato — description-level breakdown
+  const allDescriptions = useMemo(() => {
+    const descs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = r.descricao || "Sem descrição";
+      descs.add(desc);
+    });
+    return Array.from(descs);
+  }, [records]);
+
   const byObra = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number; external: number; descByCategory: Record<string, Record<string, number>> }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = { productive: 0, supplementary: 0, unproductive: 0, external: 0, descByCategory: { Produtivo: {}, Suplementar: {}, "Não Produtivo": {}, "Não Produtivo Externo": {} } };
-      const cat = getParentCatName(r);
-      const qty = r.quantidade || 0;
+      if (!result[oName]) result[oName] = {};
       const desc = r.descricao || "Sem descrição";
-      if (cat === "Produtivo") result[oName].productive += qty;
-      else if (cat === "Suplementar") result[oName].supplementary += qty;
-      else if (cat === "Não Produtivo Externo") result[oName].external += qty;
-      else result[oName].unproductive += qty;
-      if (result[oName].descByCategory[cat]) {
-        result[oName].descByCategory[cat][desc] = (result[oName].descByCategory[cat][desc] || 0) + qty;
-      }
+      const qty = r.quantidade || 0;
+      result[oName][desc] = (result[oName][desc] || 0) + qty;
     });
     return Object.entries(result)
-      .map(([name, v]) => {
-        const controllable = v.productive + v.supplementary + v.unproductive;
-        const total = controllable + v.external;
-        return {
-          name, total,
-          productive: controllable > 0 ? +((v.productive / controllable) * 100).toFixed(1) : 0,
-          supplementary: controllable > 0 ? +((v.supplementary / controllable) * 100).toFixed(1) : 0,
-          unproductive: controllable > 0 ? +((v.unproductive / controllable) * 100).toFixed(1) : 0,
-          prodPercent: controllable > 0 ? Math.round((v.productive / controllable) * 100) : 0,
-          rawProd: v.productive, rawSupl: v.supplementary, rawNprod: v.unproductive, rawExternal: v.external,
-          descByCategory: v.descByCategory,
-        };
+      .map(([name, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        // Convert to percentages
+        const row: any = { name, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+          row[`raw_${desc}`] = qty;
+        }
+        return row;
       })
-      .sort((a, b) => b.prodPercent - a.prodPercent);
-  }, [records, getParentCatName]);
+      .sort((a, b) => {
+        // Sort by "Trabalhando" percentage desc
+        const aProd = a["Trabalhando"] || 0;
+        const bProd = b["Trabalhando"] || 0;
+        return bProd - aProd;
+      });
+  }, [records]);
 
 
 
@@ -672,34 +677,22 @@ export default function Dashboard() {
     if (!active || !payload?.length) return null;
     const data = payload[0]?.payload;
     if (!data) return null;
-    const categories = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
-    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod", "Não Produtivo Externo": "rawExternal" } as const;
+    // Collect all description entries with values
+    const entries = allDescriptions
+      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
+      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
+      .sort((a, b) => b.raw - a.raw);
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 300 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 4 }}>Total: <strong>{data.total} amostras</strong></div>
-        {categories.map(cat => {
-          const raw = data[rawKeys[cat]] || 0;
-          if (raw === 0) return null;
-          const pct = data.total > 0 ? ((raw / data.total) * 100).toFixed(1) : "0";
-          const descs = data.descByCategory?.[cat] as Record<string, number> | undefined;
-          const topDescs = descs ? Object.entries(descs).sort(([,a],[,b]) => b - a).slice(0, 3) : [];
-          return (
-            <div key={cat} style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ color: CATEGORY_COLORS[cat] || "#64748B", fontWeight: 600 }}>
-                {cat} — {pct}% ({raw})
-                {cat === "Não Produtivo Externo" && <span style={{ fontSize: 9, opacity: 0.7 }}> (não impacta prod.)</span>}
-              </div>
-              {topDescs.length > 0 && (
-                <div style={{ marginLeft: 8, marginTop: 2, fontSize: 10, opacity: 0.8 }}>
-                  {topDescs.map(([desc, qty]) => (
-                    <div key={desc}>• {desc}: {qty}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total} amostras</strong></div>
+        {entries.map(({ desc, raw, pct }) => (
+          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>{desc}</span>
+            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+          </div>
+        ))}
       </div>
     );
   };
@@ -889,12 +882,12 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
               <Tooltip content={<ContratoTooltip />} />
-              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                <LabelList dataKey="prodPercent" position="top" formatter={(v: number) => `${v}% prod`} style={{ fontSize: 10, fill: TICK_COLOR }} />
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: "11px", color: "#F9FAFB" }} />
+              {allDescriptions.map((desc, i) => (
+                <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -970,7 +963,7 @@ export default function Dashboard() {
                    }} />
                    <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
-                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : PIE_COLORS[i % PIE_COLORS.length]}
+                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                      ))}
                      <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: TICK_COLOR }} />
