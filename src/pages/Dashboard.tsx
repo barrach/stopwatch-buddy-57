@@ -1094,7 +1094,6 @@ export default function Dashboard() {
                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
                              <div>Percentual: <strong>{data.percent}%</strong></div>
                              <div>Quantidade: <strong>{data.value}</strong></div>
-                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
                            </div>
                          </div>
                        );
