@@ -1299,8 +1299,13 @@ export default function Dashboard() {
         <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
           <div className={`stat-card animate-fade-in transition-all`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Causas de Não Produtividade</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
+              </div>
+              <ZoomButton onClick={() => setZoomChart("naoprod")} />
+            </div>
             {nonprodCausas.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
                 <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
