@@ -459,31 +459,30 @@ export default function Dashboard() {
       .sort((a, b) => b.productive - a.productive);
   }, [records, getParentCatName, isExternalRecord]);
 
-  // By Function — sorted by productivity desc
+  // By Function — description-level breakdown, sorted by "Trabalhando" desc
   const byFunction = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from function productivity
+      if (isExternalRecord(r)) return;
       const fName = (r as any).funcoes?.nome || "Sem função";
-      if (!result[fName]) result[fName] = { productive: 0, supplementary: 0, unproductive: 0 };
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[fName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[fName].supplementary += r.quantidade || 0;
-      else result[fName].unproductive += r.quantidade || 0;
+      if (!result[fName]) result[fName] = {};
+      const desc = r.descricao || "Sem descrição";
+      const qty = r.quantidade || 0;
+      result[fName][desc] = (result[fName][desc] || 0) + qty;
     });
     return Object.entries(result)
-      .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
-      .map(([name, v]) => {
-        const total = v.productive + v.supplementary + v.unproductive;
-        return {
-          name, total,
-          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        };
+      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
+      .map(([name, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { name, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+          row[`raw_${desc}`] = qty;
+        }
+        return row;
       })
-      .sort((a, b) => b.productive - a.productive);
-  }, [records, getParentCatName, isExternalRecord]);
+      .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
+  }, [records, isExternalRecord]);
 
   // 6) By Time — chronological order
   const byTime = useMemo(() => {
