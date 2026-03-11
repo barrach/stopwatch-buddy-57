@@ -676,34 +676,22 @@ export default function Dashboard() {
     if (!active || !payload?.length) return null;
     const data = payload[0]?.payload;
     if (!data) return null;
-    const categories = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
-    const rawKeys = { Produtivo: "rawProd", Suplementar: "rawSupl", "Não Produtivo": "rawNprod", "Não Produtivo Externo": "rawExternal" } as const;
+    // Collect all description entries with values
+    const entries = allDescriptions
+      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
+      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
+      .sort((a, b) => b.raw - a.raw);
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 300 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 4 }}>Total: <strong>{data.total} amostras</strong></div>
-        {categories.map(cat => {
-          const raw = data[rawKeys[cat]] || 0;
-          if (raw === 0) return null;
-          const pct = data.total > 0 ? ((raw / data.total) * 100).toFixed(1) : "0";
-          const descs = data.descByCategory?.[cat] as Record<string, number> | undefined;
-          const topDescs = descs ? Object.entries(descs).sort(([,a],[,b]) => b - a).slice(0, 3) : [];
-          return (
-            <div key={cat} style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ color: CATEGORY_COLORS[cat] || "#64748B", fontWeight: 600 }}>
-                {cat} — {pct}% ({raw})
-                {cat === "Não Produtivo Externo" && <span style={{ fontSize: 9, opacity: 0.7 }}> (não impacta prod.)</span>}
-              </div>
-              {topDescs.length > 0 && (
-                <div style={{ marginLeft: 8, marginTop: 2, fontSize: 10, opacity: 0.8 }}>
-                  {topDescs.map(([desc, qty]) => (
-                    <div key={desc}>• {desc}: {qty}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total} amostras</strong></div>
+        {entries.map(({ desc, raw, pct }) => (
+          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>{desc}</span>
+            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+          </div>
+        ))}
       </div>
     );
   };
