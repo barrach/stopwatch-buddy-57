@@ -1240,11 +1240,16 @@ export default function Dashboard() {
 
         {/* 4) Produtividade por Função */}
         <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Produtividade por Função
-            {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Produtividade por Função
+                {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Ordenado por produtividade — clique para filtrar</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("funcao")} />
+          </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
