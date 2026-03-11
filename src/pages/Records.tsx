@@ -174,34 +174,16 @@ export default function Records() {
   const handleEditSave = async () => {
     setEditSaving(true);
     try {
-      // Build diff: only send fields that actually changed
-      const original: Record<string, any> = {
-        data: editRecord.data, horario: editRecord.horario, obra_id: editRecord.obra_id,
-        rota_id: editRecord.rota_id, especialidade_id: editRecord.especialidade_id,
-        funcao_id: editRecord.funcao_id || "", categoria_id: editRecord.categoria_id,
-        descricao: editRecord.descricao, quantidade: editRecord.quantidade,
-        notas: editRecord.notas || "",
-      };
-      const diff: Record<string, any> = {};
-      for (const key of Object.keys(original)) {
-        const newVal = key === "quantidade" ? parseInt(editForm[key], 10) : (key === "funcao_id" || key === "notas" ? (editForm[key] || null) : editForm[key]);
-        const origVal = key === "funcao_id" || key === "notas" ? (original[key] || null) : original[key];
-        if (String(newVal ?? "") !== String(origVal ?? "")) {
-          diff[key] = newVal;
-        }
-      }
-
-      if (Object.keys(diff).length === 0) {
-        toast({ title: "Nenhuma alteração", description: "Nenhum campo foi modificado." });
-        setEditRecord(null);
-        return;
-      }
-
-      const { error } = await supabase.from("observacoes").update(diff).eq("id", editRecord.id);
+      const { error } = await supabase.from("observacoes").update({
+        data: editForm.data, horario: editForm.horario, obra_id: editForm.obra_id,
+        rota_id: editForm.rota_id, especialidade_id: editForm.especialidade_id,
+        funcao_id: editForm.funcao_id || null, categoria_id: editForm.categoria_id,
+        descricao: editForm.descricao, quantidade: parseInt(editForm.quantidade, 10),
+        notas: editForm.notas || null,
+      }).eq("id", editRecord.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["observacoes"] });
-      const changedFields = Object.keys(diff).join(", ");
-      toast({ title: "Registro atualizado", description: `Campo(s) alterado(s): ${changedFields}. Cálculos recalculados automaticamente.` });
+      toast({ title: "Registro atualizado", description: "Dados atualizados — cálculos recalculados automaticamente." });
       setEditRecord(null);
     } catch (e: any) {
       toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" });

@@ -1183,7 +1183,6 @@ export default function Dashboard() {
                   const data = payload[0]?.payload;
                   if (!data) return null;
                   const total = data.total || 0;
-                  const specColor = getSpecialtyColor(data.name);
                   const items = [
                     { key: "productive", label: "Produtivo", color: "#16A34A" },
                     { key: "supplementary", label: "Suplementar", color: "#F59E0B" },
@@ -1191,10 +1190,7 @@ export default function Dashboard() {
                   ].filter(i => (data[i.key] || 0) > 0);
                   return (
                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: specColor, display: "inline-block", flexShrink: 0 }} />
-                        <strong style={{ fontSize: 13 }}>{data.name}</strong>
-                      </div>
+                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                       <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
                       {items.map(({ key, label, color }) => {
                         const pct = data[key] || 0;
@@ -1211,35 +1207,10 @@ export default function Dashboard() {
                   );
                 }}
               />
-              <Legend content={() => (
-                <div className="flex justify-center gap-4 pt-3" style={{ fontSize: 12 }}>
-                  {[
-                    { label: "Produtivo", color: "#16A34A" },
-                    { label: "Suplementar", color: "#F59E0B" },
-                    { label: "Não Produtivo", color: "#DC2626" },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center gap-1.5">
-                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.color, display: "inline-block" }} />
-                      <span style={{ color: "#F9FAFB" }}>{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              )} />
-              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry, idx) => (
-                  <Cell key={`prod-${idx}`} fill={getSpecialtyColor(entry.name)} fillOpacity={1} />
-                ))}
-              </Bar>
-              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
-                {bySpecialty.map((entry, idx) => (
-                  <Cell key={`sup-${idx}`} fill={getSpecialtyColor(entry.name)} fillOpacity={0.55} />
-                ))}
-              </Bar>
-              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {bySpecialty.map((entry, idx) => (
-                  <Cell key={`unprod-${idx}`} fill={getSpecialtyColor(entry.name)} fillOpacity={0.25} />
-                ))}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
+              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
+              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
             </BarChart>
           </ResponsiveContainer>
         </div>
