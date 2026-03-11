@@ -1269,7 +1269,7 @@ export default function Dashboard() {
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.value} amostras · {causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
                     </div>
                   </div>
                 );
