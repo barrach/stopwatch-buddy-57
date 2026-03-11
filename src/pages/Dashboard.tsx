@@ -1368,9 +1368,31 @@ export default function Dashboard() {
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => [
-                  `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
-                ]} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const data = payload[0]?.payload;
+                    if (!data) return null;
+                    const totalHrs = externalCausas.reduce((s: number, c: any) => s + c.hours, 0);
+                    return (
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Causas Externas</strong>
+                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                          <div>Total de horas perdidas: <strong>{totalHrs}h</strong></div>
+                          {externalCausas.map((causa: any, i: number) => {
+                            const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
+                            return (
+                              <div key={causa.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[i % colors.length], display: "inline-block", flexShrink: 0 }} />
+                                <span>{causa.name}: {causa.hours}h ({causa.percent}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend
                   wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }}
                   formatter={(value: string) => {
