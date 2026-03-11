@@ -1177,7 +1177,7 @@ export default function Dashboard() {
                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total} amostras</strong></div>
+                        <div>Total: <strong>{total}</strong></div>
                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
                           const pct = data[desc] || 0;
                           const raw = data[`raw_${desc}`] || 0;
