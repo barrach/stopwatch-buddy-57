@@ -1230,10 +1230,37 @@ export default function Dashboard() {
                   );
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-              <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+              <Legend
+                content={() => (
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-3">
+                    {[
+                      { label: "Produtivo", color: "#16A34A" },
+                      { label: "Suplementar", color: "#F59E0B" },
+                      { label: "Não Produtivo", color: "#DC2626" },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-1.5">
+                        <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.color, display: "inline-block" }} />
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              />
+              <Bar dataKey="productive" name="Produtivo" stackId="a" className="cursor-pointer">
+                {bySpecialty.map((entry) => (
+                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={1} />
+                ))}
+              </Bar>
+              <Bar dataKey="supplementary" name="Suplementar" stackId="a" className="cursor-pointer">
+                {bySpecialty.map((entry) => (
+                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.55} />
+                ))}
+              </Bar>
+              <Bar dataKey="unproductive" name="Não Produtivo" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                {bySpecialty.map((entry) => (
+                  <Cell key={entry.name} fill={getSpecialtyColor(entry.name)} fillOpacity={0.25} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
