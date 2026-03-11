@@ -558,6 +558,7 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
                 <TableHead className="text-xs font-semibold">Rota</TableHead>
                 <TableHead className="text-xs font-semibold">Especialidade</TableHead>
+                <TableHead className="text-xs font-semibold">Função</TableHead>
                 <TableHead className="text-xs font-semibold">Categoria</TableHead>
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
