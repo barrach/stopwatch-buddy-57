@@ -1356,21 +1356,13 @@ export default function Dashboard() {
                     if (!active || !payload?.length) return null;
                     const data = payload[0]?.payload;
                     if (!data) return null;
-                    const totalHrs = externalCausas.reduce((s: number, c: any) => s + c.hours, 0);
+                    const idx = externalCausas.findIndex((c: any) => c.name === data.name);
+                    const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return (
-                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Causas Externas</strong>
-                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                          <div>Total de horas perdidas: <strong>{totalHrs}h</strong></div>
-                          {externalCausas.map((causa: any, i: number) => {
-                            const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
-                            return (
-                              <div key={causa.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[i % colors.length], display: "inline-block", flexShrink: 0 }} />
-                                <span>{causa.name}: {causa.hours}h ({causa.percent}%)</span>
-                              </div>
-                            );
-                          })}
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[idx >= 0 ? idx % colors.length : 0], display: "inline-block", flexShrink: 0 }} />
+                          <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
                         </div>
                       </div>
                     );
