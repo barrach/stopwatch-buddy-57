@@ -1277,7 +1277,7 @@ export default function Dashboard() {
                      ))}
                      <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
-                   <Line yAxisId="right" type="monotone" dataKey="cumPercent" name="% Acumulado" stroke="#2563EB" strokeWidth={2} dot={{ r: 3, fill: "#2563EB" }} />
+                   
                 </ComposedChart>
               </ResponsiveContainer>
             )}
