@@ -20,7 +20,6 @@ serve(async (req) => {
     let userPrompt = "";
 
     if (type === "suggest") {
-      // Sugestão automática de categoria/descrição
       systemPrompt = `Você é um assistente especializado em medição de produtividade de obras de engenharia.
 Sua tarefa é sugerir a categoria e descrição mais adequadas para uma observação de campo com base no contexto fornecido.
 
@@ -28,6 +27,7 @@ Categorias disponíveis e suas descrições:
 - Produtivo: Trabalhando, Planejando
 - Suplementar: Aguardando Instruções, Assistindo, Aguardando Ferramenta ou Material, Aguardando Liberação, Transitando no local de trabalho - com ferramenta, Transitando no local de trabalho - sem ferramenta, Transitando fora do local de trabalho - com ferramenta, Transitando fora do local de trabalho - sem ferramenta
 - Não Produtivo: Pessoal, Ocioso
+- Não Produtivo Externo: Causas Naturais, Vazamento / Interferência da Planta, Cliente
 
 Responda APENAS em JSON válido com este formato exato:
 {"categoria": "nome da categoria pai", "descricao": "nome da subcategoria", "justificativa": "breve justificativa em português"}`;
@@ -40,35 +40,62 @@ Responda APENAS em JSON válido com este formato exato:
 - Notas adicionais: ${context.notas || "nenhuma"}
 
 Qual categoria e descrição você sugere para esta observação?`;
+
     } else if (type === "report") {
-      // Relatório inteligente das observações
       systemPrompt = `Você é um especialista em análise de produtividade de obras de engenharia industrial.
 Analise os dados de observações fornecidos e gere um relatório executivo em português com insights acionáveis.
 
+IMPORTANTE — Regras de cálculo de produtividade:
+- Existem 4 categorias principais: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
+- "Não Produtivo Externo" (NPE) são eventos fora do controle da equipe (ex: Causas Naturais, Vazamento, Cliente).
+- O cálculo de produtividade EXCLUI os registros de NPE da base de cálculo.
+- Fórmula: Produtividade = Produtivo / (Total - NPE) × 100
+- Suplementar% = Suplementar / (Total - NPE) × 100
+- Não Produtivo% = Não Produtivo / (Total - NPE) × 100
+- Os percentuais de Produtivo + Suplementar + Não Produtivo devem somar ~100% (base controlável).
+- NPE é reportado separadamente como % do total bruto.
+
 Estruture o relatório com:
-1. **Resumo Executivo** (2-3 frases sobre o cenário geral)
-2. **Pontos de Atenção** (principais problemas identificados com base nos dados)
-3. **Especialidades em Destaque** (especialidades com melhor e pior performance)
-4. **Recomendações** (3-5 ações concretas para melhorar a produtividade)
-5. **Tendências** (padrões observados nos dados)
+1. **Resumo Executivo** (2-3 frases com os números reais de produtividade)
+2. **Indicadores Principais** (produtividade, suplementar, não produtivo, causas externas — com números)
+3. **Pontos de Atenção** (principais problemas identificados)
+4. **Análise por Especialidade** (destaques positivos e negativos)
+5. **Análise por Função** (funções com melhor e pior performance)
+6. **Análise por Horário** (padrões de produtividade ao longo do dia)
+7. **Causas Externas** (análise das paradas externas se houver)
+8. **Recomendações** (3-5 ações concretas e específicas)
 
-Use linguagem objetiva e profissional. Seja específico com os números.`;
+Use linguagem objetiva e profissional. Seja preciso com os números. Não invente dados.`;
 
-      userPrompt = `Dados do período analisado:
-- Total de amostras: ${context.totalAmostras}
-- Produtivo: ${context.produtivo} amostras (${context.produtivoPct}%)
-- Suplementar: ${context.suplementar} amostras (${context.suplementarPct}%)
-- Não Produtivo: ${context.naoProdutivo} amostras (${context.naoProdutivoPct}%)
-- Período: ${context.periodo}
-- Contrato/Obra: ${context.obra || "Todos"}
+      const c = context;
+      userPrompt = `Dados do período analisado (${c.periodo}):
+Contrato/Obra: ${c.obra || "Todos"}
 
-Distribuição por especialidade:
-${context.porEspecialidade || "Não disponível"}
+TOTAIS:
+- Total bruto de amostras: ${c.totalAmostras}
+- Total controlável (excluindo NPE): ${c.totalControlaveis}
+- Produtivo: ${c.produtivo} amostras (${c.produtivoPct}% da base controlável)
+- Suplementar: ${c.suplementar} amostras (${c.suplementarPct}% da base controlável)
+- Não Produtivo: ${c.naoProdutivo} amostras (${c.naoProdutivoPct}% da base controlável)
+- Não Produtivo Externo (NPE): ${c.externo} amostras (${c.externoPct}% do total bruto)
 
-Top categorias de observação:
-${context.topCategorias || "Não disponível"}
+PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
+${c.porEspecialidade || "Não disponível"}
 
-Gere um relatório executivo completo com base nesses dados.`;
+PRODUTIVIDADE POR FUNÇÃO (excluindo NPE):
+${c.porFuncao || "Não disponível"}
+
+PRODUTIVIDADE POR HORÁRIO (excluindo NPE):
+${c.porHorario || "Não disponível"}
+
+TODAS AS DESCRIÇÕES (ranking por volume):
+${c.topCategorias || "Não disponível"}
+
+CAUSAS EXTERNAS (NPE):
+${c.causasExternas || "Nenhuma registrada"}
+
+Gere um relatório executivo completo e preciso com base nesses dados. Use EXATAMENTE os percentuais fornecidos.`;
+
     } else {
       return new Response(JSON.stringify({ error: "Tipo inválido. Use 'suggest' ou 'report'." }), {
         status: 400,
@@ -111,17 +138,14 @@ Gere um relatório executivo completo com base nesses dados.`;
     }
 
     if (type === "report") {
-      // Streaming for reports
       return new Response(response.body, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
     }
 
-    // Non-streaming for suggestions
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from suggestion
     let suggestion;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
