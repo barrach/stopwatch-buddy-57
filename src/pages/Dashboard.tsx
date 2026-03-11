@@ -1228,7 +1228,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 6) Amostras por Horário — chronological + stacked */}
+        {/* 6) Amostras por Horário — chronological + stacked by description */}
         <div className={chartCardClass("horario")}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Amostras por Horário
@@ -1240,11 +1240,46 @@ export default function Dashboard() {
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => [`${value}`, name]} />
+               <Tooltip
+                 content={({ active, payload }) => {
+                   if (!active || !payload?.length) return null;
+                   const data = payload[0]?.payload;
+                   if (!data) return null;
+                   const total = data.total || 0;
+                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
+                   return (
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
+                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                         <div>Total: <strong>{total} amostras</strong></div>
+                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
+                           const qty = data[desc] || 0;
+                           if (qty === 0) return null;
+                           const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+                           return (
+                             <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                               <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                               <span>{desc}: {qty} ({pct}%)</span>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   );
+                 }}
+               />
                <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-               <Bar dataKey="productive" name="Produtivo" fill="#16A34A" stackId="a" className="cursor-pointer" />
-               <Bar dataKey="supplementary" name="Suplementar" fill="#F59E0B" stackId="a" className="cursor-pointer" />
-               <Bar dataKey="unproductive" name="Não Produtivo" fill="#DC2626" stackId="a" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+               {allDescriptions.map((desc, i) => (
+                 <Bar
+                   key={desc}
+                   dataKey={desc}
+                   name={desc}
+                   fill={getDescriptionCategoryColor("", desc)}
+                   stackId="a"
+                   className="cursor-pointer"
+                   radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                 />
+               ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
