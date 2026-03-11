@@ -484,24 +484,28 @@ export default function Dashboard() {
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records, isExternalRecord]);
 
-  // 6) By Time — chronological order
+  // 6) By Time — description-level breakdown, chronological order
   const byTime = useMemo(() => {
-    const result: Record<string, { total: number; productive: number; supplementary: number; unproductive: number }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from time-based productivity
+      if (isExternalRecord(r)) return;
       const t = r.horario || "";
-      if (!result[t]) result[t] = { total: 0, productive: 0, supplementary: 0, unproductive: 0 };
+      if (!result[t]) result[t] = {};
+      const desc = r.descricao || "Sem descrição";
       const qty = r.quantidade || 0;
-      result[t].total += qty;
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[t].productive += qty;
-      else if (cat === "Suplementar") result[t].supplementary += qty;
-      else result[t].unproductive += qty;
+      result[t][desc] = (result[t][desc] || 0) + qty;
     });
     return Object.entries(result)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
-      .map(([time, v]) => ({ time, ...v }));
-  }, [records, getParentCatName, isExternalRecord]);
+      .map(([time, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { time, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = qty;
+        }
+        return row;
+      });
+  }, [records, isExternalRecord]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
