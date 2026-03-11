@@ -1069,9 +1069,9 @@ export default function Dashboard() {
                    <YAxis yAxisId="right" hide />
                    <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
-                     return [`${value}% (${entry.payload.value} amostras)`, "Amostras"];
+                     return [`${value}%`, entry.payload.name];
                    }} />
-                   <Bar dataKey="percent" name="Amostras" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                   <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
                        <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
