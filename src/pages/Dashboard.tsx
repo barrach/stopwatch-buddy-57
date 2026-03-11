@@ -971,20 +971,35 @@ export default function Dashboard() {
             {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
           </h3>
           <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip content={<ContratoTooltip />} />
-              <Legend wrapperStyle={{ fontSize: "11px", color: "#F9FAFB" }} />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={byObra} margin={{ bottom: 20 }} onClick={handleContratoClick}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip content={<ContratoTooltip />} />
+                  {allDescriptions.map((desc, i) => (
+                    <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
+                      radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Legenda lateral */}
+            <div className="lg:w-48 flex flex-col gap-1.5">
               {allDescriptions.map((desc, i) => (
-                <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
-                />
+                <div key={desc} className="flex items-center gap-2">
+                  <span 
+                    className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
+                    style={{ backgroundColor: DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length] }}
+                  />
+                  <span className="text-[11px] text-muted-foreground leading-tight">{desc}</span>
+                </div>
               ))}
-            </BarChart>
-          </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* Row: Pie + Pareto */}
