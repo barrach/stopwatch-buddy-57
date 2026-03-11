@@ -1364,10 +1364,13 @@ export default function Dashboard() {
         {/* Causas Externas de Parada */}
         {externalCausas.length > 0 && (
           <div className="stat-card animate-fade-in mb-6">
-            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CloudRain className="w-4 h-4 text-muted-foreground" />
-              Causas Externas de Parada
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <CloudRain className="w-4 h-4 text-muted-foreground" />
+                Causas Externas de Parada
+              </h3>
+              <ZoomButton onClick={() => setZoomChart("externas")} />
+            </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
             
             {/* Summary: total lost hours */}
