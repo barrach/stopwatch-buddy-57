@@ -770,23 +770,23 @@ export default function Dashboard() {
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
-    const data = payload[0]?.payload;
-    if (!data) return null;
-    const entries = allDescriptions
-      .filter(desc => (data[`raw_${desc}`] || 0) > 0)
-      .map(desc => ({ desc, raw: data[`raw_${desc}`] as number, pct: data[desc] as number }))
-      .sort((a, b) => b.raw - a.raw);
+    const hovered = payload.find((p: any) => p?.dataKey && p?.payload);
+    const item = hovered || payload[0];
+    const data = item?.payload;
+    if (!data || !item) return null;
+
+    const desc = item.dataKey as string;
+    const raw = data[`raw_${desc}`] || 0;
+    const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+
     return (
-      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220, maxWidth: 320 }}>
+      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
         <strong style={{ fontSize: 13, marginBottom: 8, display: "block" }}>{data.name}</strong>
-        <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{data.total}</strong></div>
-        {entries.map(({ desc, raw, pct }) => (
-          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
-            <span style={{ flex: 1 }}>{desc}</span>
-            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-          </div>
-        ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{desc}</span>
+          <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+        </div>
       </div>
     );
   };
@@ -977,7 +977,7 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip content={<ContratoTooltip />} />
+                  <Tooltip content={<ContratoTooltip />} shared={false} />
                   {allDescriptions.map((desc, i) => (
                     <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
                       radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
@@ -1198,28 +1198,25 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                <Tooltip
+                shared={false}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
-                  const total = data.total || 0;
-                  const descs = Object.keys(data).filter(k => k !== "name" && k !== "total" && !k.startsWith("raw_"));
+                  const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+
+                  const desc = item.dataKey as string;
+                  const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                  const raw = data[`raw_${desc}`] || 0;
+
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
-                      {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                        const pct = data[desc] || 0;
-                        const raw = data[`raw_${desc}`] || 0;
-                        if (pct === 0) return null;
-                        return (
-                          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                            <span style={{ flex: 1 }}>{desc}</span>
-                            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-                          </div>
-                        );
-                      })}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{desc}</span>
+                        <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                      </div>
                     </div>
                   );
                 }}
@@ -1408,28 +1405,26 @@ export default function Dashboard() {
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                <Tooltip
+                 shared={false}
                  content={({ active, payload }) => {
                    if (!active || !payload?.length) return null;
-                   const data = payload[0]?.payload;
-                   if (!data) return null;
+                   const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                   const data = item?.payload;
+                   if (!data || !item) return null;
+
+                   const desc = item.dataKey as string;
+                   const qty = typeof item.value === "number" ? item.value : data[desc] || 0;
                    const total = data.total || 0;
-                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
+                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+
                    return (
-                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
-                       <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
-                       {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                         const qty = data[desc] || 0;
-                         if (qty === 0) return null;
-                         const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
-                         return (
-                           <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
-                             <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                             <span style={{ flex: 1 }}>{desc}</span>
-                             <span style={{ fontWeight: 600 }}>{qty} ({pct}%)</span>
-                           </div>
-                         );
-                       })}
+                       <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
+                         <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                         <span style={{ flex: 1 }}>{desc}</span>
+                         <span style={{ fontWeight: 600 }}>{qty} ({pct}%)</span>
+                       </div>
                      </div>
                    );
                  }}
