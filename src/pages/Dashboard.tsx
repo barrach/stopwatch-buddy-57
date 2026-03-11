@@ -1013,11 +1013,16 @@ export default function Dashboard() {
 
         {/* 2) Visão Geral por Contrato — enhanced tooltip */}
         <div className={chartCardClass("contrato")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Visão Geral por Contrato
-            {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Visão Geral por Contrato
+                {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("contrato")} />
+          </div>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <ResponsiveContainer width="100%" height={300}>
