@@ -1022,10 +1022,26 @@ export default function Dashboard() {
                     />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
-                  const total = categoryTotals.reduce((s, c) => s + c.value, 0);
-                  return [`${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%`, name];
-                }} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const total = categoryTotals.reduce((s, c) => s + c.value, 0);
+                    return (
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Distribuição por Categoria</strong>
+                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                          <div>Total: <strong>{total}</strong></div>
+                          {categoryTotals.sort((a, b) => b.value - a.value).map(cat => (
+                            <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: CATEGORY_COLORS[cat.name] || "#666", display: "inline-block", flexShrink: 0 }} />
+                              <span>{cat.name}: {cat.value} ({total > 0 ? ((cat.value / total) * 100).toFixed(1) : 0}%)</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
