@@ -1265,7 +1265,7 @@ export default function Dashboard() {
                              <div>Categoria: <strong>{data.cat}</strong></div>
                              <div>Quantidade: <strong>{data.value}</strong></div>
                              <div>Percentual: <strong>{data.percent}%</strong></div>
-                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                             
                            </div>
                          </div>
                        );
