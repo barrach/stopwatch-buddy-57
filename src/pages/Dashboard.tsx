@@ -1022,10 +1022,26 @@ export default function Dashboard() {
                     />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
-                  const total = categoryTotals.reduce((s, c) => s + c.value, 0);
-                  return [`${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%`, name];
-                }} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const total = categoryTotals.reduce((s, c) => s + c.value, 0);
+                    return (
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Distribuição por Categoria</strong>
+                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                          <div>Total: <strong>{total}</strong></div>
+                          {categoryTotals.sort((a, b) => b.value - a.value).map(cat => (
+                            <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: CATEGORY_COLORS[cat.name] || "#666", display: "inline-block", flexShrink: 0 }} />
+                              <span>{cat.name}: {cat.value} ({total > 0 ? ((cat.value / total) * 100).toFixed(1) : 0}%)</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
@@ -1067,10 +1083,26 @@ export default function Dashboard() {
                    <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
                      tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
-                     if (name === "% Acumulado") return [`${value}%`, name];
-                     return [`${value}%`, entry.payload.name];
-                   }} />
+                   <Tooltip
+                     content={({ active, payload }) => {
+                       if (!active || !payload?.length) return null;
+                       const data = payload[0]?.payload;
+                       if (!data) return null;
+                       return (
+                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: paretoMode === "especialidade" ? getSpecialtyColor(data.name) : (DESCRIPTION_COLORS[data.name] || PIE_COLORS[0]), display: "inline-block", flexShrink: 0 }} />
+                             <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                           </div>
+                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                             <div>Percentual: <strong>{data.percent}%</strong></div>
+                             <div>Quantidade: <strong>{data.value}</strong></div>
+                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                           </div>
+                         </div>
+                       );
+                     }}
+                   />
                    <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
                        <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
@@ -1235,11 +1267,27 @@ export default function Dashboard() {
                    }} interval={0} height={80} />
                    <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
-                     if (name === "% Acumulado") return [`${value}%`, name];
-                     const item = nonprodCausas.find(c => c.value === value);
-                     return [`${value} (${item?.percent || 0}%) — ${item?.cat || ""}`, item?.name || ""];
-                   }} />
+                   <Tooltip
+                     content={({ active, payload }) => {
+                       if (!active || !payload?.length) return null;
+                       const data = payload[0]?.payload;
+                       if (!data) return null;
+                       return (
+                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: data.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+                             <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                           </div>
+                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                             <div>Categoria: <strong>{data.cat}</strong></div>
+                             <div>Quantidade: <strong>{data.value}</strong></div>
+                             <div>Percentual: <strong>{data.percent}%</strong></div>
+                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                           </div>
+                         </div>
+                       );
+                     }}
+                   />
                    <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
@@ -1320,9 +1368,31 @@ export default function Dashboard() {
                     return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
                   })}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => [
-                  `${value} amostras · ${entry.payload.hours}h perdida${entry.payload.hours !== 1 ? "s" : ""} · ${entry.payload.percent}%`, "Causa externa"
-                ]} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const data = payload[0]?.payload;
+                    if (!data) return null;
+                    const totalHrs = externalCausas.reduce((s: number, c: any) => s + c.hours, 0);
+                    return (
+                      <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>Causas Externas</strong>
+                        <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                          <div>Total de horas perdidas: <strong>{totalHrs}h</strong></div>
+                          {externalCausas.map((causa: any, i: number) => {
+                            const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
+                            return (
+                              <div key={causa.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[i % colors.length], display: "inline-block", flexShrink: 0 }} />
+                                <span>{causa.name}: {causa.hours}h ({causa.percent}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend
                   wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }}
                   formatter={(value: string) => {
