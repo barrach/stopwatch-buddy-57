@@ -629,7 +629,7 @@ export default function Records() {
               })}
               {paginated.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
