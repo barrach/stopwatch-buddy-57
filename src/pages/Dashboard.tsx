@@ -1150,22 +1150,29 @@ export default function Dashboard() {
                <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const item = payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
-                  const key = item.dataKey as string;
-                  const labelMap: Record<string, string> = { productive: "Produtivo", supplementary: "Suplementar", unproductive: "Não Produtivo" };
-                  const colorMap: Record<string, string> = { productive: "#16A34A", supplementary: "#F59E0B", unproductive: "#DC2626" };
+                  const data = payload[0]?.payload;
+                  if (!data) return null;
                   const total = data.total || 0;
-                  const pct = data[key] || 0;
-                  const qty = total > 0 ? Math.round(pct * total / 100) : 0;
+                  const items = [
+                    { key: "productive", label: "Produtivo", color: "#16A34A" },
+                    { key: "supplementary", label: "Suplementar", color: "#F59E0B" },
+                    { key: "unproductive", label: "Não Produtivo", color: "#DC2626" },
+                  ].filter(i => (data[i.key] || 0) > 0);
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                       <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colorMap[key] || item.fill, display: "inline-block", flexShrink: 0 }} />
-                        <span>{labelMap[key] || key}: {pct}% ({qty})</span>
-                      </div>
+                      <div style={{ fontSize: 11, marginBottom: 6 }}>Total: <strong>{total}</strong></div>
+                      {items.map(({ key, label, color }) => {
+                        const pct = data[key] || 0;
+                        const qty = total > 0 ? Math.round(pct * total / 100) : 0;
+                        return (
+                          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color, display: "inline-block", flexShrink: 0 }} />
+                            <span style={{ flex: 1 }}>{label}</span>
+                            <span style={{ fontWeight: 600 }}>{pct}% ({qty})</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }}
