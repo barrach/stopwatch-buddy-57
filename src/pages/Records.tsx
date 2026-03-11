@@ -196,6 +196,7 @@ export default function Records() {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
     if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
     if (filterObra !== "all" && r.obra_id !== filterObra) return false;
+    if (filterFuncao !== "all" && r.funcao_id !== filterFuncao) return false;
     if (filterDateStart && r.data < filterDateStart) return false;
     if (filterDateEnd && r.data > filterDateEnd) return false;
     if (search) {
