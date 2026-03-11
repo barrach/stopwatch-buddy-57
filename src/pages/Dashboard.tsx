@@ -1267,11 +1267,27 @@ export default function Dashboard() {
                    }} interval={0} height={80} />
                    <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
-                     if (name === "% Acumulado") return [`${value}%`, name];
-                     const item = nonprodCausas.find(c => c.value === value);
-                     return [`${value} (${item?.percent || 0}%) — ${item?.cat || ""}`, item?.name || ""];
-                   }} />
+                   <Tooltip
+                     content={({ active, payload }) => {
+                       if (!active || !payload?.length) return null;
+                       const data = payload[0]?.payload;
+                       if (!data) return null;
+                       return (
+                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: data.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+                             <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                           </div>
+                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                             <div>Categoria: <strong>{data.cat}</strong></div>
+                             <div>Quantidade: <strong>{data.value}</strong></div>
+                             <div>Percentual: <strong>{data.percent}%</strong></div>
+                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                           </div>
+                         </div>
+                       );
+                     }}
+                   />
                    <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
