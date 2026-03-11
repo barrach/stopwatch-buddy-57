@@ -1238,9 +1238,9 @@ export default function Dashboard() {
                    <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string) => {
                      if (name === "% Acumulado") return [`${value}%`, name];
                      const item = nonprodCausas.find(c => c.value === value);
-                     return [`${value} amostras (${item?.percent || 0}%) — ${item?.cat || ""}`, ""];
+                     return [`${value} (${item?.percent || 0}%) — ${item?.cat || ""}`, item?.name || ""];
                    }} />
-                   <Bar dataKey="value" name="Amostras" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                   <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
