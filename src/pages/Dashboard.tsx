@@ -1083,10 +1083,26 @@ export default function Dashboard() {
                    <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
                      tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
-                   <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: "#F9FAFB" }} formatter={(value: number, name: string, entry: any) => {
-                     if (name === "% Acumulado") return [`${value}%`, name];
-                     return [`${value}%`, entry.payload.name];
-                   }} />
+                   <Tooltip
+                     content={({ active, payload }) => {
+                       if (!active || !payload?.length) return null;
+                       const data = payload[0]?.payload;
+                       if (!data) return null;
+                       return (
+                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: paretoMode === "especialidade" ? getSpecialtyColor(data.name) : (DESCRIPTION_COLORS[data.name] || PIE_COLORS[0]), display: "inline-block", flexShrink: 0 }} />
+                             <strong style={{ fontSize: 13 }}>{data.name}</strong>
+                           </div>
+                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                             <div>Percentual: <strong>{data.percent}%</strong></div>
+                             <div>Quantidade: <strong>{data.value}</strong></div>
+                             <div>Acumulado: <strong>{data.cumPercent}%</strong></div>
+                           </div>
+                         </div>
+                       );
+                     }}
+                   />
                    <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
                        <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
