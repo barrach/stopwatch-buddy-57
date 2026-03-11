@@ -1340,8 +1340,7 @@ export default function Dashboard() {
                        </text>
                      );
                    }} interval={0} height={80} />
-                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} />
-                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} unit="%" />
+                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                    <Tooltip
                      content={({ active, payload }) => {
                        if (!active || !payload?.length) return null;
@@ -1357,13 +1356,12 @@ export default function Dashboard() {
                              <div>Categoria: <strong>{data.cat}</strong></div>
                              <div>Quantidade: <strong>{data.value}</strong></div>
                              <div>Percentual: <strong>{data.percent}%</strong></div>
-                             
                            </div>
                          </div>
                        );
                      }}
                    />
-                   <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                   <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
                      {nonprodCausas.map((item, i) => (
                        <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
                      ))}
@@ -1500,7 +1498,7 @@ export default function Dashboard() {
             <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
                <Tooltip
                  shared={false}
                  content={({ active, payload }) => {
