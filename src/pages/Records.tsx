@@ -44,6 +44,7 @@ export default function Records() {
   const [filterEspecialidade, setFilterEspecialidade] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
+  const [filterFuncao, setFilterFuncao] = useState("all");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
   const [importing, setImporting] = useState(false);
