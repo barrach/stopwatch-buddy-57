@@ -1395,26 +1395,19 @@ export default function Dashboard() {
                <Tooltip
                  content={({ active, payload }) => {
                    if (!active || !payload?.length) return null;
-                   const data = payload[0]?.payload;
-                   if (!data) return null;
+                   const item = payload[0];
+                   const data = item?.payload;
+                   if (!data || !item) return null;
+                   const desc = item.dataKey as string;
+                   const qty = data[desc] || 0;
                    const total = data.total || 0;
-                   const descs = Object.keys(data).filter(k => k !== "time" && k !== "total");
+                   const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
                    return (
-                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 220 }}>
+                     <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.time}</strong>
-                       <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                         <div>Total: <strong>{total} amostras</strong></div>
-                         {descs.sort((a, b) => (data[b] || 0) - (data[a] || 0)).map(desc => {
-                           const qty = data[desc] || 0;
-                           if (qty === 0) return null;
-                           const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
-                           return (
-                             <div key={desc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                               <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                               <span>{desc}: {qty} ({pct}%)</span>
-                             </div>
-                           );
-                         })}
+                       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                         <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                         <span>{desc}: {qty} ({pct}%)</span>
                        </div>
                      </div>
                    );
