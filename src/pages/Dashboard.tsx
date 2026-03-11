@@ -977,7 +977,7 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip content={<ContratoTooltip />} />
+                  <Tooltip content={<ContratoTooltip />} shared={false} />
                   {allDescriptions.map((desc, i) => (
                     <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
                       radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
