@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain } from "lucide-react";
+import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -147,6 +148,7 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [zoomChart, setZoomChart] = useState<string | null>(null);
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
     const today = new Date();
@@ -1011,11 +1013,16 @@ export default function Dashboard() {
 
         {/* 2) Visão Geral por Contrato — enhanced tooltip */}
         <div className={chartCardClass("contrato")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Visão Geral por Contrato
-            {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Visão Geral por Contrato
+                {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("contrato")} />
+          </div>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <ResponsiveContainer width="100%" height={300}>
@@ -1051,11 +1058,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Distribution Pie */}
           <div className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Distribuição por Categoria
-              {crossFilters.categoria && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.categoria}</span>}
-            </h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Clique em uma fatia para filtrar</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Distribuição por Categoria
+                  {crossFilters.categoria && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.categoria}</span>}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma fatia para filtrar</p>
+              </div>
+              <ZoomButton onClick={() => setZoomChart("categoria")} />
+            </div>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
@@ -1109,7 +1121,8 @@ export default function Dashboard() {
                 </h3>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar</p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                <ZoomButton onClick={() => setZoomChart("pareto")} />
                 <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
                 {(["categoria", "especialidade", "funcao"] as ParetoMode[]).map(mode => (
                   <button key={mode} onClick={() => handleParetoModeChange(mode)}
@@ -1171,11 +1184,16 @@ export default function Dashboard() {
 
         {/* 3) Produtividade por Especialidade */}
         <div className={chartCardClass("especialidade")}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Produtividade por Especialidade
-            {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Produtividade por Especialidade
+                {crossFilters.especialidade && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.especialidade}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Ordenado por produtividade (maior → menor) — clique para filtrar</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("especialidade")} />
+          </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1223,11 +1241,16 @@ export default function Dashboard() {
 
         {/* 4) Produtividade por Função */}
         <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            Produtividade por Função
-            {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Ordenado por produtividade — clique para filtrar</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Produtividade por Função
+                {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Ordenado por produtividade — clique para filtrar</p>
+            </div>
+            <ZoomButton onClick={() => setZoomChart("funcao")} />
+          </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1277,8 +1300,13 @@ export default function Dashboard() {
         <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
           <div className={`stat-card animate-fade-in transition-all`}>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Causas de Não Produtividade</h3>
-            <p className="text-[10px] text-muted-foreground mb-2">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Causas de Não Produtividade</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
+              </div>
+              <ZoomButton onClick={() => setZoomChart("naoprod")} />
+            </div>
             {nonprodCausas.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
                 <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
@@ -1337,10 +1365,13 @@ export default function Dashboard() {
         {/* Causas Externas de Parada */}
         {externalCausas.length > 0 && (
           <div className="stat-card animate-fade-in mb-6">
-            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CloudRain className="w-4 h-4 text-muted-foreground" />
-              Causas Externas de Parada
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <CloudRain className="w-4 h-4 text-muted-foreground" />
+                Causas Externas de Parada
+              </h3>
+              <ZoomButton onClick={() => setZoomChart("externas")} />
+            </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
             
             {/* Summary: total lost hours */}
@@ -1436,7 +1467,8 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex items-center gap-2">
+              <ZoomButton onClick={() => setZoomChart("tempo")} />
               {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
                 <Button
                   key={key}
@@ -1494,6 +1526,279 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+
+        {/* ── Zoom Dialogs ───────────────────────────────────────── */}
+        {/* Contrato */}
+        <ChartZoomDialog title="Visão Geral por Contrato" subtitle="Clique em uma barra para filtrar" open={zoomChart === "contrato"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <div className="flex flex-col lg:flex-row gap-4 h-full">
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={byObra} margin={{ bottom: 30 }} onClick={handleContratoClick}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip content={<ContratoTooltip />} shared={false} />
+                  {allDescriptions.map((desc, i) => (
+                    <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
+                      radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="lg:w-52 flex flex-col gap-1.5 overflow-auto">
+              {allDescriptions.map((desc, i) => (
+                <div key={desc} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <span className="text-xs text-muted-foreground leading-tight">{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ChartZoomDialog>
+
+        {/* Categoria Pie */}
+        <ChartZoomDialog title="Distribuição por Categoria" subtitle="Clique em uma fatia para filtrar" open={zoomChart === "categoria"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={100} outerRadius={180} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
+                {categoryTotals.map((entry) => (
+                  <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
+                    opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1} />
+                ))}
+              </Pie>
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const entry = payload[0].payload;
+                const total = categoryTotals.reduce((s, c) => s + c.value, 0);
+                const pct = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0";
+                return (
+                  <div style={{ ...tooltipStyle, padding: "10px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[entry.name] || "#666", display: "inline-block" }} />
+                      <span><strong>{entry.name}</strong>: {entry.value} ({pct}%)</span>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Legend content={() => (
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
+                  {categoryTotals.filter(c => c.value > 0).map(cat => (
+                    <div key={cat.name} className="flex items-center gap-2 cursor-pointer" onClick={() => toggleCrossFilter("categoria", cat.name)}>
+                      <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: CATEGORY_COLORS[cat.name] || "#666", display: "inline-block" }} />
+                      <span className="text-sm text-muted-foreground">{cat.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Pareto */}
+        <ChartZoomDialog title={`Top Causas (Pareto) — ${paretoLabel}`} subtitle="Clique em uma barra para filtrar" open={zoomChart === "pareto"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={paretoData} layout="vertical" margin={{ left: 20, right: 80 }} onClick={handleParetoClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 12, fill: TICK_COLOR }} />
+              <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 12, fill: TICK_COLOR }} />
+              <YAxis yAxisId="right" hide />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const data = payload[0]?.payload;
+                if (!data) return null;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <strong style={{ fontSize: 14 }}>{data.name}</strong>
+                    <div style={{ fontSize: 12, lineHeight: 1.8, marginTop: 6 }}>
+                      <div>Percentual: <strong>{data.percent}%</strong></div>
+                      <div>Quantidade: <strong>{data.value}</strong></div>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
+                {paretoData.map((item, i) => (
+                  <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
+                    opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
+                ))}
+                <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 12, fill: TICK_COLOR }} />
+              </Bar>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Especialidade */}
+        <ChartZoomDialog title="Produtividade por Especialidade" subtitle="Ordenado por produtividade — clique para filtrar" open={zoomChart === "especialidade"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={bySpecialty} margin={{ bottom: 40 }} onClick={handleSpecialtyClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip shared={false} content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                const data = item?.payload;
+                if (!data || !item) return null;
+                const desc = item.dataKey as string;
+                const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                const raw = data[`raw_${desc}`] || 0;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <strong style={{ fontSize: 14, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 12 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block" }} />
+                      <span style={{ flex: 1 }}>{desc}</span>
+                      <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
+              {allDescriptions.map((desc, i) => (
+                <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Função */}
+        <ChartZoomDialog title="Produtividade por Função" subtitle="Ordenado por produtividade — clique para filtrar" open={zoomChart === "funcao"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={byFunction} margin={{ bottom: 40 }} onClick={handleFunctionClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip shared={false} content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                const data = item?.payload;
+                if (!data || !item) return null;
+                const desc = item.dataKey as string;
+                const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                const raw = data[`raw_${desc}`] || 0;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <strong style={{ fontSize: 14, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 12 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block" }} />
+                      <span style={{ flex: 1 }}>{desc}</span>
+                      <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
+              {allDescriptions.map((desc, i) => (
+                <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Não Produtividade */}
+        <ChartZoomDialog title="Causas de Não Produtividade" subtitle="Registros Suplementar e Não Produtivo" open={zoomChart === "naoprod"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 80 }} onClick={handleNonprodClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="name" tick={(props: any) => {
+                const { x, y, payload } = props;
+                return (
+                  <text x={x} y={y + 10} textAnchor="end" fill={TICK_COLOR} fontSize={11} transform={`rotate(-45, ${x}, ${y})`}>
+                    {payload.value.length > 30 ? payload.value.slice(0, 30) + "…" : payload.value}
+                  </text>
+                );
+              }} interval={0} height={100} />
+              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const data = payload[0]?.payload;
+                if (!data) return null;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <strong style={{ fontSize: 14 }}>{data.name}</strong>
+                    <div style={{ fontSize: 12, lineHeight: 1.8, marginTop: 6 }}>
+                      <div>Categoria: <strong>{data.cat}</strong></div>
+                      <div>Quantidade: <strong>{data.value}</strong></div>
+                      <div>Percentual: <strong>{data.percent}%</strong></div>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                {nonprodCausas.map((item, i) => (
+                  <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
+                ))}
+                <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 11, fill: TICK_COLOR }} />
+              </Bar>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Causas Externas */}
+        <ChartZoomDialog title="Causas Externas de Parada" subtitle="Eventos fora do controle da equipe" open={zoomChart === "externas"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={externalCausas} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={200}
+                label={({ name, payload, x, y, textAnchor }: any) => (
+                  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={13} fontWeight={500}>
+                    {name} ({payload.percent.toFixed(1)}%)
+                  </text>
+                )} labelLine={{ stroke: "#6B7280" }}>
+                {externalCausas.map((_: any, i: number) => {
+                  const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
+                  return <Cell key={i} fill={colors[i % colors.length]} />;
+                })}
+              </Pie>
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const data = payload[0]?.payload;
+                if (!data) return null;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                    <strong>{data.name}</strong>: {data.hours}h ({data.percent}%)
+                  </div>
+                );
+              }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
+
+        {/* Tempo */}
+        <ChartZoomDialog title={timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"} subtitle="% de produtividade — clique para filtrar" open={zoomChart === "tempo"} onOpenChange={(o) => !o && setZoomChart(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+              <XAxis dataKey="time" tick={{ fontSize: 12, fill: TICK_COLOR }} />
+              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
+              <Tooltip shared={false} content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                const data = item?.payload;
+                if (!data || !item) return null;
+                const desc = item.dataKey as string;
+                const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                const rawQty = data[`raw_${desc}`] || 0;
+                return (
+                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
+                    <strong style={{ fontSize: 14, display: "block", marginBottom: 8 }}>{data.time}</strong>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 12 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block" }} />
+                      <span style={{ flex: 1 }}>{desc}</span>
+                      <span style={{ fontWeight: 600 }}>{rawQty} ({pct}%)</span>
+                    </div>
+                  </div>
+                );
+              }} />
+              <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
+              {allDescriptions.map((desc, i) => (
+                <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
+                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartZoomDialog>
       </div>
     </AppLayout>
   );
