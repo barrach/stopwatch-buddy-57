@@ -143,6 +143,7 @@ export default function Dashboard() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [aiReportExpanded, setAiReportExpanded] = useState(false);
   const [dateMode, setDateMode] = useState<"all" | "day" | "period">("all");
+  const [timeViewMode, setTimeViewMode] = useState<"horario" | "diasemana" | "mes">("horario");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
