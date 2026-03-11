@@ -1145,30 +1145,24 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
               <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
+               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
-                  const data = payload[0]?.payload;
-                  if (!data) return null;
+                  const item = payload[0];
+                  const data = item?.payload;
+                  if (!data || !item) return null;
+                  const key = item.dataKey as string;
+                  const labelMap: Record<string, string> = { productive: "Produtivo", supplementary: "Suplementar", unproductive: "Não Produtivo" };
+                  const colorMap: Record<string, string> = { productive: "#16A34A", supplementary: "#F59E0B", unproductive: "#DC2626" };
                   const total = data.total || 0;
-                  const prod = total > 0 ? Math.round(data.productive * total / 100) : 0;
-                  const supl = total > 0 ? Math.round(data.supplementary * total / 100) : 0;
-                  const nprod = total > 0 ? Math.round(data.unproductive * total / 100) : 0;
-                  const isBest = bySpecialty.length > 0 && data.name === bySpecialty[0]?.name;
-                  const isWorst = bySpecialty.length > 1 && data.name === bySpecialty[bySpecialty.length - 1]?.name;
+                  const pct = data[key] || 0;
+                  const qty = total > 0 ? Math.round(pct * total / 100) : 0;
                   return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200, borderLeft: isBest ? "3px solid #16A34A" : isWorst ? "3px solid #DC2626" : undefined }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getSpecialtyColor(data.name), display: "inline-block", border: "1px solid rgba(255,255,255,0.2)" }} />
-                        <strong style={{ fontSize: 13 }}>{data.name}</strong>
-                        {isBest && <span style={{ fontSize: 10, color: "#4ADE80", fontWeight: 600 }}>★ Melhor</span>}
-                        {isWorst && <span style={{ fontSize: 10, color: "#F87171", fontWeight: 600 }}>⚠ Pior</span>}
-                      </div>
-                      <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                        <div>Total: <strong>{total}</strong></div>
-                        <div style={{ color: "#4ADE80" }}>Produtivo: {data.productive}% ({prod})</div>
-                        <div style={{ color: "#FBBF24" }}>Suplementar: {data.supplementary}% ({supl})</div>
-                        <div style={{ color: "#F87171" }}>Não Produtivo: {data.unproductive}% ({nprod})</div>
+                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colorMap[key] || item.fill, display: "inline-block", flexShrink: 0 }} />
+                        <span>{labelMap[key] || key}: {pct}% ({qty})</span>
                       </div>
                     </div>
                   );
