@@ -138,7 +138,7 @@ export default function Records() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome), funcoes(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false })
         .order("horario", { ascending: false });
