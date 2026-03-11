@@ -379,7 +379,6 @@ export default function Dashboard() {
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
-      .filter(([name]) => name !== "Causas Naturais")
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
     const total = sorted.reduce((s, c) => s + c.value, 0);
@@ -399,7 +398,7 @@ export default function Dashboard() {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       const desc = r.descricao || "Sem descrição";
-      descs.add(desc);
+      if (desc !== "Causas Naturais") descs.add(desc);
     });
     return Array.from(descs);
   }, [records]);
