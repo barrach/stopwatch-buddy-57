@@ -460,30 +460,30 @@ export default function Dashboard() {
 
 
 
-  // By Specialty — sorted by productivity desc
+  // By Specialty — description-level breakdown, sorted by "Trabalhando" (productivity) desc
   const bySpecialty = useMemo(() => {
-    const result: Record<string, { productive: number; supplementary: number; unproductive: number }> = {};
+    const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from specialty productivity
+      if (isExternalRecord(r)) return;
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!result[sName]) result[sName] = { productive: 0, supplementary: 0, unproductive: 0 };
-      const cat = getParentCatName(r);
-      if (cat === "Produtivo") result[sName].productive += r.quantidade || 0;
-      else if (cat === "Suplementar") result[sName].supplementary += r.quantidade || 0;
-      else result[sName].unproductive += r.quantidade || 0;
+      if (!result[sName]) result[sName] = {};
+      const desc = r.descricao || "Sem descrição";
+      const qty = r.quantidade || 0;
+      result[sName][desc] = (result[sName][desc] || 0) + qty;
     });
     return Object.entries(result)
-      .filter(([_, v]) => v.productive + v.supplementary + v.unproductive > 0)
-      .map(([name, v]) => {
-        const total = v.productive + v.supplementary + v.unproductive;
-        return {
-          name, total,
-          productive: total > 0 ? +((v.productive / total) * 100).toFixed(1) : 0,
-          supplementary: total > 0 ? +((v.supplementary / total) * 100).toFixed(1) : 0,
-          unproductive: total > 0 ? +((v.unproductive / total) * 100).toFixed(1) : 0,
-        };
+      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
+      .map(([name, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { name, total };
+        for (const [desc, qty] of Object.entries(descs)) {
+          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+          row[`raw_${desc}`] = qty;
+        }
+        return row;
       })
-      .sort((a, b) => b.productive - a.productive);
+      .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
+  }, [records, isExternalRecord]);
   }, [records, getParentCatName, isExternalRecord]);
 
   // By Function — description-level breakdown, sorted by "Trabalhando" desc
