@@ -1064,7 +1064,18 @@ export default function Dashboard() {
                     );
                   }}
                 />
-                <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} formatter={(value: string) => <span className="text-muted-foreground">{value}</span>} />
+                <Legend
+                  content={() => (
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-3">
+                      {categoryTotals.filter(c => c.value > 0).map(cat => (
+                        <div key={cat.name} className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleCrossFilter("categoria", cat.name)}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[cat.name] || "#666", display: "inline-block", flexShrink: 0 }} />
+                          <span className="text-xs text-muted-foreground">{cat.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
