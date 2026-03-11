@@ -439,6 +439,15 @@ export default function Records() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-44">
+              <Select value={filterFuncao} onValueChange={setFilterFuncao}>
+                <SelectTrigger><SelectValue placeholder="Função" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Funções</SelectItem>
+                  {funcoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             {/* Date range */}
             <div>
               <Label className="text-xs text-muted-foreground">De</Label>
