@@ -68,7 +68,13 @@ Análise da produtividade por contrato/obra. Compare os contratos, destaque os m
 Análise da distribuição por categorias (Produtivo, Suplementar, Não Produtivo, NPE). Explique o que os percentuais significam.
 
 ===PARETO===
-Análise do Pareto de causas (top causas por volume). Identifique as principais causas que concentram maior volume.
+Análise do Pareto de causas por categorias (top descrições por volume). Identifique as principais causas que concentram maior volume de amostras.
+
+===PARETO_ESPECIALIDADE===
+Análise do Pareto por especialidades. Quais especialidades concentram mais volume e quais padrões se destacam.
+
+===PARETO_FUNCAO===
+Análise do Pareto por funções. Quais funções concentram mais volume e o que isso indica.
 
 ===ESPECIALIDADE===
 Análise detalhada por especialidade. Compare as especialidades, identifique quais estão acima/abaixo da média.
