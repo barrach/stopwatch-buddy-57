@@ -780,6 +780,7 @@ export default function Dashboard() {
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
+        chartDimensions,
       });
 
       toast({ title: "Apresentação gerada!", description: "O arquivo PPTX foi baixado com sucesso." });
