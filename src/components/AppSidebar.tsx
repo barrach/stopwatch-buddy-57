@@ -1,7 +1,8 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, UserCog, LogOut } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, UserCog, LogOut, Download } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
@@ -25,6 +26,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { canInstall, install } = useInstallPrompt();
 
   const handleClick = () => {
     onNavigate?.();
@@ -84,6 +86,16 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           <Settings className="w-[18px] h-[18px]" />
           <span className="text-sm">Configurações</span>
         </NavLink>
+
+        {canInstall && (
+          <button
+            onClick={install}
+            className="sidebar-item w-full text-left mt-2 bg-primary/10 hover:bg-primary/20 text-primary"
+          >
+            <Download className="w-[18px] h-[18px]" />
+            <span className="text-sm font-medium">Instalar App</span>
+          </button>
+        )}
       </nav>
 
       {/* Footer - User info */}
