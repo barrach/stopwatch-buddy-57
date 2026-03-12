@@ -632,7 +632,7 @@ export default function Dashboard() {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-observations`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_KEY}` },
-        body: JSON.stringify({ type: "report", context: aiStats }),
+        body: JSON.stringify({ type: "pdf-report", context: aiStats }),
       });
 
       if (resp.ok && resp.body) {
