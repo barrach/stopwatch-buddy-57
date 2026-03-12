@@ -88,14 +88,14 @@ export function generatePDFReport(data: PDFReportData) {
 
   const drawSectionHeader = (title: string) => {
     ensureSpace(20);
-    curY += 10; // ~30px spacing before section
+    curY += 6; // reduced spacing before section
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
     doc.text(title, margin + 4, curY + 7);
-    curY += 14;
+    curY += 12; // ~10px gap between title and chart
   };
 
   const drawAnalysisBox = (text: string) => {
