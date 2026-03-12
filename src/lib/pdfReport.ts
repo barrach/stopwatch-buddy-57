@@ -266,12 +266,58 @@ export function generatePDFReport(data: PDFReportData) {
   }
 
   // ═══════════════════════════════════════
-  // Recomendações
+  // Conclusões e Recomendações — grouped blocks
   // ═══════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    drawSectionHeader("Conclusão e Recomendações");
-    drawAnalysisBox(recText);
+    drawSectionHeader("Conclusões e Recomendações");
+    const recBlocks = parseRecommendationBlocks(recText);
+    if (recBlocks.length > 0) {
+      for (let bi = 0; bi < recBlocks.length; bi++) {
+        const block = recBlocks[bi];
+        const fields = [
+          { label: `PROBLEMA ${bi + 1} — ${block.title}`, value: block.problema },
+          { label: "CAUSA PROVÁVEL", value: block.causa },
+          { label: "AÇÃO RECOMENDADA", value: block.acao },
+          { label: "RESPONSÁVEL", value: block.responsavel },
+          { label: "IMPACTO ESPERADO", value: block.impacto },
+        ];
+        // Estimate height
+        let blockH = 4;
+        for (const f of fields) {
+          if (!f.value) continue;
+          const lines = doc.splitTextToSize(f.value, contentW - 16);
+          blockH += 5 + lines.length * 3.5 + 2;
+        }
+        ensureSpace(blockH + 8);
+
+        // Separator line between blocks
+        if (bi > 0) {
+          doc.setDrawColor(...C.cardBorder);
+          doc.line(margin + 4, curY, margin + contentW - 4, curY);
+          curY += 4;
+        }
+
+        for (const f of fields) {
+          if (!f.value) continue;
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...C.sectionBg);
+          doc.text(f.label, margin + 4, curY + 4);
+          curY += 5;
+
+          doc.setFontSize(8.5);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          const wrapped = doc.splitTextToSize(f.value, contentW - 16);
+          doc.text(wrapped, margin + 8, curY + 3);
+          curY += wrapped.length * 3.5 + 3;
+        }
+        curY += 4; // spacing between blocks
+      }
+    } else {
+      drawAnalysisBox(recText);
+    }
   }
 
   // Footer on all pages
