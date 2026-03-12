@@ -236,7 +236,7 @@ export function generatePPTXReport(data: PDFReportData) {
   }));
   
   if (pieData.length > 0) {
-    s5.addChart(pptx.charts.DOUGHNUT, pieData, {
+    s5.addChart(pptx.ChartType.doughnut, pieData, {
       x: 0.5, y: 1.3, w: 6, h: 5,
       showLegend: true,
       legendPos: "b",
