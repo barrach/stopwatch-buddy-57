@@ -216,39 +216,7 @@ export function generatePPTXReport(data: PDFReportData) {
   });
   slides.push(s1);
 
-  // SLIDE 2 — Sumário
-  const s2 = pptx.addSlide();
-  makeBg(pptx, s2);
-  s2.addText("Sumário", {
-    x: 0.8, y: 0.3, w: 6, h: 0.8,
-    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
-  });
-  s2.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
-  const tocItems = [
-    "1. Objetivo",
-    "2. Indicadores Principais (KPIs)",
-    "3. Visão Geral por Contrato",
-    "4. Distribuição por Categoria",
-    "5. Top Causas — Pareto por Categorias",
-    "6. Top Causas — Pareto por Especialidades",
-    "7. Top Causas — Pareto por Funções",
-    "8. Produtividade por Especialidade",
-    "9. Produtividade por Função",
-    "10. Causas de Não Produtividade",
-    "11. Causas Externas de Parada (NPE)",
-    "12. Produtividade por Horário",
-    "13. Produtividade por Dia da Semana",
-    "14. Produtividade por Mês",
-    "15. Conclusões e Recomendações",
-  ];
-  s2.addText(
-    tocItems.map((t) => ({
-      text: t + "\n",
-      options: { fontSize: 14, color: T.white, paraSpaceBefore: 4, paraSpaceAfter: 10, bullet: false, lineSpacing: 20 } as any,
-    })),
-    { x: 1.2, y: 1.4, w: 10.5, h: 5.5, fontFace: "Calibri", valign: "top" },
-  );
-  slides.push(s2);
+  // Sumário removido — apresentação inicia direto no Objetivo
 
   // SLIDE 3 — Objetivo
   const s3 = pptx.addSlide();
