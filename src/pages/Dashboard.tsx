@@ -1190,7 +1190,7 @@ export default function Dashboard() {
         </div>
 
         {/* 2) Visão Geral por Contrato — enhanced tooltip */}
-        <div className={chartCardClass("contrato")}>
+        <div id="chart-contrato" className={chartCardClass("contrato")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
