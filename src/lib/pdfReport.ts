@@ -220,7 +220,9 @@ export function generatePDFReport(data: PDFReportData) {
   const chartPages: Array<{ title: string; image: string | undefined; section: string }> = [
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO" },
     { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA" },
-    { title: "Top Causas (Pareto)", image: images.pareto, section: "PARETO" },
+    { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO" },
+    { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE" },
+    { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO" },
     { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE" },
     { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO" },
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO" },
@@ -232,7 +234,9 @@ export function generatePDFReport(data: PDFReportData) {
 
   for (const cp of chartPages) {
     if (cp.image) {
-      drawChartWithAnalysis(cp.title, cp.image, analysis[cp.section]);
+      // For Pareto specialidade/funcao, fallback to PARETO analysis if specific section not found
+      const analysisText = analysis[cp.section] || (cp.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
+      drawChartWithAnalysis(cp.title, cp.image, analysisText);
     }
   }
 

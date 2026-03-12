@@ -44,16 +44,16 @@ function addSlideNumber(slide: PptxGenJS.Slide, num: number, total: number) {
 function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: number; w: number; h: number }) {
   if (!text?.trim()) return;
   const lines = text.split("\n").filter((l) => l.trim());
-  const bullets: PptxGenJS.TextProps[] = lines.slice(0, 8).map((line) => {
+  const bullets: PptxGenJS.TextProps[] = lines.slice(0, 10).map((line) => {
     const trimmed = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
     return {
       text: trimmed,
       options: {
-        fontSize: 10,
+        fontSize: 9,
         color: T.white,
         bullet: { code: "2022" },
         breakType: "none" as const,
-        paraSpaceAfter: 5,
+        paraSpaceAfter: 6,
       },
     };
   });
@@ -65,8 +65,7 @@ function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: 
 }
 
 /**
- * Adds a chart slide with the chart image taking the main space
- * and analysis bullets on the right side.
+ * Adds a chart slide with chart image on the left and analysis bullets on the right.
  */
 function addChartSlide(
   pptx: PptxGenJS,
@@ -78,28 +77,28 @@ function addChartSlide(
   const slide = pptx.addSlide();
   makeBg(pptx, slide);
 
-  // Title
+  // Title bar
   slide.addText(title, {
-    x: 0.5, y: 0.2, w: 9, h: 0.6,
-    fontSize: 22, bold: true, color: T.white, fontFace: "Calibri",
+    x: 0.5, y: 0.2, w: 12, h: 0.5,
+    fontSize: 20, bold: true, color: T.white, fontFace: "Calibri",
   });
-  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.85, w: 12.3, h: 0.03, fill: { color: T.accent } });
+  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.75, w: 12.3, h: 0.03, fill: { color: T.accent } });
 
   if (chartImage && analysisText) {
-    // Chart on left (large), analysis on right
+    // Chart large on left, bullets compact on right
     slide.addImage({
       data: chartImage,
-      x: 0.3, y: 1.1, w: 8.2, h: 5.5,
+      x: 0.3, y: 1.0, w: 8.5, h: 5.7,
     });
-    addBullets(slide, analysisText, { x: 8.7, y: 1.1, w: 4.3, h: 5.5 });
+    addBullets(slide, analysisText, { x: 9.0, y: 1.0, w: 4.0, h: 5.7 });
   } else if (chartImage) {
-    // Chart only — centered and large
+    // Chart only — full width
     slide.addImage({
       data: chartImage,
-      x: 0.8, y: 1.1, w: 11.7, h: 5.8,
+      x: 0.5, y: 1.0, w: 12.3, h: 5.8,
     });
   } else if (analysisText) {
-    addBullets(slide, analysisText, { x: 0.8, y: 1.3, w: 11.7, h: 5.5 });
+    addBullets(slide, analysisText, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
   }
 
   slides.push(slide);
@@ -108,7 +107,7 @@ function addChartSlide(
 export function generatePPTXReport(data: PDFReportData) {
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE";
-  pptx.author = "ProdControl";
+  pptx.author = "MEGASTEAM";
   pptx.subject = "Relatório de Produtividade";
   pptx.title = `Relatório - ${data.obra}`;
 
@@ -160,20 +159,22 @@ export function generatePPTXReport(data: PDFReportData) {
     "2. Indicadores Principais (KPIs)",
     "3. Visão Geral por Contrato",
     "4. Distribuição por Categoria",
-    "5. Top Causas (Pareto)",
-    "6. Produtividade por Especialidade",
-    "7. Produtividade por Função",
-    "8. Causas de Não Produtividade",
-    "9. Causas Externas de Parada",
-    "10. Produtividade por Horário",
-    "11. Produtividade por Dia da Semana",
-    "12. Produtividade por Mês",
-    "13. Recomendações e Melhorias",
+    "5. Top Causas — Pareto por Categorias",
+    "6. Top Causas — Pareto por Especialidades",
+    "7. Top Causas — Pareto por Funções",
+    "8. Produtividade por Especialidade",
+    "9. Produtividade por Função",
+    "10. Causas de Não Produtividade",
+    "11. Causas Externas de Parada",
+    "12. Produtividade por Horário",
+    "13. Produtividade por Dia da Semana",
+    "14. Produtividade por Mês",
+    "15. Recomendações e Melhorias",
   ];
   s2.addText(
     tocItems.map((t) => ({
       text: t,
-      options: { fontSize: 14, color: T.white, paraSpaceAfter: 8, bullet: false } as any,
+      options: { fontSize: 13, color: T.white, paraSpaceAfter: 6, bullet: false } as any,
     })),
     { x: 1.5, y: 1.4, w: 10, h: 5.5, fontFace: "Calibri", valign: "top" },
   );
@@ -280,7 +281,9 @@ export function generatePPTXReport(data: PDFReportData) {
   }> = [
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO" },
     { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA" },
-    { title: "Top Causas (Pareto)", image: images.pareto, section: "PARETO" },
+    { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO" },
+    { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE" },
+    { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO" },
     { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE" },
     { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO" },
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO" },
@@ -292,7 +295,8 @@ export function generatePPTXReport(data: PDFReportData) {
 
   for (const cs of chartSlides) {
     if (cs.image) {
-      addChartSlide(pptx, slides, cs.title, cs.image, analysis[cs.section]);
+      const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
+      addChartSlide(pptx, slides, cs.title, cs.image, analysisText);
     }
   }
 
