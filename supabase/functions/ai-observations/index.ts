@@ -124,7 +124,7 @@ ${c.causasExternas || "Nenhuma registrada"}
 Gere um relatório executivo completo e preciso com base nesses dados. Use EXATAMENTE os percentuais fornecidos.`;
 
     } else {
-      return new Response(JSON.stringify({ error: "Tipo inválido. Use 'suggest' ou 'report'." }), {
+      return new Response(JSON.stringify({ error: "Tipo inválido. Use 'suggest', 'report' ou 'pdf-report'." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
