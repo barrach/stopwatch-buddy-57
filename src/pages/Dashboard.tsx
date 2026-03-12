@@ -140,6 +140,7 @@ const timeIndex = (t: string) => {
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [obraFilter, setObraFilter] = useState("all");
   const [aiReport, setAiReport] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -151,6 +152,8 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
+  const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
     const today = new Date();
