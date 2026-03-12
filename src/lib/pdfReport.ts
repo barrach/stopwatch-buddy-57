@@ -26,7 +26,7 @@ export interface PDFReportData {
   chartDimensions?: ChartDimensions;
 }
 
-// ── Theme colors (matching reference PDF) ──
+// ── Theme colors ──
 const C = {
   headerBg: [15, 23, 42] as [number, number, number],
   sectionBg: [23, 80, 97] as [number, number, number],
@@ -61,8 +61,9 @@ export function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210;
   const H = 297;
-  const margin = 14;
-  const contentW = W - margin * 2;
+  const margin = 20;
+  const contentW = W - margin * 2; // 170mm
+  const maxChartH = 120; // mm
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
@@ -79,15 +80,15 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const ensureSpace = (needed: number) => {
-    if (curY + needed > H - 18) {
+    if (curY + needed > H - 20) {
       addNewPage();
-      curY = 12;
+      curY = 16;
     }
   };
 
   const drawSectionHeader = (title: string) => {
-    ensureSpace(18);
-    curY += 6;
+    ensureSpace(20);
+    curY += 8;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
@@ -134,22 +135,31 @@ export function generatePDFReport(data: PDFReportData) {
     curY += totalH + 3;
   };
 
-  /** Draw chart preserving original aspect ratio */
+  /** Draw chart preserving original aspect ratio, max 170mm wide × 120mm tall */
   const drawChart = (chartImage: string | undefined, dimKey: string) => {
     if (!chartImage) return;
     const dim = dims[dimKey];
-    // Calculate height preserving aspect ratio, capped at reasonable max
+    let chartW = contentW; // 170mm full width
     let chartH: number;
+
     if (dim && dim.width > 0) {
       const aspectRatio = dim.height / dim.width;
-      chartH = Math.min(contentW * aspectRatio, 160); // max 160mm
+      chartH = chartW * aspectRatio;
+      // Cap at max height, scale down width proportionally if needed
+      if (chartH > maxChartH) {
+        chartH = maxChartH;
+        chartW = chartH / aspectRatio;
+      }
     } else {
-      chartH = contentW * 0.55; // fallback
+      chartH = contentW * 0.55;
     }
-    ensureSpace(chartH + 4);
+
+    ensureSpace(chartH + 6);
     try {
-      doc.addImage(chartImage, "PNG", margin, curY, contentW, chartH);
-      curY += chartH + 3;
+      // Center horizontally if width was reduced
+      const xOffset = margin + (contentW - chartW) / 2;
+      doc.addImage(chartImage, "PNG", xOffset, curY, chartW, chartH);
+      curY += chartH + 4;
     } catch (e) {
       console.warn("Failed to add chart image:", e);
     }
@@ -186,8 +196,8 @@ export function generatePDFReport(data: PDFReportData) {
   const kpis = [
     { label: "Total de Amostras", value: String(data.totalAmostras), color: C.accentBlue },
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: C.accentGreen },
-    { label: "Suplementar", value: `${data.suplementar} (${data.suplementarPct}%)`, color: C.accentAmber },
-    { label: "Não Produtivo", value: `${data.naoProdutivo} (${data.naoProdutivoPct}%)`, color: C.accentRed },
+    { label: "Suplementar", value: `${data.suplementarPct}%`, color: C.accentAmber },
+    { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: C.accentRed },
   ];
 
   const kpiW = (contentW - 9) / 4;
@@ -217,18 +227,18 @@ export function generatePDFReport(data: PDFReportData) {
   if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);
 
   // ═══════════════════════════════════════
-  // Chart sections
+  // Chart sections — ordered as specified
   // ═══════════════════════════════════════
   const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string }> = [
-    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
-    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
-    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
+    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
     { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE", dimKey: "paretoEspecialidade" },
     { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO", dimKey: "paretoFuncao" },
+    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
+    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
-    { title: "Causas Externas (Não Produtivo Externo)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
+    { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
     { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
     { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana" },
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },

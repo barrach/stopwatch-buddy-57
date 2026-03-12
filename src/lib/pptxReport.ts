@@ -41,7 +41,7 @@ function addSlideNumber(slide: PptxGenJS.Slide, num: number, total: number) {
 function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: number; w: number; h: number }) {
   if (!text?.trim()) return;
   const lines = text.split("\n").filter((l) => l.trim());
-  const bullets: PptxGenJS.TextProps[] = lines.slice(0, 10).map((line) => {
+  const bullets: PptxGenJS.TextProps[] = lines.slice(0, 12).map((line) => {
     const trimmed = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
     return {
       text: trimmed,
@@ -62,7 +62,8 @@ function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: 
 }
 
 /**
- * Adds a chart slide with chart image sized proportionally and analysis beside or below.
+ * Adds a chart slide — one chart per slide, chart centered at 80% width,
+ * with title at top (28px bold). Analysis text below if present.
  */
 function addChartSlide(
   pptx: PptxGenJS,
@@ -75,49 +76,48 @@ function addChartSlide(
   const slide = pptx.addSlide();
   makeBg(pptx, slide);
 
-  // Title
+  // Title — 28px bold at top
   slide.addText(title, {
-    x: 0.5, y: 0.2, w: 12, h: 0.5,
-    fontSize: 20, bold: true, color: T.white, fontFace: "Calibri",
+    x: 0.5, y: 0.2, w: 12.3, h: 0.6,
+    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
   });
-  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.75, w: 12.3, h: 0.03, fill: { color: T.accent } });
+  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.85, w: 12.3, h: 0.03, fill: { color: T.accent } });
 
-  // Calculate chart dimensions preserving aspect ratio
-  const availH = 5.8;
-  let chartW: number;
+  // Calculate chart dimensions — 80% of slide width, proportional height
+  const slideW = 13.33;
+  const chartW = slideW * 0.80; // ~10.66 inches
+  const chartMaxH = analysisText ? 4.2 : 5.5;
   let chartH: number;
 
   if (dim && dim.width > 0) {
     const aspectRatio = dim.height / dim.width;
-    if (analysisText) {
-      // With text: chart on left ~65% width
-      chartW = 8.2;
-      chartH = Math.min(chartW * aspectRatio, availH);
-    } else {
-      // No text: chart centered, full width
-      chartW = 12.3;
-      chartH = Math.min(chartW * aspectRatio, availH);
+    chartH = chartW * aspectRatio;
+    if (chartH > chartMaxH) {
+      chartH = chartMaxH;
     }
   } else {
-    chartW = analysisText ? 8.2 : 12.3;
-    chartH = analysisText ? 5.5 : 5.8;
+    chartH = chartMaxH;
   }
 
-  if (chartImage && analysisText) {
+  if (chartImage) {
+    // Center horizontally
+    const chartX = (slideW - chartW) / 2;
+    const chartY = 1.1;
     slide.addImage({
       data: chartImage,
-      x: 0.3, y: 1.0, w: chartW, h: chartH,
+      x: chartX, y: chartY, w: chartW, h: chartH,
     });
-    addBullets(slide, analysisText, { x: chartW + 0.6, y: 1.0, w: 13.33 - chartW - 0.9, h: availH });
-  } else if (chartImage) {
-    // Center the chart vertically
-    const yOffset = 1.0 + (availH - chartH) / 2;
-    slide.addImage({
-      data: chartImage,
-      x: 0.5, y: yOffset, w: chartW, h: chartH,
-    });
+
+    // Analysis below chart if present
+    if (analysisText) {
+      const bulletY = chartY + chartH + 0.15;
+      const bulletH = 7.0 - bulletY;
+      if (bulletH > 0.5) {
+        addBullets(slide, analysisText, { x: 0.8, y: bulletY, w: 11.7, h: bulletH });
+      }
+    }
   } else if (analysisText) {
-    addBullets(slide, analysisText, { x: 0.8, y: 1.2, w: 11.7, h: availH });
+    addBullets(slide, analysisText, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
   }
 
   slides.push(slide);
@@ -172,13 +172,13 @@ export function generatePPTXReport(data: PDFReportData) {
   const tocItems = [
     "1. Objetivo",
     "2. Indicadores Principais (KPIs)",
-    "3. Distribuição por Categoria",
-    "4. Visão Geral por Contrato",
-    "5. Produtividade por Especialidade",
-    "6. Produtividade por Função",
-    "7. Top Causas — Pareto por Categorias",
-    "8. Top Causas — Pareto por Especialidades",
-    "9. Top Causas — Pareto por Funções",
+    "3. Visão Geral por Contrato",
+    "4. Distribuição por Categoria",
+    "5. Top Causas — Pareto por Categorias",
+    "6. Top Causas — Pareto por Especialidades",
+    "7. Top Causas — Pareto por Funções",
+    "8. Produtividade por Especialidade",
+    "9. Produtividade por Função",
     "10. Causas de Não Produtividade",
     "11. Causas Externas de Parada",
     "12. Produtividade por Horário",
@@ -249,15 +249,15 @@ export function generatePPTXReport(data: PDFReportData) {
   if (analysis["RESUMO"]) addBullets(s4, analysis["RESUMO"], { x: 0.8, y: 4.2, w: 11.7, h: 2.7 });
   slides.push(s4);
 
-  // Chart slides
+  // Chart slides — one per chart, ordered as specified
   const chartSlides: Array<{ title: string; image: string | undefined; section: string; dimKey: string }> = [
-    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
-    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
-    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
+    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
     { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE", dimKey: "paretoEspecialidade" },
     { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO", dimKey: "paretoFuncao" },
+    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
+    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
     { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
     { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
