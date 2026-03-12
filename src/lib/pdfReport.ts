@@ -24,6 +24,7 @@ export interface PDFReportData {
   aiAnalysis: string;
   chartImages?: ChartImages;
   chartDimensions?: ChartDimensions;
+  logoBase64?: string; // Logo MEGASTEAM em base64
 }
 
 // ── Theme colors ──
