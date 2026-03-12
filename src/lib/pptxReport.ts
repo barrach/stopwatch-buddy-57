@@ -1,6 +1,7 @@
 import PptxGenJS from "pptxgenjs";
 import { format } from "date-fns";
 import type { PDFReportData } from "./pdfReport";
+import type { ChartImages } from "./chartCapture";
 
 // ── Theme ──
 const T = {
