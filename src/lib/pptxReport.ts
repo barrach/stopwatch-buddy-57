@@ -113,7 +113,7 @@ export function generatePPTXReport(data: PDFReportData) {
   pptx.title = `Relatório - ${data.obra}`;
 
   const analysis = parseAnalysis(data.aiAnalysis);
-  const images = data.chartImages || {};
+  const images = (data as any).chartImages as ChartImages || {};
   const slides: PptxGenJS.Slide[] = [];
 
   // ═══════════════════════════════════════════

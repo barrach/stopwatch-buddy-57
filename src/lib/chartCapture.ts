@@ -60,9 +60,9 @@ export async function captureAllCharts(
   const timeEl = document.getElementById("chart-tempo");
   if (timeEl) {
     const modes: Array<{ mode: "horario" | "diasemana" | "mes"; key: keyof ChartImages }> = [
-      { mode: "horario", key: "tempoHorario" },
-      { mode: "diasemana", key: "tempoDiaSemana" },
-      { mode: "tempoMes", key: "tempoMes" },
+      { mode: "horario" as const, key: "tempoHorario" as keyof ChartImages },
+      { mode: "diasemana" as const, key: "tempoDiaSemana" as keyof ChartImages },
+      { mode: "mes" as const, key: "tempoMes" as keyof ChartImages },
     ];
 
     for (const { mode, key } of modes) {
