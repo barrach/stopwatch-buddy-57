@@ -63,7 +63,7 @@ export function generatePDFReport(data: PDFReportData) {
   const H = 297;
   const margin = 20;
   const contentW = W - margin * 2; // 170mm
-  const maxChartH = 120; // mm
+  const maxChartH = 110; // mm — max chart height as specified
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");

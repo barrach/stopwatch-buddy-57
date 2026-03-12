@@ -30,57 +30,82 @@ const STATIC_CHART_IDS = [
 ] as const;
 
 /**
- * Finds the inner chart element (recharts-wrapper or svg) inside a card,
- * so we capture ONLY the chart — not the card background/shadow/border.
+ * Finds the inner chart element (recharts container/wrapper or svg) inside a card,
+ * so we capture ONLY the chart — never the card background/shadow/border.
  */
 function findChartElement(cardEl: HTMLElement): HTMLElement {
-  // Try recharts-responsive-container first (wraps the chart tightly)
+  // Priority: recharts-responsive-container > recharts-wrapper > svg > card
   const responsive = cardEl.querySelector(".recharts-responsive-container") as HTMLElement;
   if (responsive) return responsive;
-  // Fallback to recharts-wrapper
   const wrapper = cardEl.querySelector(".recharts-wrapper") as HTMLElement;
   if (wrapper) return wrapper;
-  // Last resort: the card itself
+  const svg = cardEl.querySelector("svg.recharts-surface") as HTMLElement;
+  if (svg) return svg;
   return cardEl;
 }
 
 /**
- * Temporarily strip card styles from a parent element so html2canvas
- * renders a clean white background with no shadows/borders.
+ * Temporarily strip ALL card/dashboard styles so the capture is clean:
+ * white background, no shadow, no border, no border-radius.
+ * Also cleans all ancestor elements up to the card boundary.
  */
 function applyCleanStyles(el: HTMLElement): () => void {
-  const orig = {
-    background: el.style.background,
-    backgroundColor: el.style.backgroundColor,
-    boxShadow: el.style.boxShadow,
-    border: el.style.border,
-    borderRadius: el.style.borderRadius,
-    padding: el.style.padding,
+  const restoreFns: Array<() => void> = [];
+
+  // Clean the card element itself
+  const cleanElement = (target: HTMLElement) => {
+    const orig = {
+      background: target.style.background,
+      backgroundColor: target.style.backgroundColor,
+      boxShadow: target.style.boxShadow,
+      border: target.style.border,
+      borderRadius: target.style.borderRadius,
+      outline: target.style.outline,
+    };
+    target.style.background = "white";
+    target.style.backgroundColor = "#ffffff";
+    target.style.boxShadow = "none";
+    target.style.border = "none";
+    target.style.borderRadius = "0";
+    target.style.outline = "none";
+
+    restoreFns.push(() => {
+      target.style.background = orig.background;
+      target.style.backgroundColor = orig.backgroundColor;
+      target.style.boxShadow = orig.boxShadow;
+      target.style.border = orig.border;
+      target.style.borderRadius = orig.borderRadius;
+      target.style.outline = orig.outline;
+    });
   };
-  el.style.background = "white";
-  el.style.backgroundColor = "#ffffff";
-  el.style.boxShadow = "none";
-  el.style.border = "none";
-  el.style.borderRadius = "0";
+
+  cleanElement(el);
+
+  // Also clean immediate parent containers that may add visual noise
+  let parent = el.parentElement;
+  let depth = 0;
+  while (parent && depth < 3) {
+    const computed = window.getComputedStyle(parent);
+    if (computed.boxShadow !== "none" || computed.borderRadius !== "0px") {
+      cleanElement(parent);
+    }
+    parent = parent.parentElement;
+    depth++;
+  }
 
   return () => {
-    el.style.background = orig.background;
-    el.style.backgroundColor = orig.backgroundColor;
-    el.style.boxShadow = orig.boxShadow;
-    el.style.border = orig.border;
-    el.style.borderRadius = orig.borderRadius;
-    el.style.padding = orig.padding;
+    restoreFns.forEach((fn) => fn());
   };
 }
 
 async function captureElement(cardEl: HTMLElement): Promise<{ data: string; width: number; height: number }> {
   const chartEl = findChartElement(cardEl);
 
-  // Temporarily clean the card wrapper styles
+  // Temporarily clean the card wrapper and parent styles
   const restoreCard = applyCleanStyles(cardEl);
 
-  // Wait for any chart animations/renders to settle
-  await new Promise((r) => setTimeout(r, 300));
+  // Wait for chart animations/renders to fully settle (500ms as specified)
+  await new Promise((r) => setTimeout(r, 500));
 
   const canvas = await html2canvas(chartEl, {
     backgroundColor: "#FFFFFF",
