@@ -24,6 +24,7 @@ export interface PDFReportData {
   aiAnalysis: string;
   chartImages?: ChartImages;
   chartDimensions?: ChartDimensions;
+  logoBase64?: string; // Logo MEGASTEAM em base64
 }
 
 // ── Theme colors ──
@@ -238,6 +239,16 @@ export function generatePDFReport(data: PDFReportData) {
   addNewPage();
   doc.setFillColor(...C.headerBg);
   doc.rect(0, 0, W, 32, "F");
+  
+  // Logo MEGASTEAM no canto superior direito
+  if (data.logoBase64) {
+    try {
+      doc.addImage(data.logoBase64, "PNG", W - margin - 45, 6, 45, 12);
+    } catch (e) {
+      console.warn("Failed to add logo to PDF:", e);
+    }
+  }
+  
   doc.setFontSize(22);
   doc.setTextColor(...C.white);
   doc.setFont("helvetica", "bold");
