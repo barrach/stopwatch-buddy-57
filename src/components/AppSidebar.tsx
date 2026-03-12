@@ -26,6 +26,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { canInstall, install } = useInstallPrompt();
 
   const handleClick = () => {
     onNavigate?.();
