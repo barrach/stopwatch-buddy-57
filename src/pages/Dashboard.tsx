@@ -1067,6 +1067,11 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
                 {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
               </Button>
+              {canExportPPTX && (
+                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1.5">
+                  {isGeneratingPPTX ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Presentation className="w-3.5 h-3.5" />} PPTX
+                </Button>
+              )}
             </div>
           </div>
         </div>
