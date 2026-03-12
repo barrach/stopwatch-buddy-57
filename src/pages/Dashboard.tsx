@@ -710,9 +710,16 @@ export default function Dashboard() {
       return;
     }
     setIsGeneratingPPTX(true);
-    toast({ title: "Gerando apresentação...", description: "A IA está analisando os dados. Aguarde." });
+    toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
 
     try {
+      // 1) Capture charts from DOM
+      const { captureAllCharts } = await import("@/lib/chartCapture");
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+
+      toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando apresentação." });
+
+      // 2) Generate AI analysis
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       let aiText = "";
@@ -749,6 +756,7 @@ export default function Dashboard() {
         }
       }
 
+      // 3) Generate PPTX
       const { generatePPTXReport } = await import("@/lib/pptxReport");
       generatePPTXReport({
         periodo: aiStats.periodo,
@@ -770,6 +778,7 @@ export default function Dashboard() {
         externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
+        chartImages,
       });
 
       toast({ title: "Apresentação gerada!", description: "O arquivo PPTX foi baixado com sucesso." });
