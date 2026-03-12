@@ -180,18 +180,18 @@ export function generatePPTXReport(data: PDFReportData) {
     "8. Produtividade por Especialidade",
     "9. Produtividade por Função",
     "10. Causas de Não Produtividade",
-    "11. Causas Externas de Parada",
+    "11. Causas Externas de Parada (NPE)",
     "12. Produtividade por Horário",
     "13. Produtividade por Dia da Semana",
     "14. Produtividade por Mês",
-    "15. Recomendações e Melhorias",
+    "15. Conclusões e Recomendações",
   ];
   s2.addText(
     tocItems.map((t) => ({
-      text: t,
-      options: { fontSize: 13, color: T.white, paraSpaceAfter: 6, bullet: false } as any,
+      text: t + "\n",
+      options: { fontSize: 14, color: T.white, paraSpaceBefore: 4, paraSpaceAfter: 10, bullet: false, lineSpacing: 20 } as any,
     })),
-    { x: 1.5, y: 1.4, w: 10, h: 5.5, fontFace: "Calibri", valign: "top" },
+    { x: 1.2, y: 1.4, w: 10.5, h: 5.5, fontFace: "Calibri", valign: "top" },
   );
   slides.push(s2);
 
