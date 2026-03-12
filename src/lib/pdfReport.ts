@@ -23,16 +23,17 @@ export interface PDFReportData {
   aiAnalysis: string; // Per-chart analysis in format: ===SECTION_NAME===\ntext\n===NEXT===\ntext...
 }
 
+type C3 = [number, number, number];
 const C = {
-  header: [15, 23, 42] as const,
-  primary: [22, 78, 99] as const,
-  green: [22, 163, 74] as const,
-  amber: [245, 158, 11] as const,
-  red: [220, 38, 38] as const,
-  blue: [59, 130, 246] as const,
-  gray: [100, 116, 139] as const,
-  lightGray: [226, 232, 240] as const,
-  bgLight: [248, 250, 252] as const,
+  header: [15, 23, 42] as C3,
+  primary: [22, 78, 99] as C3,
+  green: [22, 163, 74] as C3,
+  amber: [245, 158, 11] as C3,
+  red: [220, 38, 38] as C3,
+  blue: [59, 130, 246] as C3,
+  gray: [100, 116, 139] as C3,
+  lightGray: [226, 232, 240] as C3,
+  bgLight: [248, 250, 252] as C3,
 };
 
 const CATEGORY_BAR_COLORS: Record<string, readonly [number, number, number]> = {
