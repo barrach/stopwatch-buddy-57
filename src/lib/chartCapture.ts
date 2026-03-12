@@ -15,6 +15,11 @@ export interface ChartImages {
   tempoMes?: string;
 }
 
+/** Stores original pixel dimensions of each captured chart */
+export interface ChartDimensions {
+  [key: string]: { width: number; height: number };
+}
+
 const STATIC_CHART_IDS = [
   "contrato",
   "categoria",
@@ -24,35 +29,49 @@ const STATIC_CHART_IDS = [
   "externas",
 ] as const;
 
-async function captureElement(el: HTMLElement): Promise<string> {
+async function captureElement(el: HTMLElement): Promise<{ data: string; width: number; height: number }> {
+  // Use scale 3 for crisp exports
   const canvas = await html2canvas(el, {
     backgroundColor: "#111827",
-    scale: 2,
+    scale: 3,
     logging: false,
     useCORS: true,
     allowTaint: true,
+    // Remove any scrollbar artifacts
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: el.scrollWidth,
+    windowHeight: el.scrollHeight,
   });
-  return canvas.toDataURL("image/png");
+  return {
+    data: canvas.toDataURL("image/png"),
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+  };
 }
 
 /**
  * Captures all dashboard charts as base64 PNG images.
  * Switches Pareto mode (categoria/especialidade/funcao) and time view mode to capture all variants.
+ * Returns both images and their original dimensions for proper aspect ratio in exports.
  */
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
   setParetoMode: (mode: "categoria" | "especialidade" | "funcao") => void,
   currentParetoMode: "categoria" | "especialidade" | "funcao",
-): Promise<ChartImages> {
+): Promise<{ images: ChartImages; dimensions: ChartDimensions }> {
   const images: ChartImages = {};
+  const dimensions: ChartDimensions = {};
 
   // Capture static charts
   for (const id of STATIC_CHART_IDS) {
     const el = document.getElementById(`chart-${id}`);
     if (el) {
       try {
-        images[id] = await captureElement(el);
+        const result = await captureElement(el);
+        images[id] = result.data;
+        dimensions[id] = { width: result.width, height: result.height };
       } catch (e) {
         console.warn(`Failed to capture chart-${id}:`, e);
       }
@@ -68,17 +87,18 @@ export async function captureAllCharts(
 
   for (const { mode, key } of paretoModes) {
     setParetoMode(mode);
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 1000));
     const el = document.getElementById("chart-pareto");
     if (el) {
       try {
-        images[key] = await captureElement(el);
+        const result = await captureElement(el);
+        images[key] = result.data;
+        dimensions[key as string] = { width: result.width, height: result.height };
       } catch (e) {
         console.warn(`Failed to capture chart-pareto (${mode}):`, e);
       }
     }
   }
-  // Restore original pareto mode
   setParetoMode(currentParetoMode);
 
   // Capture time charts — all 3 variants
@@ -90,18 +110,19 @@ export async function captureAllCharts(
 
   for (const { mode, key } of timeModes) {
     setTimeViewMode(mode);
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 1000));
     const el = document.getElementById("chart-tempo");
     if (el) {
       try {
-        images[key] = await captureElement(el);
+        const result = await captureElement(el);
+        images[key] = result.data;
+        dimensions[key as string] = { width: result.width, height: result.height };
       } catch (e) {
         console.warn(`Failed to capture chart-tempo (${mode}):`, e);
       }
     }
   }
-  // Restore original mode
   setTimeViewMode(currentTimeViewMode);
 
-  return images;
+  return { images, dimensions };
 }

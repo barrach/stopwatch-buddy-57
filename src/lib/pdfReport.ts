@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import type { ChartImages } from "./chartCapture";
+import type { ChartImages, ChartDimensions } from "./chartCapture";
 
 export interface PDFReportData {
   periodo: string;
@@ -23,12 +23,13 @@ export interface PDFReportData {
   categoryTotals: Array<{ name: string; value: number }>;
   aiAnalysis: string;
   chartImages?: ChartImages;
+  chartDimensions?: ChartDimensions;
 }
 
 // ── Theme colors (matching reference PDF) ──
 const C = {
-  headerBg: [15, 23, 42] as [number, number, number],       // dark navy header
-  sectionBg: [23, 80, 97] as [number, number, number],      // teal section headers
+  headerBg: [15, 23, 42] as [number, number, number],
+  sectionBg: [23, 80, 97] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
   pageBg: [255, 255, 255] as [number, number, number],
   textDark: [30, 30, 30] as [number, number, number],
@@ -40,22 +41,18 @@ const C = {
   accentGreen: [22, 163, 74] as [number, number, number],
   accentAmber: [245, 158, 11] as [number, number, number],
   accentRed: [220, 38, 38] as [number, number, number],
-  analysisBorder: [23, 80, 97] as [number, number, number], // teal left border
-  analysisBg: [240, 245, 247] as [number, number, number],  // light gray-blue
+  analysisBorder: [23, 80, 97] as [number, number, number],
+  analysisBg: [240, 245, 247] as [number, number, number],
 };
 
-interface AnalysisSections {
-  [key: string]: string;
-}
+interface AnalysisSections { [key: string]: string; }
 
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
   if (!aiText) return sections;
   const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===|$)/g;
   let m;
-  while ((m = regex.exec(aiText)) !== null) {
-    sections[m[1].trim()] = m[2].trim();
-  }
+  while ((m = regex.exec(aiText)) !== null) sections[m[1].trim()] = m[2].trim();
   if (!Object.keys(sections).length) sections["GERAL"] = aiText;
   return sections;
 }
@@ -71,35 +68,23 @@ export function generatePDFReport(data: PDFReportData) {
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
 
   const images = data.chartImages || {};
+  const dims = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
 
-  // ── Page management ──
   const addNewPage = () => {
     if (pageNum > 0) doc.addPage("a4", "portrait");
     pageNum++;
-    // White background
     doc.setFillColor(...C.pageBg);
     doc.rect(0, 0, W, H, "F");
   };
 
-  const addFooter = () => {
-    doc.setFontSize(8);
-    doc.setTextColor(...C.textLight);
-    doc.setFont("helvetica", "normal");
-    doc.text(`ProdControl — Página ${pageNum} de {TOTAL}`, margin, H - 8);
-    doc.text(dateStr, W - margin, H - 8, { align: "right" });
-  };
-
-  // Check if we need a new page (ensures space)
   const ensureSpace = (needed: number) => {
-    if (curY + needed > H - 20) {
-      addFooter();
+    if (curY + needed > H - 18) {
       addNewPage();
       curY = 12;
     }
   };
 
-  // ── Drawing helpers ──
   const drawSectionHeader = (title: string) => {
     ensureSpace(18);
     curY += 6;
@@ -116,33 +101,28 @@ export function generatePDFReport(data: PDFReportData) {
     if (!text?.trim()) return;
     const lines = text.split("\n").filter((l) => l.trim());
     const paragraphs: string[] = [];
-
     for (const line of lines) {
       const cleaned = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
       if (cleaned) paragraphs.push(cleaned);
     }
 
-    // Calculate height needed
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    let totalLines = 0;
+    let totalH = 6;
     const wrappedParagraphs: string[][] = [];
     for (const p of paragraphs) {
       const wrapped = doc.splitTextToSize(p, contentW - 10);
       wrappedParagraphs.push(wrapped);
-      totalLines += wrapped.length;
+      totalH += wrapped.length * 4 + 2;
     }
-    const boxH = totalLines * 4 + paragraphs.length * 2 + 6;
 
-    ensureSpace(boxH + 4);
+    ensureSpace(totalH + 4);
 
-    // Background box with left accent border
     doc.setFillColor(...C.analysisBg);
-    doc.roundedRect(margin, curY, contentW, boxH, 1, 1, "F");
+    doc.roundedRect(margin, curY, contentW, totalH, 1, 1, "F");
     doc.setFillColor(...C.analysisBorder);
-    doc.rect(margin, curY, 2, boxH, "F");
+    doc.rect(margin, curY, 2, totalH, "F");
 
-    // Text content
     doc.setTextColor(...C.textDark);
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
@@ -151,14 +131,21 @@ export function generatePDFReport(data: PDFReportData) {
       doc.text(wrapped, margin + 6, textY);
       textY += wrapped.length * 4 + 2;
     }
-
-    curY += boxH + 3;
+    curY += totalH + 3;
   };
 
-  const drawChart = (chartImage: string | undefined) => {
+  /** Draw chart preserving original aspect ratio */
+  const drawChart = (chartImage: string | undefined, dimKey: string) => {
     if (!chartImage) return;
-    // Chart takes full width, aspect ratio ~16:9
-    const chartH = contentW * 0.45;
+    const dim = dims[dimKey];
+    // Calculate height preserving aspect ratio, capped at reasonable max
+    let chartH: number;
+    if (dim && dim.width > 0) {
+      const aspectRatio = dim.height / dim.width;
+      chartH = Math.min(contentW * aspectRatio, 160); // max 160mm
+    } else {
+      chartH = contentW * 0.55; // fallback
+    }
     ensureSpace(chartH + 4);
     try {
       doc.addImage(chartImage, "PNG", margin, curY, contentW, chartH);
@@ -168,42 +155,32 @@ export function generatePDFReport(data: PDFReportData) {
     }
   };
 
-  const drawChartSection = (
-    title: string,
-    chartImage: string | undefined,
-    analysisText: string | undefined,
-  ) => {
+  const drawChartSection = (title: string, chartImage: string | undefined, analysisText: string | undefined, dimKey: string) => {
     drawSectionHeader(title);
-    drawChart(chartImage);
+    drawChart(chartImage, dimKey);
     if (analysisText) drawAnalysisBox(analysisText);
   };
 
-  // ═════════════════════════════════════════════
-  // PAGE 1 — Header
-  // ═════════════════════════════════════════════
+  // ═══════════════════════════════════════
+  // Header
+  // ═══════════════════════════════════════
   addNewPage();
-
-  // Dark header band
   doc.setFillColor(...C.headerBg);
   doc.rect(0, 0, W, 32, "F");
-
   doc.setFontSize(22);
   doc.setTextColor(...C.white);
   doc.setFont("helvetica", "bold");
   doc.text("ProdControl — Relatório de Produtividade", margin, 14);
-
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Contrato: ${data.obra || "Todos os Contratos"} | Período: ${data.periodo}`, margin, 22);
-
   doc.setFontSize(8);
   doc.text(`Gerado em: ${dateStr}`, margin, 28);
-
   curY = 40;
 
-  // ═════════════════════════════════════════════
+  // ═══════════════════════════════════════
   // KPIs
-  // ═════════════════════════════════════════════
+  // ═══════════════════════════════════════
   drawSectionHeader("Indicadores Principais");
 
   const kpis = [
@@ -216,79 +193,64 @@ export function generatePDFReport(data: PDFReportData) {
   const kpiW = (contentW - 9) / 4;
   kpis.forEach((kpi, i) => {
     const x = margin + i * (kpiW + 3);
-    // Card background
     doc.setFillColor(...C.cardBg);
     doc.setDrawColor(...C.cardBorder);
     doc.roundedRect(x, curY, kpiW, 22, 1, 1, "FD");
-    // Color accent top bar
     doc.setFillColor(...kpi.color);
     doc.rect(x, curY, kpiW, 1.5, "F");
-
-    // Value
     doc.setFontSize(16);
     doc.setTextColor(...kpi.color);
     doc.setFont("helvetica", "bold");
     doc.text(kpi.value, x + 4, curY + 11);
-
-    // Label
     doc.setFontSize(8);
     doc.setTextColor(...C.textGray);
     doc.setFont("helvetica", "normal");
     doc.text(kpi.label, x + 4, curY + 18);
   });
-
   curY += 26;
 
-  // Base info
   doc.setFontSize(8);
   doc.setTextColor(...C.textGray);
-  doc.text(
-    `Base controlável: ${data.totalControlaveis} amostras (excluindo ${data.externo} NPE — ${data.externoPct}% do total)`,
-    margin,
-    curY,
-  );
+  doc.text(`Base controlável: ${data.totalControlaveis} amostras (excluindo ${data.externo} NPE — ${data.externoPct}% do total)`, margin, curY);
   curY += 4;
 
-  // Resumo analysis
-  if (analysis["RESUMO"]) {
-    drawAnalysisBox(analysis["RESUMO"]);
-  }
+  if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);
 
-  // ═════════════════════════════════════════════
-  // Chart sections — continuous flow
-  // ═════════════════════════════════════════════
-  const chartSections: Array<{ title: string; image: string | undefined; section: string }> = [
-    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA" },
-    { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO" },
-    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE" },
-    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO" },
-    { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO" },
-    { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE" },
-    { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO" },
-    { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO" },
-    { title: "Causas Externas (Não Produtivo Externo)", image: images.externas, section: "EXTERNO" },
-    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO" },
-    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA" },
-    { title: "Produtividade por Mês", image: images.tempoMes, section: "MES" },
+  // ═══════════════════════════════════════
+  // Chart sections
+  // ═══════════════════════════════════════
+  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string }> = [
+    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
+    { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
+    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
+    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
+    { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
+    { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE", dimKey: "paretoEspecialidade" },
+    { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO", dimKey: "paretoFuncao" },
+    { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
+    { title: "Causas Externas (Não Produtivo Externo)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
+    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
+    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana" },
+    { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
   for (const cs of chartSections) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      drawChartSection(cs.title, cs.image, analysisText);
+      drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
     }
   }
 
-  // ═════════════════════════════════════════════
-  // Conclusão e Recomendações
-  // ═════════════════════════════════════════════
+  // ═══════════════════════════════════════
+  // Recomendações
+  // ═══════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
     drawSectionHeader("Conclusão e Recomendações");
     drawAnalysisBox(recText);
   }
 
-  // Add footer to all pages
+  // Footer on all pages
   const totalPages = pageNum;
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
