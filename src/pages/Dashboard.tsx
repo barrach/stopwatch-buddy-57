@@ -799,6 +799,10 @@ export default function Dashboard() {
     const byCat: Record<string, number> = {};
     const byParentCat: Record<string, number> = {};
     const byHour: Record<string, { prod: number; total: number }> = {};
+    const byWeekday: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
+    const byMonth: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
+    const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     records.forEach((r: any) => {
       const qty = r.quantidade || 0;
@@ -844,6 +848,25 @@ export default function Dashboard() {
         byHour[h].total += qty;
         if (cat === "Produtivo") byHour[h].prod += qty;
       }
+
+      // Per weekday
+      const dateObj = new Date(r.data + "T12:00:00");
+      const wdKey = WEEKDAY_LABELS[dateObj.getDay()];
+      if (!byWeekday[wdKey]) byWeekday[wdKey] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
+      byWeekday[wdKey].total += qty;
+      if (isExt) byWeekday[wdKey].npe += qty;
+      else if (cat === "Produtivo") byWeekday[wdKey].prod += qty;
+      else if (cat === "Suplementar") byWeekday[wdKey].supl += qty;
+      else if (cat === "Não Produtivo") byWeekday[wdKey].naoProd += qty;
+
+      // Per month
+      const mKey = MONTH_LABELS[dateObj.getMonth()];
+      if (!byMonth[mKey]) byMonth[mKey] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
+      byMonth[mKey].total += qty;
+      if (isExt) byMonth[mKey].npe += qty;
+      else if (cat === "Produtivo") byMonth[mKey].prod += qty;
+      else if (cat === "Suplementar") byMonth[mKey].supl += qty;
+      else if (cat === "Não Produtivo") byMonth[mKey].naoProd += qty;
 
       // Description breakdown
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
@@ -911,6 +934,25 @@ export default function Dashboard() {
       porEspecialidade,
       porFuncao,
       porHorario,
+      porDiaSemana: ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+        .filter(d => byWeekday[d])
+        .map(d => {
+          const v = byWeekday[d];
+          const ctrl = v.total - v.npe;
+          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
+          const sPct = ctrl > 0 ? Math.round((v.supl / ctrl) * 100) : 0;
+          const nPct = ctrl > 0 ? Math.round((v.naoProd / ctrl) * 100) : 0;
+          const npePct = v.total > 0 ? Math.round((v.npe / v.total) * 100) : 0;
+          return `${d}: Produtividade ${pPct}%, Suplementar ${sPct}%, Não Produtivo ${nPct}%, NPE ${npePct}%`;
+        }).join("\n") || "Não disponível",
+      porMes: MONTH_LABELS
+        .filter(m => byMonth[m])
+        .map(m => {
+          const v = byMonth[m];
+          const ctrl = v.total - v.npe;
+          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
+          return `${m}: Produtividade ${pPct}%`;
+        }).join("\n") || "Não disponível",
       topCategorias,
       causasExternas,
     };

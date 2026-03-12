@@ -209,6 +209,12 @@ ${c.topCategorias || "Não disponível"}
 CAUSAS EXTERNAS (NPE):
 ${c.causasExternas || "Nenhuma registrada"}
 
+PRODUTIVIDADE POR DIA DA SEMANA (excluindo NPE):
+${c.porDiaSemana || "Não disponível"}
+
+PRODUTIVIDADE POR MÊS (excluindo NPE):
+${c.porMes || "Não disponível"}
+
 Gere um relatório executivo completo e preciso com base nesses dados. Use EXATAMENTE os percentuais fornecidos. NUNCA mencione números absolutos de amostras no texto das análises.`;
 
     } else {
