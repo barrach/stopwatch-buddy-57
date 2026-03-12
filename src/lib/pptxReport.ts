@@ -197,14 +197,12 @@ export function generatePPTXReport(data: PDFReportData) {
   makeBg(pptx, s1);
   
   // Logo MEGASTEAM no canto superior direito
-  try {
-    s1.addImage({ path: "/logo-megasteam.png", x: 10.5, y: 0.3, w: 2.5, h: 0.8 });
-  } catch (e) {
-    // Fallback: texto do logo
-    s1.addText("MEGASTEAM", {
-      x: 10.5, y: 0.3, w: 2.5, h: 0.5,
-      fontSize: 14, bold: true, color: T.accent, fontFace: "Calibri", align: "right"
-    });
+  if ((data as any).logoBase64) {
+    try {
+      s1.addImage({ data: (data as any).logoBase64, x: 10.5, y: 0.3, w: 2.5, h: 0.8 });
+    } catch (e) {
+      console.warn("Failed to add logo to PPTX:", e);
+    }
   }
   
   s1.addShape(pptx.ShapeType.rect, { x: 0, y: 2, w: 13.33, h: 3.5, fill: { color: T.bgLight } });
