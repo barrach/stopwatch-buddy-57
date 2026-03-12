@@ -353,7 +353,7 @@ export function generatePPTXReport(data: PDFReportData) {
 
     if (series.length > 0) {
       const chartData = series.map(s => ({ name: s.name, labels, values: s.values }));
-      s8.addChart(pptx.charts.BAR, chartData, {
+      s8.addChart(pptx.ChartType.bar, chartData, {
         x: 0.3, y: 1.3, w: 7.5, h: 5,
         barDir: "bar",
         barGrouping: "stacked",
