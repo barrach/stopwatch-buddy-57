@@ -159,13 +159,26 @@ NUNCA pule nenhum dia. NUNCA use números de amostras.
 Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
 
 ===RECOMENDACOES===
-5 recomendações concretas no formato 5W2H simplificado:
-Para cada recomendação:
-- **Problema**: O que foi identificado
-- **Causa provável**: Por que ocorre
-- **Ação recomendada**: O que fazer
-- **Responsável sugerido**: Quem deve executar (ex: encarregado, supervisor, planejamento)
-- **Impacto esperado**: Qual a melhoria projetada em %
+5 recomendações concretas, cada uma como um BLOCO SEPARADO numerado.
+Formato OBRIGATÓRIO — cada bloco deve seguir EXATAMENTE esta estrutura:
+
+Problema 1 — [Nome curto do problema]
+- **Problema**: Descrição do que foi identificado (usar %)
+- **Causa provável**: Por que isso ocorre na prática da obra
+- **Ação recomendada**: O que fazer concretamente para resolver
+- **Responsável sugerido**: Quem deve executar (ex: Supervisor de Caldeiraria, Encarregado, Planejamento)
+- **Impacto esperado**: Qual a melhoria projetada em pontos percentuais de produtividade
+
+Problema 2 — [Nome curto]
+- **Problema**: ...
+- **Causa provável**: ...
+- **Ação recomendada**: ...
+- **Responsável sugerido**: ...
+- **Impacto esperado**: ...
+
+(continuar até Problema 5)
+
+IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor. Cada bloco DEVE ser claramente separado com "Problema N — Título".
 
 IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `Estruture o relatório com:
 1. **Resumo Executivo** (3-4 frases com percentuais reais — SEM números de amostras)

@@ -26,6 +26,61 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+interface RecBlock {
+  title: string;
+  problema: string;
+  causa: string;
+  acao: string;
+  responsavel: string;
+  impacto: string;
+}
+
+function parseRecommendationBlocks(text: string): RecBlock[] {
+  const blocks: RecBlock[] = [];
+  // Split by "Problema N" pattern (e.g. "Problema 1 — Soldagem" or "**Problema 1**")
+  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
+  for (const part of parts) {
+    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
+    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
+    // First line or text before first field is the title
+    let currentField = "title";
+    for (const line of lines) {
+      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
+      const lower = clean.toLowerCase();
+      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
+        block.problema = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "problema";
+      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
+        block.causa = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "causa";
+      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
+        block.acao = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "acao";
+      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
+        block.responsavel = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "responsavel";
+      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
+        block.impacto = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "impacto";
+      } else if (!block.title && currentField === "title") {
+        block.title = clean.replace(/\*\*/g, "").replace(/^[-—]\s*/, "").trim();
+      } else {
+        // Append to current field
+        if (currentField === "problema") block.problema += " " + clean;
+        else if (currentField === "causa") block.causa += " " + clean;
+        else if (currentField === "acao") block.acao += " " + clean;
+        else if (currentField === "responsavel") block.responsavel += " " + clean;
+        else if (currentField === "impacto") block.impacto += " " + clean;
+      }
+    }
+    if (block.title || block.problema) {
+      if (!block.title) block.title = block.problema.substring(0, 40);
+      blocks.push(block);
+    }
+  }
+  return blocks;
+}
+
 function makeBg(pptx: PptxGenJS, slide: PptxGenJS.Slide) {
   slide.background = { color: T.bg };
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 7.1, w: 13.33, h: 0.05, fill: { color: T.accent } });
@@ -180,18 +235,18 @@ export function generatePPTXReport(data: PDFReportData) {
     "8. Produtividade por Especialidade",
     "9. Produtividade por Função",
     "10. Causas de Não Produtividade",
-    "11. Causas Externas de Parada",
+    "11. Causas Externas de Parada (NPE)",
     "12. Produtividade por Horário",
     "13. Produtividade por Dia da Semana",
     "14. Produtividade por Mês",
-    "15. Recomendações e Melhorias",
+    "15. Conclusões e Recomendações",
   ];
   s2.addText(
     tocItems.map((t) => ({
-      text: t,
-      options: { fontSize: 13, color: T.white, paraSpaceAfter: 6, bullet: false } as any,
+      text: t + "\n",
+      options: { fontSize: 14, color: T.white, paraSpaceBefore: 4, paraSpaceAfter: 10, bullet: false, lineSpacing: 20 } as any,
     })),
-    { x: 1.5, y: 1.4, w: 10, h: 5.5, fontFace: "Calibri", valign: "top" },
+    { x: 1.2, y: 1.4, w: 10.5, h: 5.5, fontFace: "Calibri", valign: "top" },
   );
   slides.push(s2);
 
@@ -272,15 +327,43 @@ export function generatePPTXReport(data: PDFReportData) {
     }
   }
 
-  // Recomendações
+  // Conclusões e Recomendações — 1 slide per problem block
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    const sRec = pptx.addSlide();
-    makeBg(pptx, sRec);
-    sRec.addText("Recomendações e Melhorias", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
-    sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
-    addBullets(sRec, recText, { x: 0.8, y: 1.5, w: 11.7, h: 5.2 });
-    slides.push(sRec);
+    const recBlocks = parseRecommendationBlocks(recText);
+    if (recBlocks.length > 0) {
+      for (const block of recBlocks) {
+        const sRec = pptx.addSlide();
+        makeBg(pptx, sRec);
+        sRec.addText(`Conclusão — ${block.title}`, { x: 0.8, y: 0.15, w: 11.7, h: 0.5, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
+        sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 0.68, w: 11.7, h: 0.03, fill: { color: T.accent } });
+
+        const fields = [
+          { label: "Problema", value: block.problema, color: T.red },
+          { label: "Causa provável", value: block.causa, color: T.amber },
+          { label: "Ação recomendada", value: block.acao, color: T.green },
+          { label: "Responsável", value: block.responsavel, color: T.accent },
+          { label: "Impacto esperado", value: block.impacto, color: T.green },
+        ];
+
+        let fieldY = 1.0;
+        for (const f of fields) {
+          if (!f.value) continue;
+          sRec.addText(f.label, { x: 0.8, y: fieldY, w: 3, h: 0.4, fontSize: 12, bold: true, color: f.color, fontFace: "Calibri" });
+          sRec.addText(f.value, { x: 0.8, y: fieldY + 0.35, w: 11.7, h: 0.7, fontSize: 11, color: T.white, fontFace: "Calibri", valign: "top" });
+          fieldY += 1.1;
+        }
+        slides.push(sRec);
+      }
+    } else {
+      // Fallback: single slide with bullets
+      const sRec = pptx.addSlide();
+      makeBg(pptx, sRec);
+      sRec.addText("Conclusões e Recomendações", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
+      sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
+      addBullets(sRec, recText, { x: 0.8, y: 1.5, w: 11.7, h: 5.2 });
+      slides.push(sRec);
+    }
   }
 
   // Thank you

@@ -47,6 +47,53 @@ const C = {
 
 interface AnalysisSections { [key: string]: string; }
 
+interface RecBlock {
+  title: string;
+  problema: string;
+  causa: string;
+  acao: string;
+  responsavel: string;
+  impacto: string;
+}
+
+function parseRecommendationBlocks(text: string): RecBlock[] {
+  const blocks: RecBlock[] = [];
+  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
+  for (const part of parts) {
+    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
+    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
+    let currentField = "title";
+    for (const line of lines) {
+      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
+      const lower = clean.toLowerCase();
+      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
+        block.problema = clean.replace(/^[^:]+:\s*/, ""); currentField = "problema";
+      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
+        block.causa = clean.replace(/^[^:]+:\s*/, ""); currentField = "causa";
+      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
+        block.acao = clean.replace(/^[^:]+:\s*/, ""); currentField = "acao";
+      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
+        block.responsavel = clean.replace(/^[^:]+:\s*/, ""); currentField = "responsavel";
+      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
+        block.impacto = clean.replace(/^[^:]+:\s*/, ""); currentField = "impacto";
+      } else if (!block.title && currentField === "title") {
+        block.title = clean.replace(/^[-—]\s*/, "").trim();
+      } else {
+        if (currentField === "problema") block.problema += " " + clean;
+        else if (currentField === "causa") block.causa += " " + clean;
+        else if (currentField === "acao") block.acao += " " + clean;
+        else if (currentField === "responsavel") block.responsavel += " " + clean;
+        else if (currentField === "impacto") block.impacto += " " + clean;
+      }
+    }
+    if (block.title || block.problema) {
+      if (!block.title) block.title = block.problema.substring(0, 40);
+      blocks.push(block);
+    }
+  }
+  return blocks;
+}
+
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
   if (!aiText) return sections;
@@ -266,12 +313,58 @@ export function generatePDFReport(data: PDFReportData) {
   }
 
   // ═══════════════════════════════════════
-  // Recomendações
+  // Conclusões e Recomendações — grouped blocks
   // ═══════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    drawSectionHeader("Conclusão e Recomendações");
-    drawAnalysisBox(recText);
+    drawSectionHeader("Conclusões e Recomendações");
+    const recBlocks = parseRecommendationBlocks(recText);
+    if (recBlocks.length > 0) {
+      for (let bi = 0; bi < recBlocks.length; bi++) {
+        const block = recBlocks[bi];
+        const fields = [
+          { label: `PROBLEMA ${bi + 1} — ${block.title}`, value: block.problema },
+          { label: "CAUSA PROVÁVEL", value: block.causa },
+          { label: "AÇÃO RECOMENDADA", value: block.acao },
+          { label: "RESPONSÁVEL", value: block.responsavel },
+          { label: "IMPACTO ESPERADO", value: block.impacto },
+        ];
+        // Estimate height
+        let blockH = 4;
+        for (const f of fields) {
+          if (!f.value) continue;
+          const lines = doc.splitTextToSize(f.value, contentW - 16);
+          blockH += 5 + lines.length * 3.5 + 2;
+        }
+        ensureSpace(blockH + 8);
+
+        // Separator line between blocks
+        if (bi > 0) {
+          doc.setDrawColor(...C.cardBorder);
+          doc.line(margin + 4, curY, margin + contentW - 4, curY);
+          curY += 4;
+        }
+
+        for (const f of fields) {
+          if (!f.value) continue;
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...C.sectionBg);
+          doc.text(f.label, margin + 4, curY + 4);
+          curY += 5;
+
+          doc.setFontSize(8.5);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          const wrapped = doc.splitTextToSize(f.value, contentW - 16);
+          doc.text(wrapped, margin + 8, curY + 3);
+          curY += wrapped.length * 3.5 + 3;
+        }
+        curY += 4; // spacing between blocks
+      }
+    } else {
+      drawAnalysisBox(recText);
+    }
   }
 
   // Footer on all pages
