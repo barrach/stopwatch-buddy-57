@@ -164,7 +164,7 @@ Gere um relatório executivo completo e preciso com base nesses dados. Use EXATA
       throw new Error(`Erro na IA: ${response.status}`);
     }
 
-    if (type === "report") {
+    if (type === "report" || type === "pdf-report") {
       return new Response(response.body, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
