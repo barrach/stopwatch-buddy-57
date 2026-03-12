@@ -849,6 +849,25 @@ export default function Dashboard() {
         if (cat === "Produtivo") byHour[h].prod += qty;
       }
 
+      // Per weekday
+      const dateObj = new Date(r.data + "T12:00:00");
+      const wdKey = WEEKDAY_LABELS[dateObj.getDay()];
+      if (!byWeekday[wdKey]) byWeekday[wdKey] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
+      byWeekday[wdKey].total += qty;
+      if (isExt) byWeekday[wdKey].npe += qty;
+      else if (cat === "Produtivo") byWeekday[wdKey].prod += qty;
+      else if (cat === "Suplementar") byWeekday[wdKey].supl += qty;
+      else if (cat === "Não Produtivo") byWeekday[wdKey].naoProd += qty;
+
+      // Per month
+      const mKey = MONTH_LABELS[dateObj.getMonth()];
+      if (!byMonth[mKey]) byMonth[mKey] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
+      byMonth[mKey].total += qty;
+      if (isExt) byMonth[mKey].npe += qty;
+      else if (cat === "Produtivo") byMonth[mKey].prod += qty;
+      else if (cat === "Suplementar") byMonth[mKey].supl += qty;
+      else if (cat === "Não Produtivo") byMonth[mKey].naoProd += qty;
+
       // Description breakdown
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
