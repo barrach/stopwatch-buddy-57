@@ -149,6 +149,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
     const today = new Date();
@@ -614,7 +615,83 @@ export default function Dashboard() {
     });
   };
 
-  const exportToPDF = () => window.print();
+  const exportToPDF = async () => {
+    if (records.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma observação encontrada para o período.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingPDF(true);
+    toast({ title: "Gerando relatório PDF...", description: "A IA está analisando os dados. Aguarde." });
+
+    try {
+      // 1) Generate AI analysis
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      let aiText = "";
+
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-observations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ type: "report", context: aiStats }),
+      });
+
+      if (resp.ok && resp.body) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let done = false;
+        while (!done) {
+          const { done: sd, value } = await reader.read();
+          if (sd) break;
+          buffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") { done = true; break; }
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) aiText += content;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+
+      // 2) Generate PDF
+      const { generatePDFReport } = await import("@/lib/pdfReport");
+      generatePDFReport({
+        periodo: aiStats.periodo,
+        obra: aiStats.obra,
+        totalAmostras: aiStats.totalAmostras,
+        totalControlaveis: aiStats.totalControlaveis,
+        produtivo: aiStats.produtivo,
+        suplementar: aiStats.suplementar,
+        naoProdutivo: aiStats.naoProdutivo,
+        externo: aiStats.externo,
+        produtivoPct: aiStats.produtivoPct,
+        suplementarPct: aiStats.suplementarPct,
+        naoProdutivoPct: aiStats.naoProdutivoPct,
+        externoPct: aiStats.externoPct,
+        byObra,
+        bySpecialty,
+        byFunction,
+        nonprodCausas,
+        externalCausas,
+        categoryTotals,
+        aiAnalysis: aiText,
+      });
+
+      toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
+    } catch (e: any) {
+      toast({ title: "Erro ao gerar PDF", description: e.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // ── AI Report ──────────────────────────────────────────────────
   const aiStats = useMemo(() => {
@@ -907,8 +984,8 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={exportToPDF} className="gap-1.5">
-                <Download className="w-3.5 h-3.5" /> PDF
+              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
+                {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
               </Button>
             </div>
           </div>
