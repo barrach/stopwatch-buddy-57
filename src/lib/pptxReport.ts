@@ -1,53 +1,23 @@
 import PptxGenJS from "pptxgenjs";
 import { format } from "date-fns";
 import type { PDFReportData } from "./pdfReport";
+import type { ChartImages } from "./chartCapture";
 
 // ── Theme ──
-const THEME = {
+const T = {
   bg: "0F172A",
   bgLight: "1E293B",
-  bgCard: "1E293B",
   accent: "3B82F6",
   green: "16A34A",
   amber: "F59E0B",
   red: "DC2626",
-  blue: "3B82F6",
   white: "F8FAFC",
   gray: "94A3B8",
-  darkGray: "334155",
 };
 
-const DESC_COLORS: Record<string, string> = {
-  Trabalhando: "16A34A",
-  Planejando: "2563EB",
-  "Aguardando Instruções": "F59E0B",
-  Assistindo: "7C3AED",
-  "Aguardando Ferramenta ou Material": "E11D48",
-  "Transitando no local de trabalho - com ferramenta": "0891B2",
-  "Transitando no local de trabalho - sem ferramenta": "D946EF",
-  "Transitando fora do local de trabalho - com ferramenta": "0D9488",
-  "Transitando fora do local de trabalho - sem ferramenta": "A3631A",
-  "Preparando, Organizando": "64748B",
-  Pessoal: "DC2626",
-  Ocioso: "1F2937",
-  Retrabalho: "9F1239",
-  Deslocamento: "78350F",
-  "Causas Naturais": "38BDF8",
-  "Vazamento / Interferência da Planta": "6366F1",
-  "Aguardando Liberação de PT": "A855F7",
-};
-
-const FALLBACK = ["0EA5E9", "D946EF", "F97316", "14B8A6", "6366F1", "A3E635", "FB7185", "FBBF24"];
-const getColor = (desc: string, i: number) => DESC_COLORS[desc] || FALLBACK[i % FALLBACK.length];
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: THEME.green,
-  Suplementar: THEME.amber,
-  "Não Produtivo": THEME.red,
-  "Não Produtivo Externo": THEME.blue,
-};
-
-interface AnalysisSections { [key: string]: string }
+interface AnalysisSections {
+  [key: string]: string;
+}
 
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
@@ -59,19 +29,31 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+function makeBg(pptx: PptxGenJS, slide: PptxGenJS.Slide) {
+  slide.background = { color: T.bg };
+  slide.addShape(pptx.ShapeType.rect, { x: 0, y: 7.1, w: 13.33, h: 0.05, fill: { color: T.accent } });
+}
+
+function addSlideNumber(slide: PptxGenJS.Slide, num: number, total: number) {
+  slide.addText(`${num} / ${total}`, {
+    x: 11.5, y: 7.15, w: 1.5, h: 0.25,
+    fontSize: 7, color: T.gray, align: "right", fontFace: "Calibri",
+  });
+}
+
 function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: number; w: number; h: number }) {
   if (!text?.trim()) return;
-  const lines = text.split("\n").filter(l => l.trim());
-  const bullets: PptxGenJS.TextProps[] = lines.map(line => {
+  const lines = text.split("\n").filter((l) => l.trim());
+  const bullets: PptxGenJS.TextProps[] = lines.slice(0, 8).map((line) => {
     const trimmed = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
     return {
       text: trimmed,
       options: {
-        fontSize: 12,
-        color: THEME.white,
+        fontSize: 10,
+        color: T.white,
         bullet: { code: "2022" },
         breakType: "none" as const,
-        paraSpaceAfter: 6,
+        paraSpaceAfter: 5,
       },
     };
   });
@@ -82,71 +64,83 @@ function addBullets(slide: PptxGenJS.Slide, text: string, opts: { x: number; y: 
   });
 }
 
-function addSlideNumber(slide: PptxGenJS.Slide, num: number, total: number) {
-  slide.addText(`${num} / ${total}`, {
-    x: 8.5, y: 5.2, w: 1.2, h: 0.3,
-    fontSize: 8, color: THEME.gray, align: "right", fontFace: "Calibri",
-  });
-}
+/**
+ * Adds a chart slide with the chart image taking the main space
+ * and analysis bullets on the right side.
+ */
+function addChartSlide(
+  pptx: PptxGenJS,
+  slides: PptxGenJS.Slide[],
+  title: string,
+  chartImage: string | undefined,
+  analysisText: string | undefined,
+) {
+  const slide = pptx.addSlide();
+  makeBg(pptx, slide);
 
-// ── Horizontal stacked bar chart data builder ──
-function buildStackedBarData(
-  items: Array<{ name: string; total: number; [k: string]: any }>,
-  descs: string[]
-): { labels: string[]; series: Array<{ name: string; color: string; values: number[] }> } {
-  const labels = items.map(i => i.name.length > 20 ? i.name.slice(0, 18) + "…" : i.name);
-  const series = descs
-    .filter(d => items.some(i => (i[d] || 0) > 0))
-    .slice(0, 12)
-    .map((d, idx) => ({
-      name: d.length > 25 ? d.slice(0, 23) + "…" : d,
-      color: getColor(d, idx),
-      values: items.map(i => i[d] || 0),
-    }));
-  return { labels, series };
+  // Title
+  slide.addText(title, {
+    x: 0.5, y: 0.2, w: 9, h: 0.6,
+    fontSize: 22, bold: true, color: T.white, fontFace: "Calibri",
+  });
+  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.85, w: 12.3, h: 0.03, fill: { color: T.accent } });
+
+  if (chartImage && analysisText) {
+    // Chart on left (large), analysis on right
+    slide.addImage({
+      data: chartImage,
+      x: 0.3, y: 1.1, w: 8.2, h: 5.5,
+    });
+    addBullets(slide, analysisText, { x: 8.7, y: 1.1, w: 4.3, h: 5.5 });
+  } else if (chartImage) {
+    // Chart only — centered and large
+    slide.addImage({
+      data: chartImage,
+      x: 0.8, y: 1.1, w: 11.7, h: 5.8,
+    });
+  } else if (analysisText) {
+    addBullets(slide, analysisText, { x: 0.8, y: 1.3, w: 11.7, h: 5.5 });
+  }
+
+  slides.push(slide);
 }
 
 export function generatePPTXReport(data: PDFReportData) {
   const pptx = new PptxGenJS();
-  pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
+  pptx.layout = "LAYOUT_WIDE";
   pptx.author = "ProdControl";
   pptx.subject = "Relatório de Produtividade";
   pptx.title = `Relatório - ${data.obra}`;
 
   const analysis = parseAnalysis(data.aiAnalysis);
+  const images = (data as any).chartImages as ChartImages || {};
   const slides: PptxGenJS.Slide[] = [];
-  
-  const makeBg = (slide: PptxGenJS.Slide) => {
-    slide.background = { color: THEME.bg };
-    // Accent line at bottom
-    slide.addShape(pptx.ShapeType.rect, { x: 0, y: 7.1, w: 13.33, h: 0.05, fill: { color: THEME.accent } });
-  };
 
   // ═══════════════════════════════════════════
   // SLIDE 1 — Cover
   // ═══════════════════════════════════════════
   const s1 = pptx.addSlide();
-  makeBg(s1);
-  s1.addShape(pptx.ShapeType.rect, { x: 0, y: 2, w: 13.33, h: 3.5, fill: { color: THEME.bgLight } });
+  makeBg(pptx, s1);
+  s1.addShape(pptx.ShapeType.rect, { x: 0, y: 2, w: 13.33, h: 3.5, fill: { color: T.bgLight } });
   s1.addText("Relatório de Produtividade", {
     x: 0.8, y: 2.3, w: 11.7, h: 1.2,
-    fontSize: 36, bold: true, color: THEME.white, fontFace: "Calibri",
+    fontSize: 36, bold: true, color: T.white, fontFace: "Calibri",
   });
   s1.addText(data.obra || "Todos os Contratos", {
     x: 0.8, y: 3.5, w: 11.7, h: 0.6,
-    fontSize: 20, color: THEME.accent, fontFace: "Calibri",
+    fontSize: 20, color: T.accent, fontFace: "Calibri",
   });
   s1.addText(`Período: ${data.periodo}`, {
     x: 0.8, y: 4.2, w: 6, h: 0.5,
-    fontSize: 14, color: THEME.gray, fontFace: "Calibri",
+    fontSize: 14, color: T.gray, fontFace: "Calibri",
   });
   s1.addText(`Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}`, {
     x: 0.8, y: 4.7, w: 6, h: 0.4,
-    fontSize: 11, color: THEME.gray, fontFace: "Calibri",
+    fontSize: 11, color: T.gray, fontFace: "Calibri",
   });
   s1.addText("MEGASTEAM", {
     x: 0.8, y: 6.5, w: 4, h: 0.4,
-    fontSize: 14, bold: true, color: THEME.accent, fontFace: "Calibri",
+    fontSize: 14, bold: true, color: T.accent, fontFace: "Calibri",
   });
   slides.push(s1);
 
@@ -154,67 +148,121 @@ export function generatePPTXReport(data: PDFReportData) {
   // SLIDE 2 — Sumário
   // ═══════════════════════════════════════════
   const s2 = pptx.addSlide();
-  makeBg(s2);
-  s2.addText("Sumário", { x: 0.8, y: 0.3, w: 6, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
+  makeBg(pptx, s2);
+  s2.addText("Sumário", {
+    x: 0.8, y: 0.3, w: 6, h: 0.8,
+    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
+  });
+  s2.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
+
   const tocItems = [
     "1. Objetivo",
     "2. Indicadores Principais (KPIs)",
-    "3. Distribuição por Categoria",
-    "4. Produtividade por Contrato",
-    "5. Produtividade por Especialidade",
-    "6. Produtividade por Função",
-    "7. Causas de Não Produtividade",
-    "8. Causas Externas (NPE)",
-    "9. Recomendações e Melhorias",
+    "3. Visão Geral por Contrato",
+    "4. Distribuição por Categoria",
+    "5. Top Causas (Pareto)",
+    "6. Produtividade por Especialidade",
+    "7. Produtividade por Função",
+    "8. Causas de Não Produtividade",
+    "9. Causas Externas de Parada",
+    "10. Produtividade por Horário",
+    "11. Produtividade por Dia da Semana",
+    "12. Produtividade por Mês",
+    "13. Recomendações e Melhorias",
   ];
-  s2.addText(tocItems.map(t => ({ text: t, options: { fontSize: 16, color: THEME.white, paraSpaceAfter: 10, bullet: false } as any })), {
-    x: 1.5, y: 1.3, w: 10, h: 5.5, fontFace: "Calibri", valign: "top",
-  });
+  s2.addText(
+    tocItems.map((t) => ({
+      text: t,
+      options: { fontSize: 14, color: T.white, paraSpaceAfter: 8, bullet: false } as any,
+    })),
+    { x: 1.5, y: 1.4, w: 10, h: 5.5, fontFace: "Calibri", valign: "top" },
+  );
   slides.push(s2);
 
   // ═══════════════════════════════════════════
   // SLIDE 3 — Objetivo
   // ═══════════════════════════════════════════
   const s3 = pptx.addSlide();
-  makeBg(s3);
-  s3.addText("Objetivo", { x: 0.8, y: 0.3, w: 6, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-  s3.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.3, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-  s3.addText([
-    { text: "Este relatório apresenta a análise de produtividade das equipes de campo, com base nas observações coletadas pelo sistema ProdControl.", options: { fontSize: 14, color: THEME.white, paraSpaceAfter: 14 } },
-    { text: "Os dados são classificados em 4 categorias:", options: { fontSize: 14, color: THEME.white, paraSpaceAfter: 8 } },
-    { text: "Produtivo — Atividades que geram valor direto", options: { fontSize: 13, color: THEME.green, bullet: { code: "2022" }, paraSpaceAfter: 6 } },
-    { text: "Suplementar — Atividades de apoio necessárias", options: { fontSize: 13, color: THEME.amber, bullet: { code: "2022" }, paraSpaceAfter: 6 } },
-    { text: "Não Produtivo — Tempo improdutivo controlável", options: { fontSize: 13, color: THEME.red, bullet: { code: "2022" }, paraSpaceAfter: 6 } },
-    { text: "Não Produtivo Externo (NPE) — Causas fora do controle da equipe", options: { fontSize: 13, color: THEME.blue, bullet: { code: "2022" }, paraSpaceAfter: 6 } },
-    { text: `\nA produtividade é calculada excluindo os registros de NPE da base: Produtividade = Produtivo ÷ (Total − NPE) × 100`, options: { fontSize: 12, color: THEME.gray, paraSpaceAfter: 10 } },
-  ], { x: 0.8, y: 1.6, w: 11.7, h: 5, fontFace: "Calibri", valign: "top" });
+  makeBg(pptx, s3);
+  s3.addText("Objetivo", {
+    x: 0.8, y: 0.3, w: 6, h: 0.8,
+    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
+  });
+  s3.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
+  s3.addText(
+    [
+      {
+        text: "Análise de produtividade das equipes de campo, com base nas observações coletadas pelo sistema ProdControl.",
+        options: { fontSize: 14, color: T.white, paraSpaceAfter: 20 },
+      },
+      {
+        text: "Classificação em 4 categorias:",
+        options: { fontSize: 14, color: T.white, paraSpaceAfter: 12 },
+      },
+      {
+        text: "Produtivo — Atividades que geram valor direto",
+        options: { fontSize: 13, color: T.green, bullet: { code: "2022" }, paraSpaceAfter: 8 },
+      },
+      {
+        text: "Suplementar — Atividades de apoio necessárias",
+        options: { fontSize: 13, color: T.amber, bullet: { code: "2022" }, paraSpaceAfter: 8 },
+      },
+      {
+        text: "Não Produtivo — Tempo improdutivo controlável",
+        options: { fontSize: 13, color: T.red, bullet: { code: "2022" }, paraSpaceAfter: 8 },
+      },
+      {
+        text: "Não Produtivo Externo (NPE) — Causas fora do controle",
+        options: { fontSize: 13, color: T.accent, bullet: { code: "2022" }, paraSpaceAfter: 16 },
+      },
+      {
+        text: "Produtividade = Produtivo ÷ (Total − NPE) × 100",
+        options: { fontSize: 11, color: T.gray, paraSpaceAfter: 6 },
+      },
+    ],
+    { x: 0.8, y: 1.5, w: 11.7, h: 5, fontFace: "Calibri", valign: "top" },
+  );
   slides.push(s3);
 
   // ═══════════════════════════════════════════
   // SLIDE 4 — KPIs
   // ═══════════════════════════════════════════
   const s4 = pptx.addSlide();
-  makeBg(s4);
-  s4.addText("Indicadores Principais", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-  s4.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
+  makeBg(pptx, s4);
+  s4.addText("Indicadores Principais", {
+    x: 0.8, y: 0.3, w: 8, h: 0.8,
+    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
+  });
+  s4.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
 
   const kpis = [
-    { label: "Total de Amostras", value: String(data.totalAmostras), color: THEME.accent },
-    { label: "Produtividade", value: `${data.produtivoPct}%`, color: THEME.green },
-    { label: "Suplementar", value: `${data.suplementarPct}%`, color: THEME.amber },
-    { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: THEME.red },
+    { label: "Total de Amostras", value: String(data.totalAmostras), color: T.accent },
+    { label: "Produtividade", value: `${data.produtivoPct}%`, color: T.green },
+    { label: "Suplementar", value: `${data.suplementarPct}%`, color: T.amber },
+    { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: T.red },
   ];
+
   kpis.forEach((kpi, i) => {
     const x = 0.8 + i * 3.1;
-    s4.addShape(pptx.ShapeType.roundRect, { x, y: 1.5, w: 2.8, h: 1.8, fill: { color: THEME.bgCard }, rectRadius: 0.1 });
+    s4.addShape(pptx.ShapeType.roundRect, {
+      x, y: 1.5, w: 2.8, h: 1.8,
+      fill: { color: T.bgLight }, rectRadius: 0.1,
+    });
     s4.addShape(pptx.ShapeType.rect, { x, y: 1.5, w: 0.08, h: 1.8, fill: { color: kpi.color } });
-    s4.addText(kpi.value, { x: x + 0.3, y: 1.6, w: 2.2, h: 0.9, fontSize: 30, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle" });
-    s4.addText(kpi.label, { x: x + 0.3, y: 2.5, w: 2.2, h: 0.6, fontSize: 11, color: THEME.gray, fontFace: "Calibri" });
+    s4.addText(kpi.value, {
+      x: x + 0.3, y: 1.6, w: 2.2, h: 0.9,
+      fontSize: 30, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle",
+    });
+    s4.addText(kpi.label, {
+      x: x + 0.3, y: 2.5, w: 2.2, h: 0.6,
+      fontSize: 11, color: T.gray, fontFace: "Calibri",
+    });
   });
 
-  s4.addText(`Base controlável: ${data.totalControlaveis} amostras (excl. ${data.externo} NPE — ${data.externoPct}% do total)`, {
-    x: 0.8, y: 3.6, w: 11.7, h: 0.4, fontSize: 10, color: THEME.gray, fontFace: "Calibri",
-  });
+  s4.addText(
+    `Base controlável: ${data.totalControlaveis} amostras (excl. ${data.externo} NPE — ${data.externoPct}% do total)`,
+    { x: 0.8, y: 3.5, w: 11.7, h: 0.4, fontSize: 10, color: T.gray, fontFace: "Calibri" },
+  );
 
   if (analysis["RESUMO"]) {
     addBullets(s4, analysis["RESUMO"], { x: 0.8, y: 4.2, w: 11.7, h: 2.7 });
@@ -222,268 +270,72 @@ export function generatePPTXReport(data: PDFReportData) {
   slides.push(s4);
 
   // ═══════════════════════════════════════════
-  // SLIDE 5 — Distribuição por Categoria (pie chart)
+  // Chart slides — each with image + analysis
   // ═══════════════════════════════════════════
-  const s5 = pptx.addSlide();
-  makeBg(s5);
-  s5.addText("Distribuição por Categoria", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-  s5.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
 
-  const pieData = data.categoryTotals.map(c => ({
-    name: c.name,
-    labels: [`${c.name}\n${data.totalAmostras > 0 ? ((c.value / data.totalAmostras) * 100).toFixed(1) : 0}%`],
-    values: [c.value],
-  }));
-  
-  if (pieData.length > 0) {
-    s5.addChart(pptx.ChartType.doughnut, pieData, {
-      x: 0.5, y: 1.3, w: 6, h: 5,
-      showLegend: true,
-      legendPos: "b",
-      legendFontSize: 10,
-      legendColor: THEME.gray,
-      dataLabelPosition: "outEnd",
-      dataLabelFontSize: 11,
-      dataLabelColor: THEME.white,
-      showPercent: true,
-      showValue: false,
-      showTitle: false,
-      chartColors: data.categoryTotals.map(c => CATEGORY_COLORS[c.name] || THEME.gray),
-    } as any);
-  }
+  const chartSlides: Array<{
+    title: string;
+    image: string | undefined;
+    section: string;
+  }> = [
+    { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO" },
+    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA" },
+    { title: "Top Causas (Pareto)", image: images.pareto, section: "PARETO" },
+    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE" },
+    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO" },
+    { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO" },
+    { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO" },
+    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO" },
+    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA" },
+    { title: "Produtividade por Mês", image: images.tempoMes, section: "MES" },
+  ];
 
-  if (analysis["CATEGORIA"]) {
-    addBullets(s5, analysis["CATEGORIA"], { x: 6.8, y: 1.3, w: 5.8, h: 5 });
-  }
-  slides.push(s5);
-
-  // ═══════════════════════════════════════════
-  // SLIDE 6 — Por Contrato
-  // ═══════════════════════════════════════════
-  if (data.byObra.length > 0) {
-    const allDescs = new Set<string>();
-    data.byObra.forEach(o => Object.keys(o).forEach(k => { if (k !== "name" && k !== "total" && !k.startsWith("raw_")) allDescs.add(k); }));
-    const descs = Array.from(allDescs);
-    const { labels, series } = buildStackedBarData(data.byObra, descs);
-
-    const s6 = pptx.addSlide();
-    makeBg(s6);
-    s6.addText("Produtividade por Contrato", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    s6.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-
-    if (series.length > 0) {
-      const chartData = series.map(s => ({ name: s.name, labels, values: s.values }));
-      s6.addChart(pptx.ChartType.bar, chartData, {
-        x: 0.3, y: 1.3, w: 7.5, h: 5,
-        barDir: "bar",
-        barGrouping: "stacked",
-        showLegend: true,
-        legendPos: "b",
-        legendFontSize: 7,
-        legendColor: THEME.gray,
-        catAxisLabelColor: THEME.white,
-        catAxisLabelFontSize: 9,
-        valAxisLabelColor: THEME.gray,
-        valAxisLabelFontSize: 8,
-        valAxisMaxVal: 100,
-        showValue: false,
-        chartColors: series.map(s => s.color),
-      } as any);
+  for (const cs of chartSlides) {
+    if (cs.image) {
+      addChartSlide(pptx, slides, cs.title, cs.image, analysis[cs.section]);
     }
-
-    if (analysis["CONTRATO"]) {
-      addBullets(s6, analysis["CONTRATO"], { x: 8, y: 1.3, w: 4.8, h: 5 });
-    }
-    slides.push(s6);
   }
 
   // ═══════════════════════════════════════════
-  // SLIDE 7 — Por Especialidade
-  // ═══════════════════════════════════════════
-  if (data.bySpecialty.length > 0) {
-    const allDescs = new Set<string>();
-    data.bySpecialty.forEach(o => Object.keys(o).forEach(k => { if (k !== "name" && k !== "total" && !k.startsWith("raw_")) allDescs.add(k); }));
-    const descs = Array.from(allDescs);
-    const { labels, series } = buildStackedBarData(data.bySpecialty, descs);
-
-    const s7 = pptx.addSlide();
-    makeBg(s7);
-    s7.addText("Produtividade por Especialidade", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    s7.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-
-    if (series.length > 0) {
-      const chartData = series.map(s => ({ name: s.name, labels, values: s.values }));
-      s7.addChart(pptx.ChartType.bar, chartData, {
-        x: 0.3, y: 1.3, w: 7.5, h: 5,
-        barDir: "bar",
-        barGrouping: "stacked",
-        showLegend: true,
-        legendPos: "b",
-        legendFontSize: 7,
-        legendColor: THEME.gray,
-        catAxisLabelColor: THEME.white,
-        catAxisLabelFontSize: 9,
-        valAxisLabelColor: THEME.gray,
-        valAxisLabelFontSize: 8,
-        valAxisMaxVal: 100,
-        showValue: false,
-        chartColors: series.map(s => s.color),
-      } as any);
-    }
-
-    if (analysis["ESPECIALIDADE"]) {
-      addBullets(s7, analysis["ESPECIALIDADE"], { x: 8, y: 1.3, w: 4.8, h: 5 });
-    }
-    slides.push(s7);
-  }
-
-  // ═══════════════════════════════════════════
-  // SLIDE 8 — Por Função
-  // ═══════════════════════════════════════════
-  if (data.byFunction.length > 0) {
-    const allDescs = new Set<string>();
-    data.byFunction.forEach(o => Object.keys(o).forEach(k => { if (k !== "name" && k !== "total" && !k.startsWith("raw_")) allDescs.add(k); }));
-    const descs = Array.from(allDescs);
-    const { labels, series } = buildStackedBarData(data.byFunction, descs);
-
-    const s8 = pptx.addSlide();
-    makeBg(s8);
-    s8.addText("Produtividade por Função", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    s8.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-
-    if (series.length > 0) {
-      const chartData = series.map(s => ({ name: s.name, labels, values: s.values }));
-      s8.addChart(pptx.ChartType.bar, chartData, {
-        x: 0.3, y: 1.3, w: 7.5, h: 5,
-        barDir: "bar",
-        barGrouping: "stacked",
-        showLegend: true,
-        legendPos: "b",
-        legendFontSize: 7,
-        legendColor: THEME.gray,
-        catAxisLabelColor: THEME.white,
-        catAxisLabelFontSize: 9,
-        valAxisLabelColor: THEME.gray,
-        valAxisLabelFontSize: 8,
-        valAxisMaxVal: 100,
-        showValue: false,
-        chartColors: series.map(s => s.color),
-      } as any);
-    }
-
-    if (analysis["FUNCAO"]) {
-      addBullets(s8, analysis["FUNCAO"], { x: 8, y: 1.3, w: 4.8, h: 5 });
-    }
-    slides.push(s8);
-  }
-
-  // ═══════════════════════════════════════════
-  // SLIDE 9 — Causas de Não Produtividade
-  // ═══════════════════════════════════════════
-  if (data.nonprodCausas.length > 0) {
-    const s9 = pptx.addSlide();
-    makeBg(s9);
-    s9.addText("Causas de Não Produtividade", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    s9.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-
-    const npData = data.nonprodCausas.slice(0, 8);
-    const chartData = [{
-      name: "Amostras",
-      labels: npData.map(c => c.name.length > 25 ? c.name.slice(0, 23) + "…" : c.name),
-      values: npData.map(c => c.value),
-    }];
-
-    s9.addChart(pptx.ChartType.bar, chartData, {
-      x: 0.3, y: 1.3, w: 7.5, h: 5,
-      barDir: "bar",
-      showLegend: false,
-      catAxisLabelColor: THEME.white,
-      catAxisLabelFontSize: 9,
-      valAxisLabelColor: THEME.gray,
-      valAxisLabelFontSize: 8,
-      showValue: true,
-      dataLabelColor: THEME.white,
-      dataLabelFontSize: 9,
-      chartColors: npData.map(c => c.cat === "Suplementar" ? THEME.amber : THEME.red),
-    } as any);
-
-    if (analysis["NAO_PRODUTIVO"]) {
-      addBullets(s9, analysis["NAO_PRODUTIVO"], { x: 8, y: 1.3, w: 4.8, h: 5 });
-    }
-    slides.push(s9);
-  }
-
-  // ═══════════════════════════════════════════
-  // SLIDE 10 — Causas Externas
-  // ═══════════════════════════════════════════
-  if (data.externalCausas.length > 0) {
-    const s10 = pptx.addSlide();
-    makeBg(s10);
-    s10.addText("Causas Externas (NPE)", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    s10.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
-
-    const extData = data.externalCausas.slice(0, 8);
-    const chartData = [{
-      name: "Amostras",
-      labels: extData.map(c => c.name.length > 25 ? c.name.slice(0, 23) + "…" : c.name),
-      values: extData.map(c => c.value),
-    }];
-
-    s10.addChart(pptx.ChartType.bar, chartData, {
-      x: 0.3, y: 1.3, w: 7.5, h: 5,
-      barDir: "bar",
-      showLegend: false,
-      catAxisLabelColor: THEME.white,
-      catAxisLabelFontSize: 9,
-      valAxisLabelColor: THEME.gray,
-      valAxisLabelFontSize: 8,
-      showValue: true,
-      dataLabelColor: THEME.white,
-      dataLabelFontSize: 9,
-      chartColors: [THEME.blue],
-    } as any);
-
-    if (analysis["EXTERNO"]) {
-      addBullets(s10, analysis["EXTERNO"], { x: 8, y: 1.3, w: 4.8, h: 5 });
-    }
-    slides.push(s10);
-  }
-
-  // ═══════════════════════════════════════════
-  // SLIDE 11 — Recomendações
+  // Recomendações
   // ═══════════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
     const sRec = pptx.addSlide();
-    makeBg(sRec);
-    sRec.addText("Recomendações e Melhorias", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: THEME.white, fontFace: "Calibri" });
-    sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: THEME.accent } });
+    makeBg(pptx, sRec);
+    sRec.addText("Recomendações e Melhorias", {
+      x: 0.8, y: 0.3, w: 8, h: 0.8,
+      fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
+    });
+    sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
     addBullets(sRec, recText, { x: 0.8, y: 1.5, w: 11.7, h: 5.2 });
     slides.push(sRec);
   }
 
   // ═══════════════════════════════════════════
-  // SLIDE 12 — Thank you
+  // Thank you
   // ═══════════════════════════════════════════
   const sEnd = pptx.addSlide();
-  makeBg(sEnd);
-  sEnd.addShape(pptx.ShapeType.rect, { x: 0, y: 2.5, w: 13.33, h: 2.5, fill: { color: THEME.bgLight } });
+  makeBg(pptx, sEnd);
+  sEnd.addShape(pptx.ShapeType.rect, { x: 0, y: 2.5, w: 13.33, h: 2.5, fill: { color: T.bgLight } });
   sEnd.addText("Obrigado!", {
     x: 0, y: 2.7, w: 13.33, h: 1.2,
-    fontSize: 40, bold: true, color: THEME.white, fontFace: "Calibri", align: "center",
+    fontSize: 40, bold: true, color: T.white, fontFace: "Calibri", align: "center",
   });
   sEnd.addText("Relatório gerado automaticamente pelo ProdControl com análise de IA", {
     x: 0, y: 3.9, w: 13.33, h: 0.6,
-    fontSize: 14, color: THEME.gray, fontFace: "Calibri", align: "center",
+    fontSize: 14, color: T.gray, fontFace: "Calibri", align: "center",
   });
   sEnd.addText("MEGASTEAM", {
     x: 0, y: 6, w: 13.33, h: 0.5,
-    fontSize: 16, bold: true, color: THEME.accent, fontFace: "Calibri", align: "center",
+    fontSize: 16, bold: true, color: T.accent, fontFace: "Calibri", align: "center",
   });
   slides.push(sEnd);
 
   // Add slide numbers
   slides.forEach((s, i) => addSlideNumber(s, i + 1, slides.length));
 
-  pptx.writeFile({ fileName: `apresentacao-produtividade_${format(new Date(), "yyyy-MM-dd_HHmm")}.pptx` });
+  pptx.writeFile({
+    fileName: `apresentacao-produtividade_${format(new Date(), "yyyy-MM-dd_HHmm")}.pptx`,
+  });
 }

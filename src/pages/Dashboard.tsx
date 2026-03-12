@@ -625,10 +625,16 @@ export default function Dashboard() {
       return;
     }
     setIsGeneratingPDF(true);
-    toast({ title: "Gerando relatório PDF...", description: "A IA está analisando os dados. Aguarde." });
+    toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
 
     try {
-      // 1) Generate AI analysis
+      // 1) Capture charts from DOM
+      const { captureAllCharts } = await import("@/lib/chartCapture");
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+
+      toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando relatório." });
+
+      // 2) Generate AI analysis
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       let aiText = "";
@@ -665,7 +671,7 @@ export default function Dashboard() {
         }
       }
 
-      // 2) Generate PDF
+      // 3) Generate PDF
       const { generatePDFReport } = await import("@/lib/pdfReport");
       generatePDFReport({
         periodo: aiStats.periodo,
@@ -687,6 +693,7 @@ export default function Dashboard() {
         externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
+        chartImages,
       });
 
       toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
@@ -703,9 +710,16 @@ export default function Dashboard() {
       return;
     }
     setIsGeneratingPPTX(true);
-    toast({ title: "Gerando apresentação...", description: "A IA está analisando os dados. Aguarde." });
+    toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
 
     try {
+      // 1) Capture charts from DOM
+      const { captureAllCharts } = await import("@/lib/chartCapture");
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+
+      toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando apresentação." });
+
+      // 2) Generate AI analysis
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       let aiText = "";
@@ -742,6 +756,7 @@ export default function Dashboard() {
         }
       }
 
+      // 3) Generate PPTX
       const { generatePPTXReport } = await import("@/lib/pptxReport");
       generatePPTXReport({
         periodo: aiStats.periodo,
@@ -763,6 +778,7 @@ export default function Dashboard() {
         externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
+        chartImages,
       });
 
       toast({ title: "Apresentação gerada!", description: "O arquivo PPTX foi baixado com sucesso." });
@@ -1174,7 +1190,7 @@ export default function Dashboard() {
         </div>
 
         {/* 2) Visão Geral por Contrato — enhanced tooltip */}
-        <div className={chartCardClass("contrato")}>
+        <div id="chart-contrato" className={chartCardClass("contrato")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
@@ -1219,7 +1235,7 @@ export default function Dashboard() {
         {/* Row: Pie + Pareto */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Distribution Pie */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
+          <div id="chart-categoria" className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
@@ -1274,7 +1290,7 @@ export default function Dashboard() {
           </div>
 
           {/* Pareto — configurable */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.pareto ? "ring-2 ring-primary/50" : ""}`}>
+          <div id="chart-pareto" className={`stat-card animate-fade-in transition-all ${crossFilters.pareto ? "ring-2 ring-primary/50" : ""}`}>
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
@@ -1345,7 +1361,7 @@ export default function Dashboard() {
 
 
         {/* 3) Produtividade por Especialidade */}
-        <div className={chartCardClass("especialidade")}>
+        <div id="chart-especialidade" className={chartCardClass("especialidade")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
@@ -1402,7 +1418,7 @@ export default function Dashboard() {
         </div>
 
         {/* 4) Produtividade por Função */}
-        <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
+        <div id="chart-funcao" className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
@@ -1461,7 +1477,7 @@ export default function Dashboard() {
         {/* 5) Causas de Não Produtividade */}
         <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
-          <div className={`stat-card animate-fade-in transition-all`}>
+          <div id="chart-naoprod" className={`stat-card animate-fade-in transition-all`}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Causas de Não Produtividade</h3>
@@ -1526,7 +1542,7 @@ export default function Dashboard() {
 
         {/* Causas Externas de Parada */}
         {externalCausas.length > 0 && (
-          <div className="stat-card animate-fade-in mb-6">
+          <div id="chart-externas" className="stat-card animate-fade-in mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <CloudRain className="w-4 h-4 text-muted-foreground" />
@@ -1620,7 +1636,7 @@ export default function Dashboard() {
         )}
 
         {/* 6) Produtividade por Período — supports horario/weekday/month */}
-        <div className={chartCardClass("horario")}>
+        <div id="chart-tempo" className={chartCardClass("horario")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
