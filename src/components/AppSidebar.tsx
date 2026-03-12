@@ -86,6 +86,16 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           <Settings className="w-[18px] h-[18px]" />
           <span className="text-sm">Configurações</span>
         </NavLink>
+
+        {canInstall && (
+          <button
+            onClick={install}
+            className="sidebar-item w-full text-left mt-2 bg-primary/10 hover:bg-primary/20 text-primary"
+          >
+            <Download className="w-[18px] h-[18px]" />
+            <span className="text-sm font-medium">Instalar App</span>
+          </button>
+        )}
       </nav>
 
       {/* Footer - User info */}
