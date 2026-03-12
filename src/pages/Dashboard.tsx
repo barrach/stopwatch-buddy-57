@@ -625,10 +625,16 @@ export default function Dashboard() {
       return;
     }
     setIsGeneratingPDF(true);
-    toast({ title: "Gerando relatório PDF...", description: "A IA está analisando os dados. Aguarde." });
+    toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
 
     try {
-      // 1) Generate AI analysis
+      // 1) Capture charts from DOM
+      const { captureAllCharts } = await import("@/lib/chartCapture");
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+
+      toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando relatório." });
+
+      // 2) Generate AI analysis
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       let aiText = "";
@@ -665,7 +671,7 @@ export default function Dashboard() {
         }
       }
 
-      // 2) Generate PDF
+      // 3) Generate PDF
       const { generatePDFReport } = await import("@/lib/pdfReport");
       generatePDFReport({
         periodo: aiStats.periodo,
@@ -687,6 +693,7 @@ export default function Dashboard() {
         externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
+        chartImages,
       });
 
       toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
