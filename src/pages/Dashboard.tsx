@@ -1542,7 +1542,7 @@ export default function Dashboard() {
 
         {/* Causas Externas de Parada */}
         {externalCausas.length > 0 && (
-          <div className="stat-card animate-fade-in mb-6">
+          <div id="chart-externas" className="stat-card animate-fade-in mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <CloudRain className="w-4 h-4 text-muted-foreground" />
