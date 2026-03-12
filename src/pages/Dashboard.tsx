@@ -1361,7 +1361,7 @@ export default function Dashboard() {
 
 
         {/* 3) Produtividade por Especialidade */}
-        <div className={chartCardClass("especialidade")}>
+        <div id="chart-especialidade" className={chartCardClass("especialidade")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
