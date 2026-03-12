@@ -1290,7 +1290,7 @@ export default function Dashboard() {
           </div>
 
           {/* Pareto — configurable */}
-          <div className={`stat-card animate-fade-in transition-all ${crossFilters.pareto ? "ring-2 ring-primary/50" : ""}`}>
+          <div id="chart-pareto" className={`stat-card animate-fade-in transition-all ${crossFilters.pareto ? "ring-2 ring-primary/50" : ""}`}>
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
