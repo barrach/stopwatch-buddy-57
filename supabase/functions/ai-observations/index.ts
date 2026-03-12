@@ -56,33 +56,45 @@ IMPORTANTE — Regras de cálculo de produtividade:
 - Os percentuais de Produtivo + Suplementar + Não Produtivo devem somar ~100% (base controlável).
 - NPE é reportado separadamente como % do total bruto.
 
-${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — O relatório DEVE ser estruturado com marcadores de seção exatos. Use EXATAMENTE estes marcadores para separar as seções:
+FORMATO DE SAÍDA OBRIGATÓRIO — O relatório DEVE ser estruturado com marcadores de seção exatos. Use EXATAMENTE estes marcadores para separar as seções:
 
 ===RESUMO===
 Resumo executivo de 2-3 frases com os números reais de produtividade. Destaque o índice de produtividade e os principais pontos.
 
-===CATEGORIA===
-Análise da distribuição por categorias (Produtivo, Suplementar, Não Produtivo, NPE). Explique o que os percentuais significam e se estão dentro do esperado para obras industriais.
-
 ===CONTRATO===
-Análise da produtividade por contrato/obra. Compare os contratos, destaque os melhores e piores desempenhos e possíveis causas.
+Análise da produtividade por contrato/obra. Compare os contratos, destaque os melhores e piores desempenhos.
+
+===CATEGORIA===
+Análise da distribuição por categorias (Produtivo, Suplementar, Não Produtivo, NPE). Explique o que os percentuais significam.
+
+===PARETO===
+Análise do Pareto de causas (top causas por volume). Identifique as principais causas que concentram maior volume.
 
 ===ESPECIALIDADE===
-Análise detalhada por especialidade. Compare as especialidades, identifique quais estão acima/abaixo da média e por quê.
+Análise detalhada por especialidade. Compare as especialidades, identifique quais estão acima/abaixo da média.
 
 ===FUNCAO===
 Análise por função. Identifique funções com melhor e pior produtividade e possíveis causas.
 
 ===NAO_PRODUTIVO===
-Análise das causas de não produtividade e suplementar. Identifique as principais causas de perda de tempo e seu impacto.
+Análise das causas de não produtividade e suplementar. Identifique as principais causas de perda de tempo.
 
 ===EXTERNO===
-Análise das causas externas (NPE). Avalie o impacto das paradas externas e se há padrões recorrentes.
+Análise das causas externas (NPE). Avalie o impacto das paradas externas e padrões recorrentes.
+
+===HORARIO===
+Análise da produtividade por faixa horária. Identifique os horários mais e menos produtivos.
+
+===DIA_SEMANA===
+Análise da produtividade por dia da semana. Identifique padrões semanais.
+
+===MES===
+Análise da produtividade mensal. Identifique tendências ao longo do tempo.
 
 ===RECOMENDACOES===
 3-5 recomendações concretas, específicas e acionáveis para melhorar a produtividade, baseadas nos dados.
 
-IMPORTANTE: Cada seção deve ter 2-4 parágrafos ou bullets concisos. Use linguagem direta.` : `Estruture o relatório com:
+IMPORTANTE: Cada seção deve ter 2-4 bullets concisos. Use linguagem direta e objetiva. Pouco texto, muito direto ao ponto.` : `Estruture o relatório com:
 1. **Resumo Executivo** (2-3 frases com os números reais de produtividade)
 2. **Indicadores Principais** (produtividade, suplementar, não produtivo, causas externas — com números)
 3. **Pontos de Atenção** (principais problemas identificados)
