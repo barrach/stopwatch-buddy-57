@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react"; // refreshed
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain, Presentation } from "lucide-react";
 import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -139,6 +140,7 @@ const timeIndex = (t: string) => {
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [obraFilter, setObraFilter] = useState("all");
   const [aiReport, setAiReport] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -150,6 +152,8 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
+  const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
     const today = new Date();
@@ -693,6 +697,82 @@ export default function Dashboard() {
     }
   };
 
+  const exportToPPTX = async () => {
+    if (records.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma observação encontrada para o período.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingPPTX(true);
+    toast({ title: "Gerando apresentação...", description: "A IA está analisando os dados. Aguarde." });
+
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      let aiText = "";
+
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-observations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ type: "pdf-report", context: aiStats }),
+      });
+
+      if (resp.ok && resp.body) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let done = false;
+        while (!done) {
+          const { done: sd, value } = await reader.read();
+          if (sd) break;
+          buffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") { done = true; break; }
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) aiText += content;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+
+      const { generatePPTXReport } = await import("@/lib/pptxReport");
+      generatePPTXReport({
+        periodo: aiStats.periodo,
+        obra: aiStats.obra,
+        totalAmostras: aiStats.totalAmostras,
+        totalControlaveis: aiStats.totalControlaveis,
+        produtivo: aiStats.produtivo,
+        suplementar: aiStats.suplementar,
+        naoProdutivo: aiStats.naoProdutivo,
+        externo: aiStats.externo,
+        produtivoPct: aiStats.produtivoPct,
+        suplementarPct: aiStats.suplementarPct,
+        naoProdutivoPct: aiStats.naoProdutivoPct,
+        externoPct: aiStats.externoPct,
+        byObra,
+        bySpecialty,
+        byFunction,
+        nonprodCausas,
+        externalCausas,
+        categoryTotals,
+        aiAnalysis: aiText,
+      });
+
+      toast({ title: "Apresentação gerada!", description: "O arquivo PPTX foi baixado com sucesso." });
+    } catch (e: any) {
+      toast({ title: "Erro ao gerar PPTX", description: e.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingPPTX(false);
+    }
+  };
+
   // ── AI Report ──────────────────────────────────────────────────
   const aiStats = useMemo(() => {
     let total = 0, prod = 0, supl = 0, naoProd = 0, externo = 0;
@@ -987,6 +1067,11 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
                 {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
               </Button>
+              {canExportPPTX && (
+                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1.5">
+                  {isGeneratingPPTX ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Presentation className="w-3.5 h-3.5" />} PPTX
+                </Button>
+              )}
             </div>
           </div>
         </div>
