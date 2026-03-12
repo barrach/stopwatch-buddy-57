@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react"; // refreshed
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
