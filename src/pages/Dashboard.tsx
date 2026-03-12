@@ -984,8 +984,8 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={exportToPDF} className="gap-1.5">
-                <Download className="w-3.5 h-3.5" /> PDF
+              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
+                {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
               </Button>
             </div>
           </div>
