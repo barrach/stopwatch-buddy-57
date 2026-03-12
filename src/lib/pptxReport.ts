@@ -100,9 +100,9 @@ function addChartSlide(
   }
 
   if (chartImage) {
-    // Center horizontally
+    // Center horizontally, tight to title
     const chartX = (slideW - chartW) / 2;
-    const chartY = 1.1;
+    const chartY = 0.85; // closer to title bar
     slide.addImage({
       data: chartImage,
       x: chartX, y: chartY, w: chartW, h: chartH,

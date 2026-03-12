@@ -165,7 +165,21 @@ export function generatePDFReport(data: PDFReportData) {
     }
   };
 
+  /** Smart page break: if title + chart won't fit, break before the section */
   const drawChartSection = (title: string, chartImage: string | undefined, analysisText: string | undefined, dimKey: string) => {
+    // Estimate chart height for smart page break
+    const dim = dims[dimKey];
+    let estChartH = contentW * 0.55;
+    if (dim && dim.width > 0) {
+      const ar = dim.height / dim.width;
+      estChartH = Math.min(contentW * ar, maxChartH);
+    }
+    // Title (10mm) + gap (2mm) + chart + gap (5mm) = minimum needed
+    const totalNeeded = 12 + estChartH + 5;
+    if (curY + totalNeeded > H - 20) {
+      addNewPage();
+      curY = 16;
+    }
     drawSectionHeader(title);
     drawChart(chartImage, dimKey);
     if (analysisText) drawAnalysisBox(analysisText);
