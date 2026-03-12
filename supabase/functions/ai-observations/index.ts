@@ -142,7 +142,7 @@ Gere um relatório executivo completo e preciso com base nesses dados. Use EXATA
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        stream: type === "report",
+        stream: type === "report" || type === "pdf-report",
       }),
     });
 
