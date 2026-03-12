@@ -216,39 +216,7 @@ export function generatePPTXReport(data: PDFReportData) {
   });
   slides.push(s1);
 
-  // SLIDE 2 — Sumário
-  const s2 = pptx.addSlide();
-  makeBg(pptx, s2);
-  s2.addText("Sumário", {
-    x: 0.8, y: 0.3, w: 6, h: 0.8,
-    fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
-  });
-  s2.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
-  const tocItems = [
-    "1. Objetivo",
-    "2. Indicadores Principais (KPIs)",
-    "3. Visão Geral por Contrato",
-    "4. Distribuição por Categoria",
-    "5. Top Causas — Pareto por Categorias",
-    "6. Top Causas — Pareto por Especialidades",
-    "7. Top Causas — Pareto por Funções",
-    "8. Produtividade por Especialidade",
-    "9. Produtividade por Função",
-    "10. Causas de Não Produtividade",
-    "11. Causas Externas de Parada (NPE)",
-    "12. Produtividade por Horário",
-    "13. Produtividade por Dia da Semana",
-    "14. Produtividade por Mês",
-    "15. Conclusões e Recomendações",
-  ];
-  s2.addText(
-    tocItems.map((t) => ({
-      text: t + "\n",
-      options: { fontSize: 14, color: T.white, paraSpaceBefore: 4, paraSpaceAfter: 10, bullet: false, lineSpacing: 20 } as any,
-    })),
-    { x: 1.2, y: 1.4, w: 10.5, h: 5.5, fontFace: "Calibri", valign: "top" },
-  );
-  slides.push(s2);
+  // Sumário removido — apresentação inicia direto no Objetivo
 
   // SLIDE 3 — Objetivo
   const s3 = pptx.addSlide();
@@ -332,11 +300,17 @@ export function generatePPTXReport(data: PDFReportData) {
   if (recText) {
     const recBlocks = parseRecommendationBlocks(recText);
     if (recBlocks.length > 0) {
-      for (const block of recBlocks) {
+      for (let bi = 0; bi < recBlocks.length; bi++) {
+        const block = recBlocks[bi];
         const sRec = pptx.addSlide();
         makeBg(pptx, sRec);
-        sRec.addText(`Conclusão — ${block.title}`, { x: 0.8, y: 0.15, w: 11.7, h: 0.5, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
-        sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 0.68, w: 11.7, h: 0.03, fill: { color: T.accent } });
+
+        // Title bar with problem number — dark teal background like section headers
+        sRec.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
+        sRec.addText(`PROBLEMA ${bi + 1} — ${block.title}`, {
+          x: 0.7, y: 0.2, w: 11.9, h: 0.7,
+          fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
+        });
 
         const fields = [
           { label: "Problema", value: block.problema, color: T.red },
@@ -346,12 +320,12 @@ export function generatePPTXReport(data: PDFReportData) {
           { label: "Impacto esperado", value: block.impacto, color: T.green },
         ];
 
-        let fieldY = 1.0;
+        let fieldY = 1.2;
         for (const f of fields) {
           if (!f.value) continue;
-          sRec.addText(f.label, { x: 0.8, y: fieldY, w: 3, h: 0.4, fontSize: 12, bold: true, color: f.color, fontFace: "Calibri" });
-          sRec.addText(f.value, { x: 0.8, y: fieldY + 0.35, w: 11.7, h: 0.7, fontSize: 11, color: T.white, fontFace: "Calibri", valign: "top" });
-          fieldY += 1.1;
+          sRec.addText(f.label.toUpperCase(), { x: 0.8, y: fieldY, w: 4, h: 0.35, fontSize: 11, bold: true, color: f.color, fontFace: "Calibri" });
+          sRec.addText(f.value, { x: 0.8, y: fieldY + 0.35, w: 11.7, h: 0.8, fontSize: 12, color: T.white, fontFace: "Calibri", valign: "top" });
+          fieldY += 1.15;
         }
         slides.push(sRec);
       }
