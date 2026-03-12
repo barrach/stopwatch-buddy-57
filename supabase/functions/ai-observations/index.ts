@@ -56,7 +56,7 @@ IMPORTANTE — Regras de cálculo de produtividade:
 - Os percentuais de Produtivo + Suplementar + Não Produtivo devem somar ~100% (base controlável).
 - NPE é reportado separadamente como % do total bruto.
 
-FORMATO DE SAÍDA OBRIGATÓRIO — O relatório DEVE ser estruturado com marcadores de seção exatos. Use EXATAMENTE estes marcadores para separar as seções:
+${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — O relatório DEVE ser estruturado com marcadores de seção exatos. Use EXATAMENTE estes marcadores para separar as seções:
 
 ===RESUMO===
 Resumo executivo de 2-3 frases com os números reais de produtividade. Destaque o índice de produtividade e os principais pontos.
