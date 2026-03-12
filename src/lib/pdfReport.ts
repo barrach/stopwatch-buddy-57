@@ -63,7 +63,7 @@ export function generatePDFReport(data: PDFReportData) {
   const H = 297;
   const margin = 20;
   const contentW = W - margin * 2; // 170mm
-  const maxChartH = 120; // mm
+  const maxChartH = 110; // mm — max chart height as specified
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
@@ -88,7 +88,7 @@ export function generatePDFReport(data: PDFReportData) {
 
   const drawSectionHeader = (title: string) => {
     ensureSpace(20);
-    curY += 8;
+    curY += 10; // ~30px spacing before section
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
@@ -159,7 +159,7 @@ export function generatePDFReport(data: PDFReportData) {
       // Center horizontally if width was reduced
       const xOffset = margin + (contentW - chartW) / 2;
       doc.addImage(chartImage, "PNG", xOffset, curY, chartW, chartH);
-      curY += chartH + 4;
+      curY += chartH + 8; // ~30px spacing after chart
     } catch (e) {
       console.warn("Failed to add chart image:", e);
     }
