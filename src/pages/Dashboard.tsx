@@ -694,6 +694,7 @@ export default function Dashboard() {
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
+        chartDimensions,
       });
 
       toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
