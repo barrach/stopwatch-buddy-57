@@ -677,7 +677,7 @@ export default function Dashboard() {
       // Carregar logo como base64
       let logoBase64 = "";
       try {
-        const logoResponse = await fetch("/logo-megasteam.png");
+        const logoResponse = await fetch("/logo-megasteam-pdf.png");
         const logoBlob = await logoResponse.blob();
         logoBase64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
