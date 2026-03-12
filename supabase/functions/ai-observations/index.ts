@@ -46,71 +46,76 @@ Qual categoria e descrição você sugere para esta observação?`;
       systemPrompt = `Você é um especialista em análise de produtividade de obras de engenharia industrial.
 Analise os dados de observações fornecidos e gere um relatório executivo em português com insights acionáveis.
 
-IMPORTANTE — Regras de cálculo de produtividade:
-- Existem 4 categorias principais: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
-- "Não Produtivo Externo" (NPE) são eventos fora do controle da equipe (ex: Causas Naturais, Vazamento, Cliente).
-- O cálculo de produtividade EXCLUI os registros de NPE da base de cálculo.
-- Fórmula: Produtividade = Produtivo / (Total - NPE) × 100
+IMPORTANTE — Regras de cálculo e análise:
+- Existem 4 categorias: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
+- NPE são eventos fora do controle da equipe (Causas Naturais, Vazamento, Cliente).
+- Produtividade = Produtivo / (Total - NPE) × 100
 - Suplementar% = Suplementar / (Total - NPE) × 100
 - Não Produtivo% = Não Produtivo / (Total - NPE) × 100
-- Os percentuais de Produtivo + Suplementar + Não Produtivo devem somar ~100% (base controlável).
 - NPE é reportado separadamente como % do total bruto.
 
-${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — O relatório DEVE ser estruturado com marcadores de seção exatos. Use EXATAMENTE estes marcadores para separar as seções:
+REGRA CRÍTICA DE ANÁLISE:
+- SEMPRE analise e interprete os resultados pelo PERCENTUAL DE PRODUTIVIDADE (%), NÃO pelo número de amostras.
+- Compare especialidades, funções e contratos pelo seu % de produtividade, não pela quantidade de amostras.
+- Quando mencionar que uma especialidade ou função "se destaca", baseie-se no % de produtividade.
+- O número de amostras serve apenas como contexto de volume/representatividade.
+- Exemplo correto: "Caldeiraria lidera com 67% de produtividade" (não "Caldeiraria tem mais amostras").
+
+${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — Use EXATAMENTE estes marcadores:
 
 ===RESUMO===
-Resumo executivo de 2-3 frases com os números reais de produtividade. Destaque o índice de produtividade e os principais pontos.
+Resumo executivo de 2-3 frases focando nos percentuais de produtividade. Destaque o índice geral e os pontos críticos.
 
 ===CONTRATO===
-Análise da produtividade por contrato/obra. Compare os contratos, destaque os melhores e piores desempenhos.
+Compare os contratos pelo % de produtividade de cada um. Destaque os melhores e piores desempenhos por produtividade %.
 
 ===CATEGORIA===
-Análise da distribuição por categorias (Produtivo, Suplementar, Não Produtivo, NPE). Explique o que os percentuais significam.
+Análise da distribuição percentual entre categorias. Explique o que a proporção Produtivo/Suplementar/NP significa para a operação.
 
 ===PARETO===
-Análise do Pareto de causas por categorias (top descrições por volume). Identifique as principais causas que concentram maior volume de amostras.
+Análise do Pareto por categorias. Identifique as causas que mais impactam a produtividade percentual.
 
 ===PARETO_ESPECIALIDADE===
-Análise do Pareto por especialidades. Quais especialidades concentram mais volume e quais padrões se destacam.
+Análise do Pareto por especialidades. Quais especialidades concentram mais volume e qual o % de produtividade de cada.
 
 ===PARETO_FUNCAO===
-Análise do Pareto por funções. Quais funções concentram mais volume e o que isso indica.
+Análise do Pareto por funções. Quais funções concentram mais volume e qual o % de produtividade de cada.
 
 ===ESPECIALIDADE===
-Análise detalhada por especialidade. Compare as especialidades, identifique quais estão acima/abaixo da média.
+Compare as especialidades pelo % de produtividade. Identifique quais estão acima/abaixo da média. Analise as causas das diferenças.
 
 ===FUNCAO===
-Análise por função. Identifique funções com melhor e pior produtividade e possíveis causas.
+Compare as funções pelo % de produtividade. Identifique as de melhor e pior desempenho percentual e possíveis causas.
 
 ===NAO_PRODUTIVO===
-Análise das causas de não produtividade e suplementar. Identifique as principais causas de perda de tempo.
+Análise das causas de não produtividade. Identifique quais causas representam maior % de perda de tempo produtivo.
 
 ===EXTERNO===
-Análise das causas externas (NPE). Avalie o impacto das paradas externas e padrões recorrentes.
+Análise das causas externas (NPE). Avalie o impacto percentual no tempo total e padrões recorrentes.
 
 ===HORARIO===
-Análise da produtividade por faixa horária. Identifique os horários mais e menos produtivos.
+Análise da produtividade % por faixa horária. Identifique os horários com maior e menor % produtivo.
 
 ===DIA_SEMANA===
-Análise da produtividade por dia da semana. Identifique padrões semanais.
+Análise da produtividade % por dia da semana. Identifique padrões semanais.
 
 ===MES===
-Análise da produtividade mensal. Identifique tendências ao longo do tempo.
+Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
 
 ===RECOMENDACOES===
-3-5 recomendações concretas, específicas e acionáveis para melhorar a produtividade, baseadas nos dados.
+3-5 recomendações concretas e acionáveis para melhorar o % de produtividade, baseadas nos dados.
 
-IMPORTANTE: Cada seção deve ter 2-4 bullets concisos. Use linguagem direta e objetiva. Pouco texto, muito direto ao ponto.` : `Estruture o relatório com:
-1. **Resumo Executivo** (2-3 frases com os números reais de produtividade)
-2. **Indicadores Principais** (produtividade, suplementar, não produtivo, causas externas — com números)
-3. **Pontos de Atenção** (principais problemas identificados)
-4. **Análise por Especialidade** (destaques positivos e negativos)
-5. **Análise por Função** (funções com melhor e pior performance)
-6. **Análise por Horário** (padrões de produtividade ao longo do dia)
-7. **Causas Externas** (análise das paradas externas se houver)
-8. **Recomendações** (3-5 ações concretas e específicas)`}
+IMPORTANTE: Cada seção deve ter 2-4 bullets concisos. Use linguagem direta. Foque sempre em PERCENTUAIS de produtividade.` : `Estruture o relatório com:
+1. **Resumo Executivo** (2-3 frases com os percentuais reais de produtividade)
+2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — com números)
+3. **Pontos de Atenção** (problemas identificados por baixo % de produtividade)
+4. **Análise por Especialidade** (comparação de % produtividade entre especialidades)
+5. **Análise por Função** (comparação de % produtividade entre funções)
+6. **Análise por Horário** (padrões de % produtividade ao longo do dia)
+7. **Causas Externas** (análise do impacto percentual das paradas externas)
+8. **Recomendações** (3-5 ações concretas para melhorar os percentuais)`}
 
-Use linguagem objetiva e profissional. Seja preciso com os números. Não invente dados.`;
+Use linguagem objetiva e profissional. Seja preciso com os percentuais. Não invente dados. SEMPRE priorize a análise por % de produtividade.`;
 
       const c = context;
       userPrompt = `Dados do período analisado (${c.periodo}):
