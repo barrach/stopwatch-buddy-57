@@ -159,7 +159,7 @@ export function generatePDFReport(data: PDFReportData) {
       // Center horizontally if width was reduced
       const xOffset = margin + (contentW - chartW) / 2;
       doc.addImage(chartImage, "PNG", xOffset, curY, chartW, chartH);
-      curY += chartH + 4;
+      curY += chartH + 8; // ~30px spacing after chart
     } catch (e) {
       console.warn("Failed to add chart image:", e);
     }
