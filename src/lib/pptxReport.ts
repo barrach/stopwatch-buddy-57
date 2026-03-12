@@ -272,15 +272,43 @@ export function generatePPTXReport(data: PDFReportData) {
     }
   }
 
-  // Recomendações
+  // Conclusões e Recomendações — 1 slide per problem block
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    const sRec = pptx.addSlide();
-    makeBg(pptx, sRec);
-    sRec.addText("Recomendações e Melhorias", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
-    sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
-    addBullets(sRec, recText, { x: 0.8, y: 1.5, w: 11.7, h: 5.2 });
-    slides.push(sRec);
+    const recBlocks = parseRecommendationBlocks(recText);
+    if (recBlocks.length > 0) {
+      for (const block of recBlocks) {
+        const sRec = pptx.addSlide();
+        makeBg(pptx, sRec);
+        sRec.addText(`Conclusão — ${block.title}`, { x: 0.8, y: 0.15, w: 11.7, h: 0.5, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
+        sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 0.68, w: 11.7, h: 0.03, fill: { color: T.accent } });
+
+        const fields = [
+          { label: "Problema", value: block.problema, color: T.red },
+          { label: "Causa provável", value: block.causa, color: T.amber },
+          { label: "Ação recomendada", value: block.acao, color: T.green },
+          { label: "Responsável", value: block.responsavel, color: T.accent },
+          { label: "Impacto esperado", value: block.impacto, color: T.green },
+        ];
+
+        let fieldY = 1.0;
+        for (const f of fields) {
+          if (!f.value) continue;
+          sRec.addText(f.label, { x: 0.8, y: fieldY, w: 3, h: 0.4, fontSize: 12, bold: true, color: f.color, fontFace: "Calibri" });
+          sRec.addText(f.value, { x: 0.8, y: fieldY + 0.35, w: 11.7, h: 0.7, fontSize: 11, color: T.white, fontFace: "Calibri", valign: "top" });
+          fieldY += 1.1;
+        }
+        slides.push(sRec);
+      }
+    } else {
+      // Fallback: single slide with bullets
+      const sRec = pptx.addSlide();
+      makeBg(pptx, sRec);
+      sRec.addText("Conclusões e Recomendações", { x: 0.8, y: 0.3, w: 8, h: 0.8, fontSize: 28, bold: true, color: T.white, fontFace: "Calibri" });
+      sRec.addShape(pptx.ShapeType.rect, { x: 0.8, y: 1.1, w: 11.7, h: 0.03, fill: { color: T.accent } });
+      addBullets(sRec, recText, { x: 0.8, y: 1.5, w: 11.7, h: 5.2 });
+      slides.push(sRec);
+    }
   }
 
   // Thank you
