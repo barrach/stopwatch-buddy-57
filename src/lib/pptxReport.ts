@@ -3,6 +3,8 @@ import { format } from "date-fns";
 import type { PDFReportData } from "./pdfReport";
 import type { ChartImages, ChartDimensions } from "./chartCapture";
 
+interface PPTXReportData extends PDFReportData {}
+
 const T = {
   bg: "0F172A",
   bgLight: "1E293B",
