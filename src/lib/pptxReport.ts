@@ -76,12 +76,12 @@ function addChartSlide(
   const slide = pptx.addSlide();
   makeBg(pptx, slide);
 
-  // Title — 28px bold at top
+  // Title — 28px bold at top, tight spacing
   slide.addText(title, {
-    x: 0.5, y: 0.2, w: 12.3, h: 0.6,
+    x: 0.5, y: 0.15, w: 12.3, h: 0.5,
     fontSize: 28, bold: true, color: T.white, fontFace: "Calibri",
   });
-  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.85, w: 12.3, h: 0.03, fill: { color: T.accent } });
+  slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.68, w: 12.3, h: 0.03, fill: { color: T.accent } });
 
   // Calculate chart dimensions — 80% of slide width, proportional height
   const slideW = 13.33;
@@ -100,9 +100,9 @@ function addChartSlide(
   }
 
   if (chartImage) {
-    // Center horizontally
+    // Center horizontally, tight to title
     const chartX = (slideW - chartW) / 2;
-    const chartY = 1.1;
+    const chartY = 0.85; // closer to title bar
     slide.addImage({
       data: chartImage,
       x: chartX, y: chartY, w: chartW, h: chartH,
