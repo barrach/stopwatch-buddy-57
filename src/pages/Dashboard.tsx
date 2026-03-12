@@ -1148,8 +1148,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
-          <StatCard title="Suplementar" value={supplementaryCount} icon={Clock} variant="warning" />
-          <StatCard title="Não Produtivo" value={unproductiveCount} icon={AlertTriangle} variant="danger" />
+          <StatCard title="Suplementar" value={`${controllableTotal > 0 ? Math.round((supplementaryCount / controllableTotal) * 100) : 0}%`} icon={Clock} variant="warning" />
+          <StatCard title="Não Produtivo" value={`${unproductivePercent}%`} icon={AlertTriangle} variant="danger" />
         </div>
 
         {/* AI Analysis Section */}
