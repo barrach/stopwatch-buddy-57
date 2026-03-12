@@ -799,6 +799,10 @@ export default function Dashboard() {
     const byCat: Record<string, number> = {};
     const byParentCat: Record<string, number> = {};
     const byHour: Record<string, { prod: number; total: number }> = {};
+    const byWeekday: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
+    const byMonth: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
+    const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     records.forEach((r: any) => {
       const qty = r.quantidade || 0;
