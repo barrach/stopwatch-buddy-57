@@ -429,7 +429,7 @@ export function generatePPTXReport(data: PDFReportData) {
       values: extData.map(c => c.value),
     }];
 
-    s10.addChart(pptx.charts.BAR, chartData, {
+    s10.addChart(pptx.ChartType.bar, chartData, {
       x: 0.3, y: 1.3, w: 7.5, h: 5,
       barDir: "bar",
       showLegend: false,
