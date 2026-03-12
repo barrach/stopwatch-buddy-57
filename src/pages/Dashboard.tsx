@@ -630,7 +630,7 @@ export default function Dashboard() {
     try {
       // 1) Capture charts from DOM
       const { captureAllCharts } = await import("@/lib/chartCapture");
-      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode, handleParetoModeChange, paretoMode);
 
       toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando relatório." });
 
@@ -715,7 +715,7 @@ export default function Dashboard() {
     try {
       // 1) Capture charts from DOM
       const { captureAllCharts } = await import("@/lib/chartCapture");
-      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode);
+      const chartImages = await captureAllCharts(setTimeViewMode, timeViewMode, handleParetoModeChange, paretoMode);
 
       toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando apresentação." });
 

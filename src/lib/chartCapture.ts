@@ -3,7 +3,9 @@ import html2canvas from "html2canvas";
 export interface ChartImages {
   contrato?: string;
   categoria?: string;
-  pareto?: string;
+  paretoCategoria?: string;
+  paretoEspecialidade?: string;
+  paretoFuncao?: string;
   especialidade?: string;
   funcao?: string;
   naoprod?: string;
@@ -13,10 +15,9 @@ export interface ChartImages {
   tempoMes?: string;
 }
 
-const CHART_IDS = [
+const STATIC_CHART_IDS = [
   "contrato",
   "categoria",
-  "pareto",
   "especialidade",
   "funcao",
   "naoprod",
@@ -36,16 +37,18 @@ async function captureElement(el: HTMLElement): Promise<string> {
 
 /**
  * Captures all dashboard charts as base64 PNG images.
- * For time charts, it switches the view mode, waits for re-render, and captures each variant.
+ * Switches Pareto mode (categoria/especialidade/funcao) and time view mode to capture all variants.
  */
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
+  setParetoMode: (mode: "categoria" | "especialidade" | "funcao") => void,
+  currentParetoMode: "categoria" | "especialidade" | "funcao",
 ): Promise<ChartImages> {
   const images: ChartImages = {};
 
   // Capture static charts
-  for (const id of CHART_IDS) {
+  for (const id of STATIC_CHART_IDS) {
     const el = document.getElementById(`chart-${id}`);
     if (el) {
       try {
@@ -56,29 +59,49 @@ export async function captureAllCharts(
     }
   }
 
-  // Capture time charts — all 3 variants
-  const timeEl = document.getElementById("chart-tempo");
-  if (timeEl) {
-    const modes: Array<{ mode: "horario" | "diasemana" | "mes"; key: keyof ChartImages }> = [
-      { mode: "horario" as const, key: "tempoHorario" as keyof ChartImages },
-      { mode: "diasemana" as const, key: "tempoDiaSemana" as keyof ChartImages },
-      { mode: "mes" as const, key: "tempoMes" as keyof ChartImages },
-    ];
+  // Capture Pareto — all 3 variants
+  const paretoModes: Array<{ mode: "categoria" | "especialidade" | "funcao"; key: keyof ChartImages }> = [
+    { mode: "categoria", key: "paretoCategoria" },
+    { mode: "especialidade", key: "paretoEspecialidade" },
+    { mode: "funcao", key: "paretoFuncao" },
+  ];
 
-    for (const { mode, key } of modes) {
-      setTimeViewMode(mode);
-      // Wait for React re-render + recharts animation
-      await new Promise((r) => setTimeout(r, 800));
+  for (const { mode, key } of paretoModes) {
+    setParetoMode(mode);
+    await new Promise((r) => setTimeout(r, 800));
+    const el = document.getElementById("chart-pareto");
+    if (el) {
       try {
-        images[key] = await captureElement(timeEl);
+        images[key] = await captureElement(el);
+      } catch (e) {
+        console.warn(`Failed to capture chart-pareto (${mode}):`, e);
+      }
+    }
+  }
+  // Restore original pareto mode
+  setParetoMode(currentParetoMode);
+
+  // Capture time charts — all 3 variants
+  const timeModes: Array<{ mode: "horario" | "diasemana" | "mes"; key: keyof ChartImages }> = [
+    { mode: "horario", key: "tempoHorario" },
+    { mode: "diasemana", key: "tempoDiaSemana" },
+    { mode: "mes", key: "tempoMes" },
+  ];
+
+  for (const { mode, key } of timeModes) {
+    setTimeViewMode(mode);
+    await new Promise((r) => setTimeout(r, 800));
+    const el = document.getElementById("chart-tempo");
+    if (el) {
+      try {
+        images[key] = await captureElement(el);
       } catch (e) {
         console.warn(`Failed to capture chart-tempo (${mode}):`, e);
       }
     }
-
-    // Restore original mode
-    setTimeViewMode(currentTimeViewMode);
   }
+  // Restore original mode
+  setTimeViewMode(currentTimeViewMode);
 
   return images;
 }
