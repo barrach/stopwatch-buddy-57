@@ -243,7 +243,7 @@ export function generatePDFReport(data: PDFReportData) {
   // Logo MEGASTEAM no canto superior direito
   if (data.logoBase64) {
     try {
-      doc.addImage(data.logoBase64, "PNG", W - margin - 45, 6, 45, 12);
+      doc.addImage(data.logoBase64, "PNG", W - margin - 50, 4, 50, 24);
     } catch (e) {
       console.warn("Failed to add logo to PDF:", e);
     }
