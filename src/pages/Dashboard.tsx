@@ -673,6 +673,21 @@ export default function Dashboard() {
 
       // 3) Generate PDF
       const { generatePDFReport } = await import("@/lib/pdfReport");
+      
+      // Carregar logo como base64
+      let logoBase64 = "";
+      try {
+        const logoResponse = await fetch("/logo-megasteam.png");
+        const logoBlob = await logoResponse.blob();
+        logoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logoBlob);
+        });
+      } catch (e) {
+        console.warn("Failed to load logo:", e);
+      }
+      
       generatePDFReport({
         periodo: aiStats.periodo,
         obra: aiStats.obra,
@@ -695,6 +710,7 @@ export default function Dashboard() {
         aiAnalysis: aiText,
         chartImages,
         chartDimensions,
+        logoBase64,
       });
 
       toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
