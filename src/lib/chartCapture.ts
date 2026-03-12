@@ -30,29 +30,31 @@ const STATIC_CHART_IDS = [
 ] as const;
 
 async function captureElement(el: HTMLElement): Promise<{ data: string; width: number; height: number }> {
-  // Use scale 3 for crisp exports
+  // Force white background and ensure full visibility before capture
   const canvas = await html2canvas(el, {
-    backgroundColor: "#111827",
-    scale: 3,
+    backgroundColor: "#FFFFFF",
+    scale: 4,
     logging: false,
     useCORS: true,
     allowTaint: true,
-    // Remove any scrollbar artifacts
     scrollX: 0,
     scrollY: 0,
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight,
+    // Ensure we capture the full element including overflow
+    width: el.scrollWidth,
+    height: el.scrollHeight,
   });
   return {
     data: canvas.toDataURL("image/png"),
-    width: el.offsetWidth,
-    height: el.offsetHeight,
+    width: el.scrollWidth,
+    height: el.scrollHeight,
   };
 }
 
 /**
  * Captures all dashboard charts as base64 PNG images.
- * Switches Pareto mode (categoria/especialidade/funcao) and time view mode to capture all variants.
+ * Switches Pareto mode and time view mode to capture all variants.
  * Returns both images and their original dimensions for proper aspect ratio in exports.
  */
 export async function captureAllCharts(
@@ -87,7 +89,7 @@ export async function captureAllCharts(
 
   for (const { mode, key } of paretoModes) {
     setParetoMode(mode);
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1200));
     const el = document.getElementById("chart-pareto");
     if (el) {
       try {
@@ -110,7 +112,7 @@ export async function captureAllCharts(
 
   for (const { mode, key } of timeModes) {
     setTimeViewMode(mode);
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1200));
     const el = document.getElementById("chart-tempo");
     if (el) {
       try {
