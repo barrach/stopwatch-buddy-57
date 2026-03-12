@@ -149,6 +149,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
     const today = new Date();
