@@ -1477,7 +1477,7 @@ export default function Dashboard() {
         {/* 5) Causas de Não Produtividade */}
         <div className="mb-8">
           {/* 5) Causas de Não Produtividade */}
-          <div className={`stat-card animate-fade-in transition-all`}>
+          <div id="chart-naoprod" className={`stat-card animate-fade-in transition-all`}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Causas de Não Produtividade</h3>
