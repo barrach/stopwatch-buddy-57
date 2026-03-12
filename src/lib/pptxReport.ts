@@ -193,6 +193,18 @@ export function generatePPTXReport(data: PDFReportData) {
   // SLIDE 1 — Cover
   const s1 = pptx.addSlide();
   makeBg(pptx, s1);
+  
+  // Logo MEGASTEAM no canto superior direito
+  try {
+    s1.addImage({ path: "/logo-megasteam.png", x: 10.5, y: 0.3, w: 2.5, h: 0.8 });
+  } catch (e) {
+    // Fallback: texto do logo
+    s1.addText("MEGASTEAM", {
+      x: 10.5, y: 0.3, w: 2.5, h: 0.5,
+      fontSize: 14, bold: true, color: T.accent, fontFace: "Calibri", align: "right"
+    });
+  }
+  
   s1.addShape(pptx.ShapeType.rect, { x: 0, y: 2, w: 13.33, h: 3.5, fill: { color: T.bgLight } });
   s1.addText("Relatório de Produtividade", {
     x: 0.8, y: 2.3, w: 11.7, h: 1.2,
@@ -209,10 +221,6 @@ export function generatePPTXReport(data: PDFReportData) {
   s1.addText(`Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}`, {
     x: 0.8, y: 4.7, w: 6, h: 0.4,
     fontSize: 11, color: T.gray, fontFace: "Calibri",
-  });
-  s1.addText("MEGASTEAM", {
-    x: 0.8, y: 6.5, w: 4, h: 0.4,
-    fontSize: 14, bold: true, color: T.accent, fontFace: "Calibri",
   });
   slides.push(s1);
 

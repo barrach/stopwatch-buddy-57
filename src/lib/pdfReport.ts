@@ -238,6 +238,18 @@ export function generatePDFReport(data: PDFReportData) {
   addNewPage();
   doc.setFillColor(...C.headerBg);
   doc.rect(0, 0, W, 32, "F");
+  
+  // Logo MEGASTEAM
+  try {
+    doc.addImage("/logo-megasteam.png", "PNG", W - margin - 35, 6, 35, 12);
+  } catch (e) {
+    // Fallback se logo não carregar
+    doc.setFontSize(10);
+    doc.setTextColor(...C.white);
+    doc.setFont("helvetica", "bold");
+    doc.text("MEGASTEAM", W - margin - 25, 14);
+  }
+  
   doc.setFontSize(22);
   doc.setTextColor(...C.white);
   doc.setFont("helvetica", "bold");
