@@ -75,43 +75,53 @@ Resumo executivo de 2-3 frases focando nos percentuais de produtividade. Destaqu
 Compare os contratos pelo % de produtividade de cada um. Destaque os melhores e piores desempenhos por produtividade %. NÃO use números absolutos.
 
 ===CATEGORIA===
-Análise da distribuição percentual entre categorias. Explique o que a proporção Produtivo/Suplementar/NP significa para a operação. Use apenas %.
+Análise da distribuição percentual entre categorias (Produtivo, Suplementar, Não Produtivo).
+Exemplo de análise esperada: "A distribuição das categorias indica que X% do tempo disponível está sendo utilizado em atividades produtivas, enquanto Y% corresponde a atividades suplementares e Z% a atividades não produtivas. O volume de tempo suplementar sugere oportunidades de melhoria logística."
+Use apenas %.
 
 ===PARETO===
-Análise do Pareto por categorias. Identifique as causas que mais impactam a produtividade percentual. NÃO mencione contagem de amostras.
+Análise do Pareto por categorias. Identifique as 3 principais causas que concentram a maior parcela do tempo e o impacto percentual de cada uma. Destaque onde estão os maiores ganhos potenciais. NÃO mencione contagem de amostras.
+Exemplo: "O gráfico Pareto demonstra que a maior parcela do tempo está concentrada em atividades produtivas (X%). Em seguida aparecem os períodos de ociosidade (Y%), seguidos por atividades pessoais (Z%)."
 
 ===PARETO_ESPECIALIDADE===
-Análise do Pareto por especialidades. Qual o % de produtividade de cada especialidade. NÃO mencione número de amostras.
+Análise do Pareto por especialidades. Compare cada especialidade pelo seu % de produtividade em relação à média geral. NÃO mencione número de amostras.
 
 ===PARETO_FUNCAO===
-Análise do Pareto por funções. Qual o % de produtividade de cada função. NÃO mencione número de amostras.
+Análise do Pareto por funções. Compare cada função pelo seu % de produtividade. Identifique a função mais produtiva, intermediárias e críticas. NÃO mencione número de amostras.
 
 ===ESPECIALIDADE===
-Compare as especialidades pelo % de produtividade. Identifique quais estão acima/abaixo da média. Analise as causas das diferenças. Use apenas percentuais.
+Compare as especialidades pelo % de produtividade em relação à média geral do projeto.
+Exemplo: "A Caldeiraria apresenta 69% de produtividade, posicionando-se acima da média geral do projeto (62%). Já a Elétrica registra 59%, ligeiramente abaixo da média."
+Identifique a principal motora de produtividade e quais demandam melhorias. Use apenas percentuais.
 
 ===FUNCAO===
-Compare as funções pelo % de produtividade. Identifique as de melhor e pior desempenho percentual e possíveis causas. Use apenas percentuais.
+Destaque a função mais produtiva, a intermediária e a crítica (menor %). 
+Exemplo: "A função de Encanador apresenta o melhor desempenho operacional, com aproximadamente 74% de produtividade. Por outro lado, os Soldadores registram apenas 44%, indicando oportunidade de melhoria."
+Use apenas percentuais.
 
 ===NAO_PRODUTIVO===
 Análise das causas de não produtividade. Identifique quais causas representam maior % de perda de tempo produtivo. Use apenas percentuais.
 
 ===EXTERNO===
-Análise das causas externas (NPE). Avalie o impacto percentual no tempo total e padrões recorrentes. Use apenas percentuais.
+Análise das causas externas (NPE). Destaque o impacto percentual no tempo total.
+Exemplo: "O tempo classificado como NPE representa aproximadamente X% do tempo total da obra, indicando forte influência de fatores externos. As principais causas estão relacionadas a condições naturais, interferências da planta e atrasos na liberação de Permissões de Trabalho."
+Use apenas percentuais.
 
 ===HORARIO===
-Análise da produtividade % por faixa horária. Identifique os horários com maior e menor % produtivo.
+Análise da produtividade % por faixa horária. Identifique o horário mais produtivo, o menos produtivo e a tendência geral do dia.
+Exemplo: "O período da tarde apresenta os maiores níveis de produtividade, com destaque para as faixas de 14:00 e 16:00. O menor desempenho ocorre às 15:00, indicando possível queda de ritmo após o intervalo."
 
 ===DIA_SEMANA===
 OBRIGATÓRIO: Gere uma análise INDIVIDUAL para CADA dia da semana, mesmo que haja pouca variação.
 Formato obrigatório:
 
-- **Segunda-feira**: Comentário sobre o % de produtividade registrado neste dia e o que ele indica sobre o ritmo operacional.
+- **Segunda-feira**: Comentário sobre o % de produtividade registrado neste dia, comparando com a média semanal. Ex: "A produtividade registrada na segunda-feira apresenta um índice de aproximadamente X%, indicando um ritmo inicial consistente."
 - **Terça-feira**: Comentário sobre o % de produtividade e comparação com os demais dias.
-- **Quarta-feira**: Comentário sobre o % de produtividade e continuidade operacional.
-- **Quinta-feira**: Comentário sobre o % de produtividade e manutenção do ritmo.
+- **Quarta-feira**: Comentário sobre o % de produtividade e continuidade operacional ao longo da semana.
+- **Quinta-feira**: Comentário sobre o % de produtividade e manutenção do ritmo produtivo.
 - **Sexta-feira**: Comentário sobre o % de produtividade e estabilidade próximo ao encerramento da semana.
 
-Cada dia deve ter pelo menos 1 frase analítica baseada no percentual. NÃO pule nenhum dia. NÃO use números de amostras.
+Cada dia DEVE ter pelo menos 1-2 frases analíticas baseadas no percentual. NÃO pule nenhum dia. NÃO use números de amostras.
 
 ===MES===
 Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo. Use apenas percentuais.
@@ -119,7 +129,7 @@ Análise da produtividade % mensal. Identifique tendências de melhora ou piora 
 ===RECOMENDACOES===
 3-5 recomendações concretas e acionáveis para melhorar o % de produtividade, baseadas nos dados. NÃO mencione números de amostras.
 
-IMPORTANTE: Cada seção deve ter 2-4 bullets concisos. Use linguagem direta. Foque SEMPRE em PERCENTUAIS de produtividade. NUNCA mencione "amostras", "registros" ou "ocorrências" nas análises.` : `Estruture o relatório com:
+IMPORTANTE: Cada seção deve ter 2-4 bullets concisos. Use linguagem direta e profissional. Foque SEMPRE em PERCENTUAIS de produtividade. NUNCA mencione "amostras", "registros" ou "ocorrências" nas análises.` : `Estruture o relatório com:
 1. **Resumo Executivo** (2-3 frases com os percentuais reais de produtividade — SEM números de amostras)
 2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — com números percentuais)
 3. **Pontos de Atenção** (problemas identificados por baixo % de produtividade)
