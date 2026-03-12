@@ -88,7 +88,7 @@ export function generatePDFReport(data: PDFReportData) {
 
   const drawSectionHeader = (title: string) => {
     ensureSpace(20);
-    curY += 8;
+    curY += 10; // ~30px spacing before section
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
