@@ -1418,7 +1418,7 @@ export default function Dashboard() {
         </div>
 
         {/* 4) Produtividade por Função */}
-        <div className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
+        <div id="chart-funcao" className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
