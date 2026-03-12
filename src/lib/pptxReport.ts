@@ -26,6 +26,61 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+interface RecBlock {
+  title: string;
+  problema: string;
+  causa: string;
+  acao: string;
+  responsavel: string;
+  impacto: string;
+}
+
+function parseRecommendationBlocks(text: string): RecBlock[] {
+  const blocks: RecBlock[] = [];
+  // Split by "Problema N" pattern (e.g. "Problema 1 — Soldagem" or "**Problema 1**")
+  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
+  for (const part of parts) {
+    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
+    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
+    // First line or text before first field is the title
+    let currentField = "title";
+    for (const line of lines) {
+      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
+      const lower = clean.toLowerCase();
+      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
+        block.problema = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "problema";
+      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
+        block.causa = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "causa";
+      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
+        block.acao = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "acao";
+      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
+        block.responsavel = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "responsavel";
+      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
+        block.impacto = clean.replace(/^[^:]+:\s*/, "");
+        currentField = "impacto";
+      } else if (!block.title && currentField === "title") {
+        block.title = clean.replace(/\*\*/g, "").replace(/^[-—]\s*/, "").trim();
+      } else {
+        // Append to current field
+        if (currentField === "problema") block.problema += " " + clean;
+        else if (currentField === "causa") block.causa += " " + clean;
+        else if (currentField === "acao") block.acao += " " + clean;
+        else if (currentField === "responsavel") block.responsavel += " " + clean;
+        else if (currentField === "impacto") block.impacto += " " + clean;
+      }
+    }
+    if (block.title || block.problema) {
+      if (!block.title) block.title = block.problema.substring(0, 40);
+      blocks.push(block);
+    }
+  }
+  return blocks;
+}
+
 function makeBg(pptx: PptxGenJS, slide: PptxGenJS.Slide) {
   slide.background = { color: T.bg };
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 7.1, w: 13.33, h: 0.05, fill: { color: T.accent } });
