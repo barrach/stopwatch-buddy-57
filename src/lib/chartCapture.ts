@@ -29,9 +29,60 @@ const STATIC_CHART_IDS = [
   "externas",
 ] as const;
 
-async function captureElement(el: HTMLElement): Promise<{ data: string; width: number; height: number }> {
-  // Force white background and ensure full visibility before capture
-  const canvas = await html2canvas(el, {
+/**
+ * Finds the inner chart element (recharts-wrapper or svg) inside a card,
+ * so we capture ONLY the chart — not the card background/shadow/border.
+ */
+function findChartElement(cardEl: HTMLElement): HTMLElement {
+  // Try recharts-responsive-container first (wraps the chart tightly)
+  const responsive = cardEl.querySelector(".recharts-responsive-container") as HTMLElement;
+  if (responsive) return responsive;
+  // Fallback to recharts-wrapper
+  const wrapper = cardEl.querySelector(".recharts-wrapper") as HTMLElement;
+  if (wrapper) return wrapper;
+  // Last resort: the card itself
+  return cardEl;
+}
+
+/**
+ * Temporarily strip card styles from a parent element so html2canvas
+ * renders a clean white background with no shadows/borders.
+ */
+function applyCleanStyles(el: HTMLElement): () => void {
+  const orig = {
+    background: el.style.background,
+    backgroundColor: el.style.backgroundColor,
+    boxShadow: el.style.boxShadow,
+    border: el.style.border,
+    borderRadius: el.style.borderRadius,
+    padding: el.style.padding,
+  };
+  el.style.background = "white";
+  el.style.backgroundColor = "#ffffff";
+  el.style.boxShadow = "none";
+  el.style.border = "none";
+  el.style.borderRadius = "0";
+
+  return () => {
+    el.style.background = orig.background;
+    el.style.backgroundColor = orig.backgroundColor;
+    el.style.boxShadow = orig.boxShadow;
+    el.style.border = orig.border;
+    el.style.borderRadius = orig.borderRadius;
+    el.style.padding = orig.padding;
+  };
+}
+
+async function captureElement(cardEl: HTMLElement): Promise<{ data: string; width: number; height: number }> {
+  const chartEl = findChartElement(cardEl);
+
+  // Temporarily clean the card wrapper styles
+  const restoreCard = applyCleanStyles(cardEl);
+
+  // Wait for any chart animations/renders to settle
+  await new Promise((r) => setTimeout(r, 300));
+
+  const canvas = await html2canvas(chartEl, {
     backgroundColor: "#FFFFFF",
     scale: 4,
     logging: false,
@@ -39,22 +90,28 @@ async function captureElement(el: HTMLElement): Promise<{ data: string; width: n
     allowTaint: true,
     scrollX: 0,
     scrollY: 0,
-    windowWidth: el.scrollWidth,
-    windowHeight: el.scrollHeight,
-    // Ensure we capture the full element including overflow
-    width: el.scrollWidth,
-    height: el.scrollHeight,
+    windowWidth: chartEl.scrollWidth,
+    windowHeight: chartEl.scrollHeight,
+    width: chartEl.scrollWidth,
+    height: chartEl.scrollHeight,
   });
+
+  // Restore original styles
+  restoreCard();
+
+  // Apply light compression (quality 0.95)
+  const data = canvas.toDataURL("image/png", 0.95);
+
   return {
-    data: canvas.toDataURL("image/png"),
-    width: el.scrollWidth,
-    height: el.scrollHeight,
+    data,
+    width: chartEl.scrollWidth,
+    height: chartEl.scrollHeight,
   };
 }
 
 /**
  * Captures all dashboard charts as base64 PNG images.
- * Switches Pareto mode and time view mode to capture all variants.
+ * Captures ONLY the inner chart element (not the card wrapper).
  * Returns both images and their original dimensions for proper aspect ratio in exports.
  */
 export async function captureAllCharts(
