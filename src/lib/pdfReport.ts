@@ -317,52 +317,85 @@ export function generatePDFReport(data: PDFReportData) {
   // ═══════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    drawSectionHeader("Conclusões e Recomendações");
     const recBlocks = parseRecommendationBlocks(recText);
     if (recBlocks.length > 0) {
+      // Estimate first block height to keep title + first block together
+      const firstBlock = recBlocks[0];
+      const firstFields = [
+        { label: `PROBLEMA 1 — ${firstBlock.title}`, value: firstBlock.problema },
+        { label: "CAUSA PROVÁVEL", value: firstBlock.causa },
+        { label: "AÇÃO RECOMENDADA", value: firstBlock.acao },
+        { label: "RESPONSÁVEL", value: firstBlock.responsavel },
+        { label: "IMPACTO ESPERADO", value: firstBlock.impacto },
+      ];
+      let firstBlockH = 16; // section header (12) + problem header (10) + padding
+      for (const f of firstFields) {
+        if (!f.value) {
+          continue;
+        }
+        const lines = doc.splitTextToSize(f.value, contentW - 16);
+        firstBlockH += 5 + lines.length * 3.5 + 2;
+      }
+      // Ensure title + first block fit together — if not, break before
+      const minNeeded = Math.min(firstBlockH, 80); // cap to avoid forcing empty pages
+      ensureSpace(minNeeded);
+
+      drawSectionHeader("Conclusões e Recomendações");
+
       for (let bi = 0; bi < recBlocks.length; bi++) {
         const block = recBlocks[bi];
         const fields = [
-          { label: `PROBLEMA ${bi + 1} — ${block.title}`, value: block.problema },
+          { label: "PROBLEMA", value: block.problema },
           { label: "CAUSA PROVÁVEL", value: block.causa },
           { label: "AÇÃO RECOMENDADA", value: block.acao },
           { label: "RESPONSÁVEL", value: block.responsavel },
           { label: "IMPACTO ESPERADO", value: block.impacto },
         ];
-        // Estimate height
-        let blockH = 4;
+
+        // Estimate block height
+        let blockH = 14; // problem header box
         for (const f of fields) {
           if (!f.value) continue;
           const lines = doc.splitTextToSize(f.value, contentW - 16);
           blockH += 5 + lines.length * 3.5 + 2;
         }
-        ensureSpace(blockH + 8);
+        ensureSpace(blockH + 10);
 
         // Separator line between blocks
         if (bi > 0) {
           doc.setDrawColor(...C.cardBorder);
           doc.line(margin + 4, curY, margin + contentW - 4, curY);
-          curY += 4;
+          curY += 6;
         }
+
+        // Problem title header — styled box matching section header style
+        doc.setFillColor(...C.sectionBg);
+        doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+        doc.setFontSize(10);
+        doc.setTextColor(...C.white);
+        doc.setFont("helvetica", "bold");
+        doc.text(`PROBLEMA ${bi + 1} — ${block.title}`, margin + 6, curY + 5.5);
+        curY += 12;
 
         for (const f of fields) {
           if (!f.value) continue;
           doc.setFontSize(8);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(...C.sectionBg);
-          doc.text(f.label, margin + 4, curY + 4);
+          doc.text(f.label, margin + 6, curY + 4);
           curY += 5;
 
           doc.setFontSize(8.5);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
           const wrapped = doc.splitTextToSize(f.value, contentW - 16);
-          doc.text(wrapped, margin + 8, curY + 3);
+          doc.text(wrapped, margin + 10, curY + 3);
           curY += wrapped.length * 3.5 + 3;
         }
-        curY += 4; // spacing between blocks
+        curY += 6; // spacing between blocks
       }
     } else {
+      drawSectionHeader("Conclusões e Recomendações");
       drawAnalysisBox(recText);
     }
   }
