@@ -428,18 +428,18 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
-  const cleanBlockTitle = (rawName: string): string => {
-    return rawName
-      .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
-      .replace(/\s*={2,}\s*$/i, "")
-      .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
-      .replace(/^(?:Dia|Hora)\s+/i, "")
-      .trim();
-  };
-
   const drawSubHeader = (rawName: string) => {
-    const cleanName = cleanBlockTitle(rawName);
+    const cleanName = normalizeInternalTitle(rawName);
     ensureSpace(16);
+    curY += 6;
+    doc.setFillColor(...C.sectionBg);
+    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...C.white);
+    doc.setFont("helvetica", "bold");
+    doc.text(cleanName, margin + 6, curY + 5.5);
+    curY += 12;
+  };
     curY += 6;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
