@@ -1593,9 +1593,9 @@ export default function Dashboard() {
                      }}
                    />
                    <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                     {nonprodCausas.map((item, i) => (
-                       <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
-                     ))}
+                      {nonprodCausas.map((item, i) => (
+                        <Cell key={i} fill={getDescColor(item.name)} />
+                      ))}
                      <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
                    
