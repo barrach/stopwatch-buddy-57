@@ -361,7 +361,7 @@ export function generatePDFReport(data: PDFReportData) {
 
   doc.setFontSize(8);
   doc.setTextColor(...C.textGray);
-  doc.text(`Base controlável: ${data.totalControlaveis} amostras (excluindo ${data.externo} NPE — ${data.externoPct}% do total)`, margin, curY);
+  doc.text(`Total de amostras: ${data.totalAmostras} | Produtivo: ${data.produtivoPct}% | Suplementar: ${data.suplementarPct}% | Não Produtivo: ${data.naoProdutivoPct}% | NPE: ${data.externoPct}%`, margin, curY);
   curY += 4;
 
   if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);

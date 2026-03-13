@@ -265,7 +265,7 @@ export function generatePPTXReport(data: PDFReportData) {
   });
 
   s4.addText(
-    `Base controlável: ${data.totalControlaveis} amostras (excl. ${data.externo} NPE — ${data.externoPct}% do total)`,
+    `Total: ${data.totalAmostras} amostras | Produtivo: ${data.produtivoPct}% | Suplementar: ${data.suplementarPct}% | NP: ${data.naoProdutivoPct}% | NPE: ${data.externoPct}%`,
     { x: 0.8, y: 3.5, w: 11.7, h: 0.4, fontSize: 10, color: T.gray, fontFace: "Calibri" },
   );
 

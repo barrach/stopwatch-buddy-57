@@ -81,10 +81,12 @@ REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 FÓRMULAS DE CÁLCULO:
 - Existem 4 categorias: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
 - NPE são eventos fora do controle da equipe (Causas Naturais, Vazamento/Interferência da Planta, Aguardando Liberação de PT).
-- Produtividade = Produtivo / (Total - NPE) × 100
-- Suplementar% = Suplementar / (Total - NPE) × 100
-- Não Produtivo% = Não Produtivo / (Total - NPE) × 100
-- NPE é reportado separadamente como % do total bruto.
+- IMPORTANTE: O NPE ENTRA na conta da produtividade global. O denominador é o TOTAL BRUTO (incluindo NPE).
+- Produtividade = Produtivo / Total × 100
+- Suplementar% = Suplementar / Total × 100
+- Não Produtivo% = Não Produtivo / Total × 100
+- NPE% = NPE / Total × 100
+- A soma das 4 categorias deve ser 100% do total.
 
 ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes:
 1. **Diagnóstico**: O que o gráfico mostra (dados percentuais reais da obra).
