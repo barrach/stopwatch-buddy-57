@@ -203,8 +203,9 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const drawAnalysisBox = (text: string) => {
-    if (!text?.trim()) return;
-    const lines = text.split("\n").filter((l) => l.trim());
+    const sanitizedText = stripInternalTags(text || "");
+    if (!sanitizedText) return;
+    const lines = sanitizedText.split("\n").filter((l) => l.trim());
     const paragraphs: string[] = [];
     for (const line of lines) {
       const cleaned = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
