@@ -23,11 +23,24 @@ serve(async (req) => {
       systemPrompt = `Você é um assistente especializado em medição de produtividade de obras de engenharia.
 Sua tarefa é sugerir a categoria e descrição mais adequadas para uma observação de campo com base no contexto fornecido.
 
-Categorias disponíveis e suas descrições:
-- Produtivo: Trabalhando, Planejando
-- Suplementar: Aguardando Instruções, Assistindo, Aguardando Ferramenta ou Material, Aguardando Liberação, Transitando no local de trabalho - com ferramenta, Transitando no local de trabalho - sem ferramenta, Transitando fora do local de trabalho - com ferramenta, Transitando fora do local de trabalho - sem ferramenta
-- Não Produtivo: Pessoal, Ocioso
-- Não Produtivo Externo: Causas Naturais, Vazamento / Interferência da Planta, Cliente
+Categorias e critérios detalhados:
+- Produtivo:
+  • Trabalhando: Executando esforço físico no local de trabalho, posicionando peças, limpando/preparando superfícies.
+  • Planejando: Efetuando medições, analisando desenhos/croquis, fazendo levantamento de materiais, dando/recebendo instruções do técnico/supervisor, realizando DDS ou elaborando APR.
+- Suplementar:
+  • Aguardando Instruções: Detecta-se através de perguntas (pode ou não estar no local de trabalho).
+  • Aguardando Movimentação de Carga: Esperando vez na equipe, aguardando movimentação de máquinas, apoio stand-by.
+  • Aguardando Ferramenta ou Material: Recebendo/entregando ferramentas, no almoxarifado/ferramentaria, aguardando guindaste/caminhão/apoio.
+  • Aguardando Liberação de PT: Solicitando/devolvendo PT, aguardando emissão de PT ou manobra de liberação.
+  • Transitando no local de trabalho - com ferramenta: Deslocando-se dentro da Unidade/Oficinas, portando ferramentas.
+  • Transitando no local de trabalho - sem ferramenta: Deslocando-se dentro da Unidade/Oficinas, sem ferramentas.
+  • Transitando fora do local de trabalho - com ferramenta: Deslocando-se em ruas, portando ferramentas.
+  • Transitando fora do local de trabalho - sem ferramenta: Deslocando-se em ruas, sem ferramentas.
+- Não Produtivo:
+  • Pessoal: No bebedouro ou sanitário, exclusivamente.
+  • Ocioso: No café, cantina, copa, banco, área médica, bate-papo entre funcionários.
+- Não Produtivo Externo:
+  • Causas Naturais, Vazamento / Interferência da Planta, Aguardando Liberação de PT (quando causada pelo cliente/operação).
 
 Responda APENAS em JSON válido com este formato exato:
 {"categoria": "nome da categoria pai", "descricao": "nome da subcategoria", "justificativa": "breve justificativa em português"}`;
