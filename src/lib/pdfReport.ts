@@ -422,7 +422,7 @@ export function generatePDFReport(data: PDFReportData) {
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const dayBlocks = parseDayBlocks(analysisText);
         for (const block of dayBlocks) {
-          if (block.day) drawDaySubHeader(block.day);
+          if (block.day) drawSubHeader(block.day);
           drawAnalysisBox(block.content);
         }
       } else if (cs.dayByDay && cs.section === "HORARIO" && analysisText) {
@@ -430,7 +430,7 @@ export function generatePDFReport(data: PDFReportData) {
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const hourBlocks = parseHourBlocks(analysisText);
         for (const block of hourBlocks) {
-          if (block.hour) drawDaySubHeader(block.hour);
+          if (block.hour) drawSubHeader(block.hour);
           drawAnalysisBox(block.content);
         }
       } else {
