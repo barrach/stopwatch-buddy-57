@@ -107,6 +107,15 @@ function parseRecommendationBlocks(text: string): RecBlock[] {
   return blocks;
 }
 
+function cleanBlockTitle(rawName: string): string {
+  return rawName
+    .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
+    .replace(/\s*={2,}\s*$/i, "")
+    .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
+    .replace(/^(?:Dia|Hora)\s+/i, "")
+    .trim();
+}
+
 function makeBg(pptx: PptxGenJS, slide: PptxGenJS.Slide) {
   slide.background = { color: T.bg };
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 7.1, w: 13.33, h: 0.05, fill: { color: T.accent } });
