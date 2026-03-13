@@ -104,29 +104,60 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+const normalizeInternalTitle = (rawName: string): string => {
+  return rawName
+    .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
+    .replace(/\s*={2,}\s*$/i, "")
+    .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
+    .replace(/^(?:Dia|Hora)\s+/i, "")
+    .trim();
+};
+
+const stripInternalTags = (text: string): string => {
+  return text
+    .replace(/===\s*HORA\s*:\s*(.*?)\s*===/gi, "$1")
+    .replace(/===\s*DIA\s*:\s*(.*?)\s*===/gi, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
   const blocks: Array<{ day: string; content: string }> = [];
-  const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
+  const normalized = text.replace(/\r\n/g, "\n");
+  const regex = /(?:^|\n)\s*===\s*DIA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*DIA\s*:|$)/gi;
   let m;
-  while ((m = regex.exec(text)) !== null) {
-    blocks.push({ day: m[1].trim(), content: m[2].trim() });
+
+  while ((m = regex.exec(normalized)) !== null) {
+    blocks.push({
+      day: normalizeInternalTitle(m[1]),
+      content: stripInternalTags(m[2]),
+    });
   }
-  if (blocks.length === 0 && text.trim()) {
-    blocks.push({ day: "", content: text.trim() });
+
+  if (blocks.length === 0 && normalized.trim()) {
+    blocks.push({ day: "", content: stripInternalTags(normalized) });
   }
+
   return blocks;
 }
 
 function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
   const blocks: Array<{ hour: string; content: string }> = [];
-  const regex = /(?:^|\n)\s*===HORA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===HORA:|$)/g;
+  const normalized = text.replace(/\r\n/g, "\n");
+  const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
   let m;
-  while ((m = regex.exec(text)) !== null) {
-    blocks.push({ hour: m[1].trim(), content: m[2].trim() });
+
+  while ((m = regex.exec(normalized)) !== null) {
+    blocks.push({
+      hour: normalizeInternalTitle(m[1]),
+      content: stripInternalTags(m[2]),
+    });
   }
-  if (blocks.length === 0 && text.trim()) {
-    blocks.push({ hour: "", content: text.trim() });
+
+  if (blocks.length === 0 && normalized.trim()) {
+    blocks.push({ hour: "", content: stripInternalTags(normalized) });
   }
+
   return blocks;
 }
 
@@ -172,8 +203,9 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const drawAnalysisBox = (text: string) => {
-    if (!text?.trim()) return;
-    const lines = text.split("\n").filter((l) => l.trim());
+    const sanitizedText = stripInternalTags(text || "");
+    if (!sanitizedText) return;
+    const lines = sanitizedText.split("\n").filter((l) => l.trim());
     const paragraphs: string[] = [];
     for (const line of lines) {
       const cleaned = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
@@ -396,17 +428,8 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
-  const cleanBlockTitle = (rawName: string): string => {
-    return rawName
-      .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
-      .replace(/\s*={2,}\s*$/i, "")
-      .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
-      .replace(/^(?:Dia|Hora)\s+/i, "")
-      .trim();
-  };
-
   const drawSubHeader = (rawName: string) => {
-    const cleanName = cleanBlockTitle(rawName);
+    const cleanName = normalizeInternalTitle(rawName);
     ensureSpace(16);
     curY += 6;
     doc.setFillColor(...C.sectionBg);
