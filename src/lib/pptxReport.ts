@@ -19,7 +19,7 @@ interface AnalysisSections { [key: string]: string; }
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
   if (!aiText) return sections;
-  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===|$)/g;
+  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
   let m;
   while ((m = regex.exec(aiText)) !== null) sections[m[1].trim()] = m[2].trim();
   if (!Object.keys(sections).length) sections["GERAL"] = aiText;
