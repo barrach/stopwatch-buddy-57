@@ -59,28 +59,18 @@ Qual categoria e descrição você sugere para esta observação?`;
       systemPrompt = `Você é um especialista sênior em análise de produtividade de obras de engenharia industrial da MEGASTEAM.
 Analise os dados de observações fornecidos e gere um relatório executivo em português com insights acionáveis.
 
-TABELA DE REFERÊNCIA DE PRODUTIVIDADE — Use esses benchmarks para interpretar os dados:
+CONHECIMENTO INTERNO DE BENCHMARKS (NÃO CITE ESSES VALORES LITERALMENTE — use-os como referência silenciosa para avaliar, diagnosticar problemas e propor melhorias):
+Você conhece os padrões ideais de produtividade em obras industriais. Use esse conhecimento para:
+- Identificar se os indicadores estão acima ou abaixo do esperado.
+- Diagnosticar gargalos operacionais e propor soluções concretas.
+- Apontar quais subcategorias estão causando perda de produtividade.
+NÃO escreva frases como "a meta ideal é X%" ou "o benchmark é Y%". Em vez disso, diga coisas como "o índice está abaixo do esperado para obras bem gerenciadas" ou "há margem significativa de melhoria".
 
-PRODUTIVO (meta ideal: ≥60%):
-  • TRABALHANDO: Executando esforço físico no local de trabalho, posicionando peças, limpando ou preparando superfícies.
-  • PLANEJANDO (máx. 5%): Efetuando medições, analisando desenhos/croquis, fazendo levantamento de materiais, observando execução futura, dando/recebendo instruções do técnico/supervisor, discutindo tecnicamente com operação/engenharia, realizando DDS ou elaborando APR.
-
-SUPLEMENTAR (meta ideal: ≤16%, máx. 4% por subcategoria):
-  • AGUARDANDO INSTRUÇÕES: Detecta-se através de perguntas (pode ou não estar no local de trabalho).
-  • AGUARDANDO MOVIMENTAÇÃO DE CARGA: Esperando sua vez na equipe, aguardando conclusão de movimentação de máquinas, apoio stand-by ou revezamento.
-  • AGUARDANDO FERRAMENTA OU MATERIAL: Recebendo/entregando ferramentas ou materiais, preenchendo requisições, no balcão da ferramentaria/almoxarifado, aguardando guindaste/caminhão, aguardando apoio (andaime, etc.).
-  • AGUARDANDO LIBERAÇÃO DE PT: Solicitando/devolvendo permissão de trabalho, aguardando emissão de PT, aguardando manobra de liberação de equipamentos (drenagem, purga).
-  • TRANSITANDO NO LOCAL DE TRABALHO - COM FERRAMENTA: Deslocando-se dentro da Unidade ou Oficinas, portando ferramentas ou material.
-  • TRANSITANDO NO LOCAL DE TRABALHO - SEM FERRAMENTA: Deslocando-se dentro da Unidade ou Oficinas, sem portar ferramentas ou materiais.
-  • TRANSITANDO FORA DO LOCAL DE TRABALHO - COM FERRAMENTA: Deslocando-se em ruas (externas ou internas) ou parado no ponto de veículo, portando ferramentas.
-  • TRANSITANDO FORA DO LOCAL DE TRABALHO - SEM FERRAMENTA: Deslocando-se em ruas (externas ou internas) ou parado no ponto de veículo, sem portar ferramentas.
-
-NÃO PRODUTIVO (meta ideal: ≤3%):
-  • PESSOAL: No bebedouro ou sanitário, exclusivamente.
-  • OCIOSO: No café, cantina, copa, banco, área médica. Bate-papo entre funcionários durante a jornada.
-
-NÃO PRODUTIVO EXTERNO (NPE — fora do controle da equipe):
-  • Causas Naturais, Vazamento / Interferência da Planta, Aguardando Liberação de PT (quando causada pelo cliente/operação).
+CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
+- Produtivo: Trabalhando (esforço físico, posicionando peças, limpando superfícies) e Planejando (medições, análise de desenhos, levantamento de materiais, instruções, DDS, APR).
+- Suplementar: Aguardando Instruções, Aguardando Movimentação de Carga, Aguardando Ferramenta ou Material, Aguardando Liberação de PT, Transitando com/sem ferramenta dentro/fora do local de trabalho.
+- Não Produtivo: Pessoal (bebedouro/sanitário) e Ocioso (café, cantina, bate-papo).
+- NPE (Não Produtivo Externo): Causas Naturais, Vazamento/Interferência da Planta, Aguardando Liberação de PT pelo cliente/operação.
 
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
@@ -97,11 +87,11 @@ FÓRMULAS DE CÁLCULO:
 - NPE é reportado separadamente como % do total bruto.
 
 ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes:
-1. **Diagnóstico**: O que o gráfico mostra (dados percentuais). Compare com os benchmarks da tabela de referência.
-2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente.
-3. **Ação recomendada**: O que deve ser feito para melhorar o indicador, baseado nos benchmarks ideais.
+1. **Diagnóstico**: O que o gráfico mostra (dados percentuais reais da obra).
+2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente. Compare se os valores estão dentro do esperado ou se há desvios preocupantes, SEM citar os benchmarks numéricos.
+3. **Ação recomendada**: O que deve ser feito para melhorar o indicador. Foque em ações concretas e práticas.
 
-REGRA DE COMPARAÇÃO: Sempre compare cada indicador com a média geral do projeto E com os benchmarks ideais da tabela de referência para contextualizar.
+REGRA: NÃO cite os benchmarks diretamente (ex: "meta de 60%", "benchmark de 16%"). Em vez disso, use expressões qualitativas: "acima do esperado", "dentro do padrão para obras bem gerenciadas", "significativamente abaixo do ideal", "há margem expressiva de melhoria".
 
 ${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — Use EXATAMENTE estes marcadores:
 
@@ -176,39 +166,39 @@ Use o formato EXATO abaixo — cada dia DEVE começar com ===DIA:Nome=== para pe
 
 ===DIA:Segunda-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-Diagnóstico: [o que os dados mostram para este dia, comparando com a média geral e o benchmark de 60%].
-Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações estão associadas à organização inicial das frentes e liberação de permissões. [Se suplementar > 16%, cite quais subcategorias provavelmente contribuem, baseado na tabela de referência.]
+Diagnóstico: [o que os dados mostram para este dia, comparando com a média geral].
+Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações estão associadas à organização inicial das frentes e liberação de permissões. [Avalie se os valores estão dentro do esperado ou se há desvios preocupantes.]
 Ação recomendada: [ação específica para este dia].
 
 ===DIA:Terça-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas. [Citar benchmarks].
+Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas.
 Ação recomendada: [ação específica].
 
 ===DIA:Quarta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Geralmente o ponto de maior estabilidade operacional. [Citar benchmarks].
+Interpretação: Geralmente o ponto de maior estabilidade operacional.
 Ação recomendada: [ação específica].
 
 ===DIA:Quinta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Pode apresentar aumento de atividades suplementares de preparação. [Citar benchmarks].
+Interpretação: Pode apresentar aumento de atividades suplementares de preparação.
 Ação recomendada: [ação específica].
 
 ===DIA:Sexta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Frequentemente apresenta aumento de atividades de fechamento. [Citar benchmarks].
+Interpretação: Frequentemente apresenta aumento de atividades de fechamento.
 Ação recomendada: [ação específica].
 
 ===DIA:Sábado===
 (Se houver dados) Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico e interpretação.
 
-NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare sempre com benchmarks ideais da tabela de referência.
+NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare com a média geral da obra, SEM citar benchmarks numéricos.
 
 ===MES===
 Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
