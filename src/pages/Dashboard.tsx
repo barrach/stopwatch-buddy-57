@@ -920,7 +920,13 @@ export default function Dashboard() {
 
     const porHorario = Object.entries(byHour)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
-      .map(([h, v]) => `${h}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
+      .map(([h, v]) => {
+        const prodPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
+        const suplPct = v.total > 0 ? Math.round((v.supl / v.total) * 100) : 0;
+        const npPct = v.total > 0 ? Math.round((v.naoProd / v.total) * 100) : 0;
+        const npePct = v.total > 0 ? Math.round((v.npe / v.total) * 100) : 0;
+        return `${h}: Prod ${prodPct}%, Supl ${suplPct}%, NP ${npPct}%, NPE ${npePct}%`;
+      })
       .join("\n");
 
     // topCategorias excludes NPE descriptions for the AI report
