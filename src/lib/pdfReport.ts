@@ -415,14 +415,20 @@ export function generatePDFReport(data: PDFReportData) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
       
-      if (cs.dayByDay && analysisText) {
+      if (cs.dayByDay && cs.section === "DIA_SEMANA" && analysisText) {
         // Special rendering: chart first, then each day as its own sub-section
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const dayBlocks = parseDayBlocks(analysisText);
         for (const block of dayBlocks) {
-          if (block.day) {
-            drawDaySubHeader(block.day);
-          }
+          if (block.day) drawDaySubHeader(block.day);
+          drawAnalysisBox(block.content);
+        }
+      } else if (cs.dayByDay && cs.section === "HORARIO" && analysisText) {
+        // Special rendering: chart first, then each hour as its own sub-section
+        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
+        const hourBlocks = parseHourBlocks(analysisText);
+        for (const block of hourBlocks) {
+          if (block.hour) drawDaySubHeader(block.hour);
           drawAnalysisBox(block.content);
         }
       } else {
