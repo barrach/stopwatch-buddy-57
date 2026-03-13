@@ -918,15 +918,15 @@ export default function Dashboard() {
 
     return {
       totalAmostras: total,
-      totalControlaveis: controllable,
+      totalControlaveis: total, // NPE now included in global calculation
       produtivo: prod,
       suplementar: supl,
       naoProdutivo: naoProd,
       externo,
-      // Adjusted percentages (excluding external) — same as KPI cards
-      produtivoPct: controllable > 0 ? Math.round((prod / controllable) * 100) : 0,
-      suplementarPct: controllable > 0 ? Math.round((supl / controllable) * 100) : 0,
-      naoProdutivoPct: controllable > 0 ? Math.round((naoProd / controllable) * 100) : 0,
+      // Global percentages — NPE included in denominator
+      produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
+      suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
+      naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
       externoPct: total > 0 ? Math.round((externo / total) * 100) : 0,
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
       obra: obraName,
