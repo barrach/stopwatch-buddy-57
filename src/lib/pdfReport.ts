@@ -304,7 +304,7 @@ export function generatePDFReport(data: PDFReportData) {
   // ═══════════════════════════════════════
   // Chart sections — ordered as specified
   // ═══════════════════════════════════════
-  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string }> = [
+  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string; dayByDay?: boolean }> = [
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
     { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
@@ -319,10 +319,35 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
+  const drawDaySubHeader = (dayName: string) => {
+    ensureSpace(14);
+    curY += 3;
+    doc.setFillColor(23, 80, 97);
+    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...C.white);
+    doc.setFont("helvetica", "bold");
+    doc.text(dayName, margin + 6, curY + 5.5);
+    curY += 11;
+  };
+
   for (const cs of chartSections) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
+      
+      if (cs.dayByDay && analysisText) {
+        // Special rendering: chart first, then each day as its own sub-section
+        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
+        const dayBlocks = parseDayBlocks(analysisText);
+        for (const block of dayBlocks) {
+          if (block.day) {
+            drawDaySubHeader(block.day);
+          }
+          drawAnalysisBox(block.content);
+        }
+      } else {
+        drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
+      }
     }
   }
 
