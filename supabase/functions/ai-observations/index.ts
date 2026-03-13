@@ -158,25 +158,44 @@ Análise da produtividade % por faixa horária:
 Exemplo: "O período da tarde apresenta os maiores níveis de produtividade, com destaque para 14:00 e 16:00. O menor desempenho ocorre às 15:00, indicando possível queda pós-intervalo."
 
 ===DIA_SEMANA===
-OBRIGATÓRIO: Análise INDIVIDUAL para CADA dia da semana com TODAS as porcentagens do gráfico.
-Formato obrigatório para CADA dia:
+OBRIGATÓRIO: Análise INDIVIDUAL para CADA dia da semana, SEPARADA POR MARCADOR DE DIA.
+Use o formato EXATO abaixo — cada dia DEVE começar com ===DIA:Nome=== para permitir renderização separada no PDF.
 
-- **Segunda-feira**: Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-  Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações nesse dia estão associadas à organização inicial das frentes e liberação de permissões.
+===DIA:Segunda-feira===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [o que os dados mostram para este dia, comparando com a média geral e o benchmark de 60%].
+Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações estão associadas à organização inicial das frentes e liberação de permissões. [Se suplementar > 16%, cite quais subcategorias provavelmente contribuem, baseado na tabela de referência.]
+Ação recomendada: [ação específica para este dia].
 
-- **Terça-feira**: Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-  Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas.
+===DIA:Terça-feira===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [dados do dia].
+Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas. [Citar benchmarks].
+Ação recomendada: [ação específica].
 
-- **Quarta-feira**: Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-  Interpretação: Geralmente o ponto de maior estabilidade operacional.
+===DIA:Quarta-feira===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [dados do dia].
+Interpretação: Geralmente o ponto de maior estabilidade operacional. [Citar benchmarks].
+Ação recomendada: [ação específica].
 
-- **Quinta-feira**: Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-  Interpretação: Pode apresentar aumento de atividades suplementares de preparação para encerramento.
+===DIA:Quinta-feira===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [dados do dia].
+Interpretação: Pode apresentar aumento de atividades suplementares de preparação. [Citar benchmarks].
+Ação recomendada: [ação específica].
 
-- **Sexta-feira**: Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-  Interpretação: Frequentemente apresenta aumento de atividades de fechamento e preparação para a semana seguinte.
+===DIA:Sexta-feira===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [dados do dia].
+Interpretação: Frequentemente apresenta aumento de atividades de fechamento. [Citar benchmarks].
+Ação recomendada: [ação específica].
 
-NUNCA pule nenhum dia. NUNCA use números de amostras.
+===DIA:Sábado===
+(Se houver dados) Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico e interpretação.
+
+NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare sempre com benchmarks ideais da tabela de referência.
 
 ===MES===
 Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
