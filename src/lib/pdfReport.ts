@@ -371,15 +371,15 @@ export function generatePDFReport(data: PDFReportData) {
   ];
 
   const drawDaySubHeader = (dayName: string) => {
-    ensureSpace(14);
-    curY += 3;
-    doc.setFillColor(23, 80, 97);
-    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
-    doc.setFontSize(10);
+    ensureSpace(16);
+    curY += 5;
+    doc.setFillColor(...C.sectionBg);
+    doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
+    doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
-    doc.text(dayName, margin + 6, curY + 5.5);
-    curY += 11;
+    doc.text(dayName, margin + 4, curY + 7);
+    curY += 13;
   };
 
   for (const cs of chartSections) {
