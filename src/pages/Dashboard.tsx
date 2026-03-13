@@ -1580,7 +1580,7 @@ export default function Dashboard() {
                        return (
                          <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: data.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
                              <strong style={{ fontSize: 13 }}>{data.name}</strong>
                            </div>
                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
@@ -1593,9 +1593,9 @@ export default function Dashboard() {
                      }}
                    />
                    <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                     {nonprodCausas.map((item, i) => (
-                       <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
-                     ))}
+                      {nonprodCausas.map((item, i) => (
+                        <Cell key={i} fill={getDescColor(item.name)} />
+                      ))}
                      <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
                    </Bar>
                    
@@ -1603,8 +1603,8 @@ export default function Dashboard() {
               </ResponsiveContainer>
             )}
             <div className="flex items-center gap-4 mt-2 justify-center">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#F59E0B" }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC2626" }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Suplementar"] }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Não Produtivo"] }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
             </div>
           </div>
         </div>
@@ -1975,7 +1975,7 @@ export default function Dashboard() {
               }} />
               <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
                 {nonprodCausas.map((item, i) => (
-                  <Cell key={i} fill={item.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B"} />
+                  <Cell key={i} fill={getDescColor(item.name)} />
                 ))}
                 <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 11, fill: TICK_COLOR }} />
               </Bar>
