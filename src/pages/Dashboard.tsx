@@ -74,9 +74,9 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Assistindo": "#15803D",                       // verde escuro
   "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
   "Aguardando Movimentação de Carga": "#059669",  // esmeralda
-  "Transitando no local de trabalho - com ferramenta": "#22D3EE",  // ciano-verde
+  "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
   "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
-  "Transitando fora do local de trabalho - com ferramenta": "#0D9488", // teal
+  "Transitando fora do local de trabalho - com ferramenta": "#22C55E", // verde médio
   "Transitando fora do local de trabalho - sem ferramenta": "#A3E635", // verde lima
   "Preparando, Organizando": "#65A30D",          // verde oliva
   // Não Produtivo — tons de VERMELHO
@@ -428,6 +428,21 @@ export default function Dashboard() {
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
+  // Sort by category group: Produtivo → Suplementar → Não Produtivo
+  const DESCRIPTION_CATEGORY_ORDER: Record<string, number> = {
+    // Produtivo
+    "Trabalhando": 0, "Planejando": 1,
+    // Suplementar
+    "Aguardando Instruções": 10, "Assistindo": 11,
+    "Aguardando Ferramenta ou Material": 12, "Aguardando Movimentação de Carga": 13,
+    "Transitando no local de trabalho - com ferramenta": 14,
+    "Transitando no local de trabalho - sem ferramenta": 15,
+    "Transitando fora do local de trabalho - com ferramenta": 16,
+    "Transitando fora do local de trabalho - sem ferramenta": 17,
+    "Preparando, Organizando": 18,
+    // Não Produtivo
+    "Pessoal": 20, "Ocioso": 21, "Retrabalho": 22, "Deslocamento": 23,
+  };
   const allDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
@@ -435,7 +450,11 @@ export default function Dashboard() {
       const desc = r.descricao || "Sem descrição";
       descs.add(desc);
     });
-    return Array.from(descs);
+    return Array.from(descs).sort((a, b) => {
+      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
+      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
+      return orderA - orderB;
+    });
   }, [records, isExternalRecord]);
 
   const byObra = useMemo(() => {
