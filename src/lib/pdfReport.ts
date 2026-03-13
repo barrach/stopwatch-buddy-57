@@ -396,14 +396,19 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
-  const drawSubHeader = (rawName: string) => {
-    // Strip prefixes like "Dia", "Hora", "DIA:", "HORA:" etc.
-    const cleanName = rawName
-      .replace(/^(?:Dia|HORA|Hora)\s*[-—:]\s*/i, "")
+  const cleanBlockTitle = (rawName: string): string => {
+    return rawName
+      .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
+      .replace(/\s*={2,}\s*$/i, "")
+      .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
       .replace(/^(?:Dia|Hora)\s+/i, "")
       .trim();
+  };
+
+  const drawSubHeader = (rawName: string) => {
+    const cleanName = cleanBlockTitle(rawName);
     ensureSpace(16);
-    curY += 5;
+    curY += 6;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
     doc.setFontSize(10);
