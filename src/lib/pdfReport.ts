@@ -106,7 +106,8 @@ function parseAnalysis(aiText: string): AnalysisSections {
 
 function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
   const blocks: Array<{ day: string; content: string }> = [];
-  const regex = /===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n===DIA:|$)/g;
+  // Match ===DIA:Name=== at start of string or after newline
+  const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
   let m;
   while ((m = regex.exec(text)) !== null) {
     blocks.push({ day: m[1].trim(), content: m[2].trim() });
@@ -234,12 +235,25 @@ export function generatePDFReport(data: PDFReportData) {
       doc.setFillColor(...C.analysisBorder);
       doc.rect(margin, chunkStartY, 2, chunkH, "F");
 
-      // Draw text
-      doc.setTextColor(...C.textDark);
+      // Draw text with bold before ":"
       doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
       for (const cl of chunkLines) {
-        doc.text(cl.text, margin + 6, cl.y);
+        const colonIdx = cl.text.indexOf(":");
+        if (colonIdx > 0 && colonIdx < 60) {
+          const boldPart = cl.text.substring(0, colonIdx + 1);
+          const normalPart = cl.text.substring(colonIdx + 1);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...C.sectionBg);
+          doc.text(boldPart, margin + 6, cl.y);
+          const boldW = doc.getTextWidth(boldPart);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(normalPart, margin + 6 + boldW, cl.y);
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(cl.text, margin + 6, cl.y);
+        }
       }
 
       curY = chunkStartY + chunkH + 3;
@@ -371,15 +385,15 @@ export function generatePDFReport(data: PDFReportData) {
   ];
 
   const drawDaySubHeader = (dayName: string) => {
-    ensureSpace(14);
-    curY += 3;
-    doc.setFillColor(23, 80, 97);
-    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
-    doc.setFontSize(10);
+    ensureSpace(16);
+    curY += 5;
+    doc.setFillColor(...C.sectionBg);
+    doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
+    doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
-    doc.text(dayName, margin + 6, curY + 5.5);
-    curY += 11;
+    doc.text(dayName, margin + 4, curY + 7);
+    curY += 13;
   };
 
   for (const cs of chartSections) {
