@@ -1603,8 +1603,8 @@ export default function Dashboard() {
               </ResponsiveContainer>
             )}
             <div className="flex items-center gap-4 mt-2 justify-center">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#F59E0B" }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC2626" }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Suplementar"] }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Não Produtivo"] }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
             </div>
           </div>
         </div>
