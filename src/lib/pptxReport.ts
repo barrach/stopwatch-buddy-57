@@ -26,6 +26,32 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
+  const blocks: Array<{ day: string; content: string }> = [];
+  const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ day: m[1].trim(), content: m[2].trim() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ day: "", content: text.trim() });
+  }
+  return blocks;
+}
+
+function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
+  const blocks: Array<{ hour: string; content: string }> = [];
+  const regex = /(?:^|\n)\s*===HORA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===HORA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ hour: m[1].trim(), content: m[2].trim() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ hour: "", content: text.trim() });
+  }
+  return blocks;
+}
+
 interface RecBlock {
   title: string;
   problema: string;
