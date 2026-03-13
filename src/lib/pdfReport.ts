@@ -338,9 +338,10 @@ export function generatePDFReport(data: PDFReportData) {
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: C.accentGreen },
     { label: "Suplementar", value: `${data.suplementarPct}%`, color: C.accentAmber },
     { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: C.accentRed },
+    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: [139, 92, 246] as [number, number, number] },
   ];
 
-  const kpiW = (contentW - 9) / 4;
+  const kpiW = (contentW - 12) / 5;
   kpis.forEach((kpi, i) => {
     const x = margin + i * (kpiW + 3);
     doc.setFillColor(...C.cardBg);
