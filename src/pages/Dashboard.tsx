@@ -22,10 +22,10 @@ import { format } from "date-fns";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: "#16A34A",
-  Suplementar: "#F59E0B",
+  Produtivo: "#2563EB",
+  Suplementar: "#16A34A",
   "Não Produtivo": "#DC2626",
-  "Não Produtivo Externo": "#3B82F6",
+  "Não Produtivo Externo": "#7C3AED",
 };
 
 const PIE_COLORS = [
