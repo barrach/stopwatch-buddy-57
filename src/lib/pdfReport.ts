@@ -234,12 +234,25 @@ export function generatePDFReport(data: PDFReportData) {
       doc.setFillColor(...C.analysisBorder);
       doc.rect(margin, chunkStartY, 2, chunkH, "F");
 
-      // Draw text
-      doc.setTextColor(...C.textDark);
+      // Draw text with bold before ":"
       doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
       for (const cl of chunkLines) {
-        doc.text(cl.text, margin + 6, cl.y);
+        const colonIdx = cl.text.indexOf(":");
+        if (colonIdx > 0 && colonIdx < 60) {
+          const boldPart = cl.text.substring(0, colonIdx + 1);
+          const normalPart = cl.text.substring(colonIdx + 1);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...C.sectionBg);
+          doc.text(boldPart, margin + 6, cl.y);
+          const boldW = doc.getTextWidth(boldPart);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(normalPart, margin + 6 + boldW, cl.y);
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(cl.text, margin + 6, cl.y);
+        }
       }
 
       curY = chunkStartY + chunkH + 3;
