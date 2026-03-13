@@ -321,16 +321,15 @@ export function generatePPTXReport(data: PDFReportData) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
       
       if (cs.section === "DIA_SEMANA" && analysisText) {
-        // Chart slide without analysis
         addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
-        // Individual slides per day
         const dayBlocks = parseDayBlocks(analysisText);
         for (const block of dayBlocks) {
           if (!block.day) continue;
+          const cleanDay = cleanBlockTitle(block.day);
           const sDay = pptx.addSlide();
           makeBg(pptx, sDay);
           sDay.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
-          sDay.addText(block.day, {
+          sDay.addText(cleanDay, {
             x: 0.7, y: 0.2, w: 11.9, h: 0.7,
             fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
           });
@@ -338,16 +337,15 @@ export function generatePPTXReport(data: PDFReportData) {
           slides.push(sDay);
         }
       } else if (cs.section === "HORARIO" && analysisText) {
-        // Chart slide without analysis
         addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
-        // Individual slides per hour
         const hourBlocks = parseHourBlocks(analysisText);
         for (const block of hourBlocks) {
           if (!block.hour) continue;
+          const cleanHour = cleanBlockTitle(block.hour);
           const sHour = pptx.addSlide();
           makeBg(pptx, sHour);
           sHour.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
-          sHour.addText(block.hour, {
+          sHour.addText(cleanHour, {
             x: 0.7, y: 0.2, w: 11.9, h: 0.7,
             fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
           });
