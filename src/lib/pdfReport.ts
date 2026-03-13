@@ -396,14 +396,19 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
-  const drawSubHeader = (rawName: string) => {
-    // Strip prefixes like "Dia", "Hora", "DIA:", "HORA:" etc.
-    const cleanName = rawName
-      .replace(/^(?:Dia|HORA|Hora)\s*[-—:]\s*/i, "")
+  const cleanBlockTitle = (rawName: string): string => {
+    return rawName
+      .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
+      .replace(/\s*={2,}\s*$/i, "")
+      .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
       .replace(/^(?:Dia|Hora)\s+/i, "")
       .trim();
+  };
+
+  const drawSubHeader = (rawName: string) => {
+    const cleanName = cleanBlockTitle(rawName);
     ensureSpace(16);
-    curY += 5;
+    curY += 6;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
     doc.setFontSize(10);
@@ -418,20 +423,22 @@ export function generatePDFReport(data: PDFReportData) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
       
       if (cs.dayByDay && cs.section === "DIA_SEMANA" && analysisText) {
-        // Special rendering: chart first, then each day as its own sub-section
+        // Order: TITLE → CHART → individual day analyses
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const dayBlocks = parseDayBlocks(analysisText);
         for (const block of dayBlocks) {
           if (block.day) drawSubHeader(block.day);
           drawAnalysisBox(block.content);
+          curY += 4; // spacing between day blocks
         }
       } else if (cs.dayByDay && cs.section === "HORARIO" && analysisText) {
-        // Special rendering: chart first, then each hour as its own sub-section
+        // Order: TITLE → CHART → individual hour analyses
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const hourBlocks = parseHourBlocks(analysisText);
         for (const block of hourBlocks) {
           if (block.hour) drawSubHeader(block.hour);
           drawAnalysisBox(block.content);
+          curY += 4; // spacing between hour blocks
         }
       } else {
         drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
