@@ -97,11 +97,25 @@ function parseRecommendationBlocks(text: string): RecBlock[] {
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
   if (!aiText) return sections;
-  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===|$)/g;
+  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
   let m;
   while ((m = regex.exec(aiText)) !== null) sections[m[1].trim()] = m[2].trim();
   if (!Object.keys(sections).length) sections["GERAL"] = aiText;
   return sections;
+}
+
+function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
+  const blocks: Array<{ day: string; content: string }> = [];
+  const regex = /===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n===DIA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ day: m[1].trim(), content: m[2].trim() });
+  }
+  // Fallback: if no ===DIA: markers, return entire text as single block
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ day: "", content: text.trim() });
+  }
+  return blocks;
 }
 
 export function generatePDFReport(data: PDFReportData) {
