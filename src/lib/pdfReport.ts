@@ -106,7 +106,8 @@ function parseAnalysis(aiText: string): AnalysisSections {
 
 function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
   const blocks: Array<{ day: string; content: string }> = [];
-  const regex = /===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n===DIA:|$)/g;
+  // Match ===DIA:Name=== at start of string or after newline
+  const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
   let m;
   while ((m = regex.exec(text)) !== null) {
     blocks.push({ day: m[1].trim(), content: m[2].trim() });
