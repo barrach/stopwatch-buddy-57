@@ -1580,7 +1580,7 @@ export default function Dashboard() {
                        return (
                          <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: data.cat === "Não Produtivo" ? "#DC2626" : "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
                              <strong style={{ fontSize: 13 }}>{data.name}</strong>
                            </div>
                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
