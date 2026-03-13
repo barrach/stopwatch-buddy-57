@@ -97,11 +97,25 @@ function parseRecommendationBlocks(text: string): RecBlock[] {
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
   if (!aiText) return sections;
-  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===|$)/g;
+  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
   let m;
   while ((m = regex.exec(aiText)) !== null) sections[m[1].trim()] = m[2].trim();
   if (!Object.keys(sections).length) sections["GERAL"] = aiText;
   return sections;
+}
+
+function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
+  const blocks: Array<{ day: string; content: string }> = [];
+  const regex = /===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n===DIA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ day: m[1].trim(), content: m[2].trim() });
+  }
+  // Fallback: if no ===DIA: markers, return entire text as single block
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ day: "", content: text.trim() });
+  }
+  return blocks;
 }
 
 export function generatePDFReport(data: PDFReportData) {
@@ -290,7 +304,7 @@ export function generatePDFReport(data: PDFReportData) {
   // ═══════════════════════════════════════
   // Chart sections — ordered as specified
   // ═══════════════════════════════════════
-  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string }> = [
+  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string; dayByDay?: boolean }> = [
     { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
     { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
@@ -301,14 +315,39 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
     { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
     { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
-    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana" },
+    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana", dayByDay: true },
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
+
+  const drawDaySubHeader = (dayName: string) => {
+    ensureSpace(14);
+    curY += 3;
+    doc.setFillColor(23, 80, 97);
+    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...C.white);
+    doc.setFont("helvetica", "bold");
+    doc.text(dayName, margin + 6, curY + 5.5);
+    curY += 11;
+  };
 
   for (const cs of chartSections) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
+      
+      if (cs.dayByDay && analysisText) {
+        // Special rendering: chart first, then each day as its own sub-section
+        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
+        const dayBlocks = parseDayBlocks(analysisText);
+        for (const block of dayBlocks) {
+          if (block.day) {
+            drawDaySubHeader(block.day);
+          }
+          drawAnalysisBox(block.content);
+        }
+      } else {
+        drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
+      }
     }
   }
 
