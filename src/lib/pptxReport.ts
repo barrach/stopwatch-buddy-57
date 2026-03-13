@@ -319,7 +319,44 @@ export function generatePPTXReport(data: PDFReportData) {
   for (const cs of chartSlides) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      addChartSlide(pptx, slides, cs.title, cs.image, analysisText, dims[cs.dimKey]);
+      
+      if (cs.section === "DIA_SEMANA" && analysisText) {
+        // Chart slide without analysis
+        addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
+        // Individual slides per day
+        const dayBlocks = parseDayBlocks(analysisText);
+        for (const block of dayBlocks) {
+          if (!block.day) continue;
+          const sDay = pptx.addSlide();
+          makeBg(pptx, sDay);
+          sDay.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
+          sDay.addText(block.day, {
+            x: 0.7, y: 0.2, w: 11.9, h: 0.7,
+            fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
+          });
+          addBullets(sDay, block.content, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
+          slides.push(sDay);
+        }
+      } else if (cs.section === "HORARIO" && analysisText) {
+        // Chart slide without analysis
+        addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
+        // Individual slides per hour
+        const hourBlocks = parseHourBlocks(analysisText);
+        for (const block of hourBlocks) {
+          if (!block.hour) continue;
+          const sHour = pptx.addSlide();
+          makeBg(pptx, sHour);
+          sHour.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
+          sHour.addText(block.hour, {
+            x: 0.7, y: 0.2, w: 11.9, h: 0.7,
+            fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
+          });
+          addBullets(sHour, block.content, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
+          slides.push(sHour);
+        }
+      } else {
+        addChartSlide(pptx, slides, cs.title, cs.image, analysisText, dims[cs.dimKey]);
+      }
     }
   }
 
