@@ -937,10 +937,9 @@ export default function Dashboard() {
         .filter(d => byWeekday[d])
         .map(d => {
           const v = byWeekday[d];
-          const ctrl = v.total - v.npe;
-          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
-          const sPct = ctrl > 0 ? Math.round((v.supl / ctrl) * 100) : 0;
-          const nPct = ctrl > 0 ? Math.round((v.naoProd / ctrl) * 100) : 0;
+          const pPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
+          const sPct = v.total > 0 ? Math.round((v.supl / v.total) * 100) : 0;
+          const nPct = v.total > 0 ? Math.round((v.naoProd / v.total) * 100) : 0;
           const npePct = v.total > 0 ? Math.round((v.npe / v.total) * 100) : 0;
           return `${d}: Produtividade ${pPct}%, Suplementar ${sPct}%, Não Produtivo ${nPct}%, NPE ${npePct}%`;
         }).join("\n") || "Não disponível",
@@ -948,8 +947,7 @@ export default function Dashboard() {
         .filter(m => byMonth[m])
         .map(m => {
           const v = byMonth[m];
-          const ctrl = v.total - v.npe;
-          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
+          const pPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
           return `${m}: Produtividade ${pPct}%`;
         }).join("\n") || "Não disponível",
       topCategorias,
