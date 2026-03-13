@@ -26,6 +26,32 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
+function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
+  const blocks: Array<{ day: string; content: string }> = [];
+  const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ day: m[1].trim(), content: m[2].trim() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ day: "", content: text.trim() });
+  }
+  return blocks;
+}
+
+function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
+  const blocks: Array<{ hour: string; content: string }> = [];
+  const regex = /(?:^|\n)\s*===HORA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===HORA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ hour: m[1].trim(), content: m[2].trim() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ hour: "", content: text.trim() });
+  }
+  return blocks;
+}
+
 interface RecBlock {
   title: string;
   problema: string;
@@ -234,7 +260,6 @@ export function generatePPTXReport(data: PDFReportData) {
       { text: "Suplementar — Atividades de apoio necessárias", options: { fontSize: 13, color: T.amber, bullet: { code: "2022" }, paraSpaceAfter: 8 } },
       { text: "Não Produtivo — Tempo improdutivo controlável", options: { fontSize: 13, color: T.red, bullet: { code: "2022" }, paraSpaceAfter: 8 } },
       { text: "Não Produtivo Externo (NPE) — Causas fora do controle", options: { fontSize: 13, color: T.accent, bullet: { code: "2022" }, paraSpaceAfter: 16 } },
-      { text: "Produtividade = Produtivo ÷ Total × 100 (NPE incluído no total)", options: { fontSize: 11, color: T.gray, paraSpaceAfter: 6 } },
     ],
     { x: 0.8, y: 1.5, w: 11.7, h: 5, fontFace: "Calibri", valign: "top" },
   );
@@ -254,14 +279,17 @@ export function generatePPTXReport(data: PDFReportData) {
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: T.green },
     { label: "Suplementar", value: `${data.suplementarPct}%`, color: T.amber },
     { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: T.red },
+    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: "8B5CF6" },
   ];
 
+  const kpiCardW = 2.3;
+  const kpiGap = 0.15;
   kpis.forEach((kpi, i) => {
-    const x = 0.8 + i * 3.1;
-    s4.addShape(pptx.ShapeType.roundRect, { x, y: 1.5, w: 2.8, h: 1.8, fill: { color: T.bgLight }, rectRadius: 0.1 });
+    const x = 0.5 + i * (kpiCardW + kpiGap);
+    s4.addShape(pptx.ShapeType.roundRect, { x, y: 1.5, w: kpiCardW, h: 1.8, fill: { color: T.bgLight }, rectRadius: 0.1 });
     s4.addShape(pptx.ShapeType.rect, { x, y: 1.5, w: 0.08, h: 1.8, fill: { color: kpi.color } });
-    s4.addText(kpi.value, { x: x + 0.3, y: 1.6, w: 2.2, h: 0.9, fontSize: 30, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle" });
-    s4.addText(kpi.label, { x: x + 0.3, y: 2.5, w: 2.2, h: 0.6, fontSize: 11, color: T.gray, fontFace: "Calibri" });
+    s4.addText(kpi.value, { x: x + 0.3, y: 1.6, w: kpiCardW - 0.5, h: 0.9, fontSize: 28, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle" });
+    s4.addText(kpi.label, { x: x + 0.3, y: 2.5, w: kpiCardW - 0.5, h: 0.6, fontSize: 10, color: T.gray, fontFace: "Calibri" });
   });
 
   s4.addText(
@@ -291,7 +319,44 @@ export function generatePPTXReport(data: PDFReportData) {
   for (const cs of chartSlides) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      addChartSlide(pptx, slides, cs.title, cs.image, analysisText, dims[cs.dimKey]);
+      
+      if (cs.section === "DIA_SEMANA" && analysisText) {
+        // Chart slide without analysis
+        addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
+        // Individual slides per day
+        const dayBlocks = parseDayBlocks(analysisText);
+        for (const block of dayBlocks) {
+          if (!block.day) continue;
+          const sDay = pptx.addSlide();
+          makeBg(pptx, sDay);
+          sDay.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
+          sDay.addText(block.day, {
+            x: 0.7, y: 0.2, w: 11.9, h: 0.7,
+            fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
+          });
+          addBullets(sDay, block.content, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
+          slides.push(sDay);
+        }
+      } else if (cs.section === "HORARIO" && analysisText) {
+        // Chart slide without analysis
+        addChartSlide(pptx, slides, cs.title, cs.image, undefined, dims[cs.dimKey]);
+        // Individual slides per hour
+        const hourBlocks = parseHourBlocks(analysisText);
+        for (const block of hourBlocks) {
+          if (!block.hour) continue;
+          const sHour = pptx.addSlide();
+          makeBg(pptx, sHour);
+          sHour.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 0.2, w: 12.3, h: 0.7, fill: { color: "175061" }, rectRadius: 0.06 });
+          sHour.addText(block.hour, {
+            x: 0.7, y: 0.2, w: 11.9, h: 0.7,
+            fontSize: 24, bold: true, color: T.white, fontFace: "Calibri", valign: "middle",
+          });
+          addBullets(sHour, block.content, { x: 0.8, y: 1.2, w: 11.7, h: 5.5 });
+          slides.push(sHour);
+        }
+      } else {
+        addChartSlide(pptx, slides, cs.title, cs.image, analysisText, dims[cs.dimKey]);
+      }
     }
   }
 

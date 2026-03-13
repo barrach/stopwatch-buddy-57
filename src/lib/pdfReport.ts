@@ -106,15 +106,26 @@ function parseAnalysis(aiText: string): AnalysisSections {
 
 function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
   const blocks: Array<{ day: string; content: string }> = [];
-  // Match ===DIA:Name=== at start of string or after newline
   const regex = /(?:^|\n)\s*===DIA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===DIA:|$)/g;
   let m;
   while ((m = regex.exec(text)) !== null) {
     blocks.push({ day: m[1].trim(), content: m[2].trim() });
   }
-  // Fallback: if no ===DIA: markers, return entire text as single block
   if (blocks.length === 0 && text.trim()) {
     blocks.push({ day: "", content: text.trim() });
+  }
+  return blocks;
+}
+
+function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
+  const blocks: Array<{ hour: string; content: string }> = [];
+  const regex = /(?:^|\n)\s*===HORA:([^=]+)===\s*\n([\s\S]*?)(?=\n\s*===HORA:|$)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    blocks.push({ hour: m[1].trim(), content: m[2].trim() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ hour: "", content: text.trim() });
   }
   return blocks;
 }
@@ -338,9 +349,10 @@ export function generatePDFReport(data: PDFReportData) {
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: C.accentGreen },
     { label: "Suplementar", value: `${data.suplementarPct}%`, color: C.accentAmber },
     { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: C.accentRed },
+    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: [139, 92, 246] as [number, number, number] },
   ];
 
-  const kpiW = (contentW - 9) / 4;
+  const kpiW = (contentW - 12) / 5;
   kpis.forEach((kpi, i) => {
     const x = margin + i * (kpiW + 3);
     doc.setFillColor(...C.cardBg);
@@ -379,7 +391,7 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
     { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
-    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
+    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario", dayByDay: true },
     { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana", dayByDay: true },
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
@@ -403,14 +415,20 @@ export function generatePDFReport(data: PDFReportData) {
     if (cs.image) {
       const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
       
-      if (cs.dayByDay && analysisText) {
+      if (cs.dayByDay && cs.section === "DIA_SEMANA" && analysisText) {
         // Special rendering: chart first, then each day as its own sub-section
         drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
         const dayBlocks = parseDayBlocks(analysisText);
         for (const block of dayBlocks) {
-          if (block.day) {
-            drawDaySubHeader(block.day);
-          }
+          if (block.day) drawDaySubHeader(block.day);
+          drawAnalysisBox(block.content);
+        }
+      } else if (cs.dayByDay && cs.section === "HORARIO" && analysisText) {
+        // Special rendering: chart first, then each hour as its own sub-section
+        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
+        const hourBlocks = parseHourBlocks(analysisText);
+        for (const block of hourBlocks) {
+          if (block.hour) drawDaySubHeader(block.hour);
           drawAnalysisBox(block.content);
         }
       } else {
