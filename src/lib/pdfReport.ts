@@ -315,7 +315,7 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
     { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
     { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario" },
-    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana" },
+    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana", dayByDay: true },
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
