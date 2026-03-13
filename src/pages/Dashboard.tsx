@@ -1292,7 +1292,7 @@ export default function Dashboard() {
                 <div key={desc} className="flex items-center gap-2">
                   <span 
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
-                    style={{ backgroundColor: DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length] }}
+                    style={{ backgroundColor: getDescColor(desc) }}
                   />
                   <span className="text-[11px] text-muted-foreground leading-tight">{desc}</span>
                 </div>
