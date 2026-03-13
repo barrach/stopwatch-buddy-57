@@ -156,11 +156,24 @@ Análise das causas externas (NPE):
 - Recomende ações de mitigação.
 
 ===HORARIO===
-Análise da produtividade % por faixa horária:
-- Identifique o horário mais produtivo e seu %.
-- Identifique o horário menos produtivo e seu %.
-- Analise a tendência geral (manhã vs tarde).
-Exemplo: "O período da tarde apresenta os maiores níveis de produtividade, com destaque para 14:00 e 16:00. O menor desempenho ocorre às 15:00, indicando possível queda pós-intervalo."
+OBRIGATÓRIO: Análise INDIVIDUAL para CADA faixa horária que tenha dados, SEPARADA POR MARCADOR DE HORA.
+Use o formato EXATO abaixo — cada horário DEVE começar com ===HORA:XX:XX=== para permitir renderização separada no PDF.
+
+===HORA:07:00===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [o que os dados mostram para este horário, comparando com a média geral].
+Interpretação: [contexto operacional do horário — início do turno, pós-intervalo, etc.].
+Ação recomendada: [ação específica para este horário].
+
+===HORA:08:00===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X%
+Diagnóstico: [dados do horário].
+Interpretação: [contexto operacional].
+Ação recomendada: [ação específica].
+
+(continuar para CADA horário que possua dados — ex: 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00)
+
+NUNCA pule nenhum horário que tenha dados. NUNCA use números de amostras. Compare com a média geral da obra, SEM citar benchmarks numéricos.
 
 ===DIA_SEMANA===
 OBRIGATÓRIO: Análise INDIVIDUAL para CADA dia da semana, SEPARADA POR MARCADOR DE DIA.
