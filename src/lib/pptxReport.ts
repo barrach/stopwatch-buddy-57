@@ -254,14 +254,17 @@ export function generatePPTXReport(data: PDFReportData) {
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: T.green },
     { label: "Suplementar", value: `${data.suplementarPct}%`, color: T.amber },
     { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: T.red },
+    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: "8B5CF6" },
   ];
 
+  const kpiCardW = 2.3;
+  const kpiGap = 0.15;
   kpis.forEach((kpi, i) => {
-    const x = 0.8 + i * 3.1;
-    s4.addShape(pptx.ShapeType.roundRect, { x, y: 1.5, w: 2.8, h: 1.8, fill: { color: T.bgLight }, rectRadius: 0.1 });
+    const x = 0.5 + i * (kpiCardW + kpiGap);
+    s4.addShape(pptx.ShapeType.roundRect, { x, y: 1.5, w: kpiCardW, h: 1.8, fill: { color: T.bgLight }, rectRadius: 0.1 });
     s4.addShape(pptx.ShapeType.rect, { x, y: 1.5, w: 0.08, h: 1.8, fill: { color: kpi.color } });
-    s4.addText(kpi.value, { x: x + 0.3, y: 1.6, w: 2.2, h: 0.9, fontSize: 30, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle" });
-    s4.addText(kpi.label, { x: x + 0.3, y: 2.5, w: 2.2, h: 0.6, fontSize: 11, color: T.gray, fontFace: "Calibri" });
+    s4.addText(kpi.value, { x: x + 0.3, y: 1.6, w: kpiCardW - 0.5, h: 0.9, fontSize: 28, bold: true, color: kpi.color, fontFace: "Calibri", valign: "middle" });
+    s4.addText(kpi.label, { x: x + 0.3, y: 2.5, w: kpiCardW - 0.5, h: 0.6, fontSize: 10, color: T.gray, fontFace: "Calibri" });
   });
 
   s4.addText(
