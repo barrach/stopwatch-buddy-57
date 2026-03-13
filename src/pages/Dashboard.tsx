@@ -428,6 +428,21 @@ export default function Dashboard() {
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
+  // Sort by category group: Produtivo → Suplementar → Não Produtivo
+  const DESCRIPTION_CATEGORY_ORDER: Record<string, number> = {
+    // Produtivo
+    "Trabalhando": 0, "Planejando": 1,
+    // Suplementar
+    "Aguardando Instruções": 10, "Assistindo": 11,
+    "Aguardando Ferramenta ou Material": 12, "Aguardando Movimentação de Carga": 13,
+    "Transitando no local de trabalho - com ferramenta": 14,
+    "Transitando no local de trabalho - sem ferramenta": 15,
+    "Transitando fora do local de trabalho - com ferramenta": 16,
+    "Transitando fora do local de trabalho - sem ferramenta": 17,
+    "Preparando, Organizando": 18,
+    // Não Produtivo
+    "Pessoal": 20, "Ocioso": 21, "Retrabalho": 22, "Deslocamento": 23,
+  };
   const allDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
@@ -435,7 +450,11 @@ export default function Dashboard() {
       const desc = r.descricao || "Sem descrição";
       descs.add(desc);
     });
-    return Array.from(descs);
+    return Array.from(descs).sort((a, b) => {
+      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
+      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
+      return orderA - orderB;
+    });
   }, [records, isExternalRecord]);
 
   const byObra = useMemo(() => {
