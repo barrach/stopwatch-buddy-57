@@ -869,13 +869,14 @@ export default function Dashboard() {
         if (cat === "Produtivo") byFunc[fName].prod += qty;
       }
 
-      // Per hour (exclude external)
-      if (!isExt) {
-        const h = r.horario || "";
-        if (!byHour[h]) byHour[h] = { prod: 0, total: 0 };
-        byHour[h].total += qty;
-        if (cat === "Produtivo") byHour[h].prod += qty;
-      }
+      // Per hour
+      const h = r.horario || "";
+      if (!byHour[h]) byHour[h] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
+      byHour[h].total += qty;
+      if (isExt) byHour[h].npe += qty;
+      else if (cat === "Produtivo") byHour[h].prod += qty;
+      else if (cat === "Suplementar") byHour[h].supl += qty;
+      else if (cat === "Não Produtivo") byHour[h].naoProd += qty;
 
       // Per weekday
       const dateObj = new Date(r.data + "T12:00:00");
