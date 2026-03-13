@@ -396,12 +396,14 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
   ];
 
-  const drawDaySubHeader = (dayName: string) => {
-    // Strip "Dia" prefix if present, show only the day name
-    const cleanName = dayName.replace(/^Dia\s*[-—:]\s*/i, "").trim();
+  const drawSubHeader = (rawName: string) => {
+    // Strip prefixes like "Dia", "Hora", "DIA:", "HORA:" etc.
+    const cleanName = rawName
+      .replace(/^(?:Dia|HORA|Hora)\s*[-—:]\s*/i, "")
+      .replace(/^(?:Dia|Hora)\s+/i, "")
+      .trim();
     ensureSpace(16);
     curY += 5;
-    // Match PROBLEMA header style — full-width teal box with green left accent
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
     doc.setFontSize(10);
