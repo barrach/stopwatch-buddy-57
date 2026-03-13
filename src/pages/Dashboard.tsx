@@ -90,9 +90,17 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Liberação de PT": "#C084FC",        // lilás
 };
 
-// Map description to its unique color, falling back to parent category color
+// Map description to its unique color — single source of truth for ALL charts
+const getDescColor = (desc: string): string => {
+  if (DESCRIPTION_COLORS[desc]) return DESCRIPTION_COLORS[desc];
+  // Fallback: try to find partial match
+  for (const [key, color] of Object.entries(DESCRIPTION_COLORS)) {
+    if (desc.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+  return "#6B7280";
+};
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
-  if (descricao && DESCRIPTION_COLORS[descricao]) return DESCRIPTION_COLORS[descricao];
+  if (descricao) return getDescColor(descricao);
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
