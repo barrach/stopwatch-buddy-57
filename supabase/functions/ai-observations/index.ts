@@ -166,39 +166,39 @@ Use o formato EXATO abaixo — cada dia DEVE começar com ===DIA:Nome=== para pe
 
 ===DIA:Segunda-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
-Diagnóstico: [o que os dados mostram para este dia, comparando com a média geral e o benchmark de 60%].
-Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações estão associadas à organização inicial das frentes e liberação de permissões. [Se suplementar > 16%, cite quais subcategorias provavelmente contribuem, baseado na tabela de referência.]
+Diagnóstico: [o que os dados mostram para este dia, comparando com a média geral].
+Interpretação: A segunda-feira representa o momento de retomada operacional. Oscilações estão associadas à organização inicial das frentes e liberação de permissões. [Avalie se os valores estão dentro do esperado ou se há desvios preocupantes.]
 Ação recomendada: [ação específica para este dia].
 
 ===DIA:Terça-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas. [Citar benchmarks].
+Interpretação: Normalmente representa o padrão da semana, com equipes totalmente mobilizadas.
 Ação recomendada: [ação específica].
 
 ===DIA:Quarta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Geralmente o ponto de maior estabilidade operacional. [Citar benchmarks].
+Interpretação: Geralmente o ponto de maior estabilidade operacional.
 Ação recomendada: [ação específica].
 
 ===DIA:Quinta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Pode apresentar aumento de atividades suplementares de preparação. [Citar benchmarks].
+Interpretação: Pode apresentar aumento de atividades suplementares de preparação.
 Ação recomendada: [ação específica].
 
 ===DIA:Sexta-feira===
 Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico: [dados do dia].
-Interpretação: Frequentemente apresenta aumento de atividades de fechamento. [Citar benchmarks].
+Interpretação: Frequentemente apresenta aumento de atividades de fechamento.
 Ação recomendada: [ação específica].
 
 ===DIA:Sábado===
 (Se houver dados) Produtividade: X% | Suplementar: X% | Não Produtivo: X%
 Diagnóstico e interpretação.
 
-NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare sempre com benchmarks ideais da tabela de referência.
+NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare com a média geral da obra, SEM citar benchmarks numéricos.
 
 ===MES===
 Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
