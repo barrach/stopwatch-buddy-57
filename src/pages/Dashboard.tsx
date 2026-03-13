@@ -1212,11 +1212,12 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
           <StatCard title="Suplementar" value={`${supplementaryPercent}%`} icon={Clock} variant="warning" />
           <StatCard title="Não Produtivo" value={`${unproductivePercent}%`} icon={AlertTriangle} variant="danger" />
+          <StatCard title="NPE (Externo)" value={`${externalPercent}%`} icon={CloudRain} variant="default" />
         </div>
 
         {/* AI Analysis Section */}
