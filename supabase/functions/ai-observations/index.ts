@@ -247,12 +247,11 @@ Use linguagem técnica, objetiva e profissional de engenharia industrial. Seja p
 Contrato/Obra: ${c.obra || "Todos"}
 
 TOTAIS:
-- Total bruto: ${c.totalAmostras}
-- Total controlável (excluindo NPE): ${c.totalControlaveis}
-- Produtivo: ${c.produtivoPct}% da base controlável
-- Suplementar: ${c.suplementarPct}% da base controlável
-- Não Produtivo: ${c.naoProdutivoPct}% da base controlável
-- Não Produtivo Externo (NPE): ${c.externoPct}% do total bruto
+- Total de amostras: ${c.totalAmostras}
+- Produtivo: ${c.produtivoPct}% do total
+- Suplementar: ${c.suplementarPct}% do total
+- Não Produtivo: ${c.naoProdutivoPct}% do total
+- Não Produtivo Externo (NPE): ${c.externoPct}% do total
 
 PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
 ${c.porEspecialidade || "Não disponível"}
