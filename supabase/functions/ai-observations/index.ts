@@ -87,11 +87,11 @@ FÓRMULAS DE CÁLCULO:
 - NPE é reportado separadamente como % do total bruto.
 
 ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes:
-1. **Diagnóstico**: O que o gráfico mostra (dados percentuais). Compare com os benchmarks da tabela de referência.
-2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente.
-3. **Ação recomendada**: O que deve ser feito para melhorar o indicador, baseado nos benchmarks ideais.
+1. **Diagnóstico**: O que o gráfico mostra (dados percentuais reais da obra).
+2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente. Compare se os valores estão dentro do esperado ou se há desvios preocupantes, SEM citar os benchmarks numéricos.
+3. **Ação recomendada**: O que deve ser feito para melhorar o indicador. Foque em ações concretas e práticas.
 
-REGRA DE COMPARAÇÃO: Sempre compare cada indicador com a média geral do projeto E com os benchmarks ideais da tabela de referência para contextualizar.
+REGRA: NÃO cite os benchmarks diretamente (ex: "meta de 60%", "benchmark de 16%"). Em vez disso, use expressões qualitativas: "acima do esperado", "dentro do padrão para obras bem gerenciadas", "significativamente abaixo do ideal", "há margem expressiva de melhoria".
 
 ${isPdf ? `FORMATO DE SAÍDA OBRIGATÓRIO — Use EXATAMENTE estes marcadores:
 
