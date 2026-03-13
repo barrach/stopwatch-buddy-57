@@ -22,10 +22,10 @@ import { format } from "date-fns";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: "#16A34A",
-  Suplementar: "#F59E0B",
+  Produtivo: "#2563EB",
+  Suplementar: "#16A34A",
   "Não Produtivo": "#DC2626",
-  "Não Produtivo Externo": "#3B82F6",
+  "Não Produtivo Externo": "#7C3AED",
 };
 
 const PIE_COLORS = [
@@ -66,27 +66,28 @@ const getSpecialtyColor = (name: string): string => {
 
 // ── Per-description unique colors (maximally distinct) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
-  // Produtivo
-  "Trabalhando": "#16A34A",       // verde
-  "Planejando": "#2563EB",        // azul
-  // Suplementar
-  "Aguardando Instruções": "#F59E0B",  // amarelo/âmbar
-  "Assistindo": "#7C3AED",             // roxo
-  "Aguardando Ferramenta ou Material": "#E11D48", // rosa escuro
-  "Transitando no local de trabalho - com ferramenta": "#0891B2",  // ciano
-  "Transitando no local de trabalho - sem ferramenta": "#D946EF",  // magenta
+  // Produtivo — tons de AZUL
+  "Trabalhando": "#2563EB",       // azul principal
+  "Planejando": "#60A5FA",        // azul claro
+  // Suplementar — tons de VERDE
+  "Aguardando Instruções": "#16A34A",           // verde
+  "Assistindo": "#15803D",                       // verde escuro
+  "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
+  "Aguardando Movimentação de Carga": "#059669",  // esmeralda
+  "Transitando no local de trabalho - com ferramenta": "#22D3EE",  // ciano-verde
+  "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
   "Transitando fora do local de trabalho - com ferramenta": "#0D9488", // teal
-  "Transitando fora do local de trabalho - sem ferramenta": "#A3631A", // marrom
-  "Preparando, Organizando": "#64748B", // cinza ardósia
-  // Não Produtivo
+  "Transitando fora do local de trabalho - sem ferramenta": "#A3E635", // verde lima
+  "Preparando, Organizando": "#65A30D",          // verde oliva
+  // Não Produtivo — tons de VERMELHO
   "Pessoal": "#DC2626",           // vermelho
-  "Ocioso": "#1F2937",            // cinza escuro
+  "Ocioso": "#F87171",            // vermelho claro
   "Retrabalho": "#9F1239",        // bordô
-  "Deslocamento": "#78350F",      // marrom escuro
-  // Não Produtivo Externo
-  "Causas Naturais": "#38BDF8",          // azul claro (sky)
-  "Vazamento / Interferência da Planta": "#6366F1", // índigo
-  "Aguardando Liberação de PT": "#A855F7",  // violeta
+  "Deslocamento": "#B91C1C",      // vermelho escuro
+  // NPE (Não Produtivo Externo) — tons de ROXO
+  "Causas Naturais": "#A855F7",                  // violeta
+  "Vazamento / Interferência da Planta": "#7C3AED", // roxo
+  "Aguardando Liberação de PT": "#C084FC",        // lilás
 };
 
 // Map description to its unique color, falling back to parent category color

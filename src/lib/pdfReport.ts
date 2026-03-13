@@ -385,15 +385,18 @@ export function generatePDFReport(data: PDFReportData) {
   ];
 
   const drawDaySubHeader = (dayName: string) => {
+    // Strip "Dia" prefix if present, show only the day name
+    const cleanName = dayName.replace(/^Dia\s*[-—:]\s*/i, "").trim();
     ensureSpace(16);
     curY += 5;
+    // Match PROBLEMA header style — full-width teal box with green left accent
     doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
-    doc.setFontSize(12);
+    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    doc.setFontSize(10);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
-    doc.text(dayName, margin + 4, curY + 7);
-    curY += 13;
+    doc.text(cleanName, margin + 6, curY + 5.5);
+    curY += 12;
   };
 
   for (const cs of chartSections) {
