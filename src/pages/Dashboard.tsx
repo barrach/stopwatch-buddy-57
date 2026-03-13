@@ -872,8 +872,7 @@ export default function Dashboard() {
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
 
-    // Controllable total = total - external (same formula as KPI cards)
-    const controllable = total - externo;
+    // Global total — NPE included in denominator
 
     const porEspecialidade = Object.entries(byEsp)
       .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
