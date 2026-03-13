@@ -440,15 +440,6 @@ export function generatePDFReport(data: PDFReportData) {
     doc.text(cleanName, margin + 6, curY + 5.5);
     curY += 12;
   };
-    curY += 6;
-    doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
-    doc.setFontSize(10);
-    doc.setTextColor(...C.white);
-    doc.setFont("helvetica", "bold");
-    doc.text(cleanName, margin + 6, curY + 5.5);
-    curY += 12;
-  };
 
   for (const cs of chartSections) {
     if (cs.image) {
