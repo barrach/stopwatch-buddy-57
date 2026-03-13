@@ -234,7 +234,7 @@ export function generatePPTXReport(data: PDFReportData) {
       { text: "Suplementar — Atividades de apoio necessárias", options: { fontSize: 13, color: T.amber, bullet: { code: "2022" }, paraSpaceAfter: 8 } },
       { text: "Não Produtivo — Tempo improdutivo controlável", options: { fontSize: 13, color: T.red, bullet: { code: "2022" }, paraSpaceAfter: 8 } },
       { text: "Não Produtivo Externo (NPE) — Causas fora do controle", options: { fontSize: 13, color: T.accent, bullet: { code: "2022" }, paraSpaceAfter: 16 } },
-      { text: "Produtividade = Produtivo ÷ (Total − NPE) × 100", options: { fontSize: 11, color: T.gray, paraSpaceAfter: 6 } },
+      { text: "Produtividade = Produtivo ÷ Total × 100 (NPE incluído no total)", options: { fontSize: 11, color: T.gray, paraSpaceAfter: 6 } },
     ],
     { x: 0.8, y: 1.5, w: 11.7, h: 5, fontFace: "Calibri", valign: "top" },
   );
