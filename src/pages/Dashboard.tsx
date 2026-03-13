@@ -90,9 +90,17 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Liberação de PT": "#C084FC",        // lilás
 };
 
-// Map description to its unique color, falling back to parent category color
+// Map description to its unique color — single source of truth for ALL charts
+const getDescColor = (desc: string): string => {
+  if (DESCRIPTION_COLORS[desc]) return DESCRIPTION_COLORS[desc];
+  // Fallback: try to find partial match
+  for (const [key, color] of Object.entries(DESCRIPTION_COLORS)) {
+    if (desc.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+  return "#6B7280";
+};
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
-  if (descricao && DESCRIPTION_COLORS[descricao]) return DESCRIPTION_COLORS[descricao];
+  if (descricao) return getDescColor(descricao);
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
@@ -1271,7 +1279,7 @@ export default function Dashboard() {
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
                   {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
+                    <Bar key={desc} dataKey={desc} name={desc} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
                       radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
                     />
                   ))}
@@ -1284,7 +1292,7 @@ export default function Dashboard() {
                 <div key={desc} className="flex items-center gap-2">
                   <span 
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
-                    style={{ backgroundColor: DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length] }}
+                    style={{ backgroundColor: getDescColor(desc) }}
                   />
                   <span className="text-[11px] text-muted-foreground leading-tight">{desc}</span>
                 </div>
@@ -1778,7 +1786,7 @@ export default function Dashboard() {
                   <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
                   {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={desc} fill={DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length]} stackId="a" className="cursor-pointer"
+                    <Bar key={desc} dataKey={desc} name={desc} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
                       radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
                   ))}
                 </BarChart>
@@ -1787,7 +1795,7 @@ export default function Dashboard() {
             <div className="lg:w-52 flex flex-col gap-1.5 overflow-auto">
               {allDescriptions.map((desc, i) => (
                 <div key={desc} className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: DESCRIPTION_COLORS[desc] || PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
                   <span className="text-xs text-muted-foreground leading-tight">{desc}</span>
                 </div>
               ))}
