@@ -330,11 +330,11 @@ export default function Dashboard() {
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
-  // Adjusted productivity: excludes external non-productive
-  const controllableTotal = totalSamples - externalCount;
-  const productivePercent = controllableTotal > 0 ? Math.round((productiveCount / controllableTotal) * 100) : 0;
+  // Global productivity: NPE included in denominator
+  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
-  const unproductivePercent = controllableTotal > 0 ? Math.round((unproductiveCount / controllableTotal) * 100) : 0;
+  const unproductivePercent = totalSamples > 0 ? Math.round((unproductiveCount / totalSamples) * 100) : 0;
+  const supplementaryPercent = totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0;
   const externalPercent = totalSamples > 0 ? Math.round((externalCount / totalSamples) * 100) : 0;
 
   // ── Chart data ─────────────────────────────────────────────────
@@ -872,8 +872,7 @@ export default function Dashboard() {
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
 
-    // Controllable total = total - external (same formula as KPI cards)
-    const controllable = total - externo;
+    // Global total — NPE included in denominator
 
     const porEspecialidade = Object.entries(byEsp)
       .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
@@ -919,15 +918,15 @@ export default function Dashboard() {
 
     return {
       totalAmostras: total,
-      totalControlaveis: controllable,
+      totalControlaveis: total, // NPE now included in global calculation
       produtivo: prod,
       suplementar: supl,
       naoProdutivo: naoProd,
       externo,
-      // Adjusted percentages (excluding external) — same as KPI cards
-      produtivoPct: controllable > 0 ? Math.round((prod / controllable) * 100) : 0,
-      suplementarPct: controllable > 0 ? Math.round((supl / controllable) * 100) : 0,
-      naoProdutivoPct: controllable > 0 ? Math.round((naoProd / controllable) * 100) : 0,
+      // Global percentages — NPE included in denominator
+      produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
+      suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
+      naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
       externoPct: total > 0 ? Math.round((externo / total) * 100) : 0,
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
       obra: obraName,
@@ -938,10 +937,9 @@ export default function Dashboard() {
         .filter(d => byWeekday[d])
         .map(d => {
           const v = byWeekday[d];
-          const ctrl = v.total - v.npe;
-          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
-          const sPct = ctrl > 0 ? Math.round((v.supl / ctrl) * 100) : 0;
-          const nPct = ctrl > 0 ? Math.round((v.naoProd / ctrl) * 100) : 0;
+          const pPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
+          const sPct = v.total > 0 ? Math.round((v.supl / v.total) * 100) : 0;
+          const nPct = v.total > 0 ? Math.round((v.naoProd / v.total) * 100) : 0;
           const npePct = v.total > 0 ? Math.round((v.npe / v.total) * 100) : 0;
           return `${d}: Produtividade ${pPct}%, Suplementar ${sPct}%, Não Produtivo ${nPct}%, NPE ${npePct}%`;
         }).join("\n") || "Não disponível",
@@ -949,8 +947,7 @@ export default function Dashboard() {
         .filter(m => byMonth[m])
         .map(m => {
           const v = byMonth[m];
-          const ctrl = v.total - v.npe;
-          const pPct = ctrl > 0 ? Math.round((v.prod / ctrl) * 100) : 0;
+          const pPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
           return `${m}: Produtividade ${pPct}%`;
         }).join("\n") || "Não disponível",
       topCategorias,
@@ -1190,7 +1187,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
-          <StatCard title="Suplementar" value={`${controllableTotal > 0 ? Math.round((supplementaryCount / controllableTotal) * 100) : 0}%`} icon={Clock} variant="warning" />
+          <StatCard title="Suplementar" value={`${supplementaryPercent}%`} icon={Clock} variant="warning" />
           <StatCard title="Não Produtivo" value={`${unproductivePercent}%`} icon={AlertTriangle} variant="danger" />
         </div>
 
