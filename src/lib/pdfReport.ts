@@ -170,30 +170,81 @@ export function generatePDFReport(data: PDFReportData) {
 
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    let totalH = 6;
+    const maxTextW = contentW - 12; // safe text width inside box
     const wrappedParagraphs: string[][] = [];
     for (const p of paragraphs) {
-      const wrapped = doc.splitTextToSize(p, contentW - 10);
+      const wrapped = doc.splitTextToSize(p, maxTextW);
       wrappedParagraphs.push(wrapped);
-      totalH += wrapped.length * 4 + 2;
     }
 
-    ensureSpace(totalH + 4);
+    // Render line by line with page break support
+    const lineH = 4;
+    const paraGap = 2;
+    const boxPadTop = 5;
+    const boxPadBot = 3;
+    let isFirstChunk = true;
 
-    doc.setFillColor(...C.analysisBg);
-    doc.roundedRect(margin, curY, contentW, totalH, 1, 1, "F");
-    doc.setFillColor(...C.analysisBorder);
-    doc.rect(margin, curY, 2, totalH, "F");
+    const startBox = () => {
+      // Draw background and left border from curY to bottom of current content
+    };
 
-    doc.setTextColor(...C.textDark);
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    let textY = curY + 5;
-    for (const wrapped of wrappedParagraphs) {
-      doc.text(wrapped, margin + 6, textY);
-      textY += wrapped.length * 4 + 2;
+    // Flatten all lines with paragraph gaps for rendering
+    const allLines: Array<{ text: string; gapAfter: number }> = [];
+    for (let pi = 0; pi < wrappedParagraphs.length; pi++) {
+      const wp = wrappedParagraphs[pi];
+      for (let li = 0; li < wp.length; li++) {
+        const isLastLineOfPara = li === wp.length - 1;
+        allLines.push({ text: wp[li], gapAfter: isLastLineOfPara ? paraGap : 0 });
+      }
     }
-    curY += totalH + 3;
+
+    // Render in chunks that fit on each page
+    let lineIdx = 0;
+    while (lineIdx < allLines.length) {
+      const availH = H - 20 - curY;
+      if (availH < 16) {
+        addNewPage();
+        curY = 16;
+      }
+
+      const chunkStartY = curY;
+      let chunkY = curY + (isFirstChunk ? boxPadTop : 3);
+      const chunkLines: Array<{ text: string; y: number }> = [];
+
+      while (lineIdx < allLines.length) {
+        const needed = lineH + allLines[lineIdx].gapAfter;
+        if (chunkY + needed > H - 20) break;
+        chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
+        chunkY += needed;
+        lineIdx++;
+      }
+
+      if (chunkLines.length === 0) {
+        // Force at least one line
+        chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
+        chunkY += lineH + allLines[lineIdx].gapAfter;
+        lineIdx++;
+      }
+
+      const chunkH = chunkY - chunkStartY + boxPadBot;
+
+      // Draw box background
+      doc.setFillColor(...C.analysisBg);
+      doc.roundedRect(margin, chunkStartY, contentW, chunkH, 1, 1, "F");
+      doc.setFillColor(...C.analysisBorder);
+      doc.rect(margin, chunkStartY, 2, chunkH, "F");
+
+      // Draw text
+      doc.setTextColor(...C.textDark);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      for (const cl of chunkLines) {
+        doc.text(cl.text, margin + 6, cl.y);
+      }
+
+      curY = chunkStartY + chunkH + 3;
+      isFirstChunk = false;
+    }
   };
 
   /** Draw chart preserving original aspect ratio, max 170mm wide × 120mm tall */
