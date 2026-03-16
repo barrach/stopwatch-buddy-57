@@ -185,14 +185,15 @@ const getDescriptionGroup = (desc: string): keyof typeof DESCRIPTION_GROUPS => {
 };
 
 const BarPercentLabel = (props: any & { labelKey?: string }) => {
-  const { x, y, width, height, value, fill, labelKey } = props;
+  const { x, y, width, height, value, fill } = props;
   const numVal = Number(value);
   if (value === undefined || value === null || numVal === 0 || !width) return null;
 
   const h = Math.max(Number(height) || 0, 1);
   const w = Math.max(Number(width) || 0, 1);
-  const fitsInside = h >= 14 && w >= 28;
+  const fitsInside = h >= 16 && w >= 32;
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
+  const label = numVal.toFixed(1) + "%";
 
   if (fitsInside) {
     return (
@@ -200,38 +201,51 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
         x={x + w / 2}
         y={y + h / 2}
         fill={textColor}
-        fontSize={h >= 18 ? 9 : 7.5}
+        fontSize={Math.min(11, h * 0.55)}
         fontWeight={700}
         textAnchor="middle"
         dominantBaseline="middle"
         paintOrder="stroke"
-        stroke={textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)"}
-        strokeWidth={2}
+        stroke={textColor === "#FFFFFF" ? "rgba(17,24,39,0.5)" : "rgba(255,255,255,0.7)"}
+        strokeWidth={2.5}
         style={{ pointerEvents: "none" }}
       >
-        {numVal.toFixed(1)}%
+        {label}
       </text>
     );
   }
 
-  // Outside label: place centered on top edge of the segment
-  const labelY = Math.max(y - 1, 8);
+  // Outside label with background rect for readability
+  const fontSize = 8.5;
+  const textWidth = label.length * 5.2;
+  const textHeight = 12;
+  const labelX = x + w / 2;
+  const labelY = Math.max(y - 2, 14);
+
   return (
-    <text
-      x={x + w / 2}
-      y={labelY}
-      fill="hsl(var(--foreground))"
-      fontSize={7}
-      fontWeight={700}
-      textAnchor="middle"
-      dominantBaseline="auto"
-      paintOrder="stroke"
-      stroke="hsl(var(--background))"
-      strokeWidth={3}
-      style={{ pointerEvents: "none" }}
-    >
-      {numVal.toFixed(1)}%
-    </text>
+    <g style={{ pointerEvents: "none" }}>
+      <rect
+        x={labelX - textWidth / 2 - 2}
+        y={labelY - textHeight + 1}
+        width={textWidth + 4}
+        height={textHeight + 1}
+        rx={2}
+        fill="hsl(var(--background))"
+        fillOpacity={0.85}
+      />
+      <text
+        x={labelX}
+        y={labelY}
+        fill="hsl(var(--foreground))"
+        fontSize={fontSize}
+        fontWeight={700}
+        textAnchor="middle"
+        dominantBaseline="auto"
+        style={{ pointerEvents: "none" }}
+      >
+        {label}
+      </text>
+    </g>
   );
 };
 
