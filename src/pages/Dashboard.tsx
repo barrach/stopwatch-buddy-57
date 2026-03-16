@@ -123,7 +123,7 @@ const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Liberação de PT": "Aguardando Liberações",
   "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
-const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
+const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
 
 // Map description to its unique color — single source of truth for ALL charts
