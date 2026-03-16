@@ -360,20 +360,10 @@ export default function NewObservation() {
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Especialidade *</Label>
-                <Select value={especialidadeId} onValueChange={(v) => { setEspecialidadeId(v); setFuncaoId(""); }}>
+                <Select value={especialidadeId} onValueChange={setEspecialidadeId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a especialidade..." /></SelectTrigger>
                   <SelectContent>
                     {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-muted-foreground">Função</Label>
-                <Select value={funcaoId} onValueChange={setFuncaoId} disabled={!especialidadeId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder={especialidadeId ? "Selecione a função..." : "Selecione a especialidade primeiro"} /></SelectTrigger>
-                  <SelectContent>
-                    {filteredFuncoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

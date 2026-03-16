@@ -16,7 +16,6 @@ const cadastroItems = [
   { to: "/cadastro/rotas", label: "Rotas", icon: Route },
   { to: "/cadastro/especialidades", label: "Especialidades", icon: Wrench },
   { to: "/cadastro/categorias", label: "Categorias", icon: Tag },
-  { to: "/cadastro/funcoes", label: "Funções", icon: UserCog },
 ];
 
 interface AppSidebarProps {

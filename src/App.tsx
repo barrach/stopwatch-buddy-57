@@ -49,7 +49,7 @@ function AppRoutes() {
       <Route path="/cadastro/especialidades" element={<CadastroEspecialidades />} />
       <Route path="/cadastro/categorias" element={<CadastroCategorias />} />
       <Route path="/cadastro/obras" element={<CadastroObras />} />
-      <Route path="/cadastro/funcoes" element={<CadastroFuncoes />} />
+      
       <Route path="/auditoria" element={<AuditoriaPage />} />
       <Route path="/relatorio-ia" element={<RelatorioIA />} />
       <Route path="*" element={<NotFound />} />
