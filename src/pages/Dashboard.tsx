@@ -1324,13 +1324,13 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 shrink-0">
                 <ZoomButton onClick={() => setZoomChart("pareto")} />
                 <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
-                {(["categoria", "especialidade", "funcao"] as ParetoMode[]).map(mode => (
+                {(["categoria", "especialidade"] as ParetoMode[]).map(mode => (
                   <button key={mode} onClick={() => handleParetoModeChange(mode)}
                     className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
                       paretoMode === mode ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
                     }`}
                   >
-                    {mode === "categoria" ? "Categorias" : mode === "especialidade" ? "Especialidades" : "Funções"}
+                    {mode === "categoria" ? "Categorias" : "Especialidades"}
                   </button>
                 ))}
               </div>

@@ -158,10 +158,9 @@ export async function captureAllCharts(
   }
 
   // Capture Pareto — all 3 variants
-  const paretoModes: Array<{ mode: "categoria" | "especialidade" | "funcao"; key: keyof ChartImages }> = [
+  const paretoModes: Array<{ mode: "categoria" | "especialidade"; key: keyof ChartImages }> = [
     { mode: "categoria", key: "paretoCategoria" },
     { mode: "especialidade", key: "paretoEspecialidade" },
-    { mode: "funcao", key: "paretoFuncao" },
   ];
 
   for (const { mode, key } of paretoModes) {
