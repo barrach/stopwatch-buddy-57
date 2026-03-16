@@ -40,6 +40,8 @@ export function useOfflineQuery<T>(
       return data as T[];
     },
     retry: (failureCount) => navigator.onLine && failureCount < 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }

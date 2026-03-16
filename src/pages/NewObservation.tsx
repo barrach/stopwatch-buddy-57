@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
+import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
@@ -70,7 +71,9 @@ export default function NewObservation() {
   );
 
   const subcategorias = useMemo(
-    () => categoriaId ? categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo") : [],
+    () => categoriaId
+      ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
+      : [],
     [categorias, categoriaId]
   );
 
@@ -170,7 +173,7 @@ export default function NewObservation() {
     setQuantity(lastObs.quantity);
     setNotes(lastObs.notes);
     // Set descricao after a tick so subcategorias recompute with the new categoriaId
-    setTimeout(() => setDescricao(lastObs.descricao), 50);
+    setTimeout(() => setDescricao(normalizeDescriptionName(lastObs.descricao)), 50);
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 

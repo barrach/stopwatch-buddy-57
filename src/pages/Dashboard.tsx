@@ -19,6 +19,7 @@ import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -107,7 +108,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#DC2626",
   // NPE extras
   "Causas Naturais": "#F97316",
-  "Vazamento / Interferência da Planta": "#EAB308",
+  "Vazamento / Interferência da Planta": "#FFFFFF",
   // Legacy
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
@@ -122,7 +123,7 @@ const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Liberação de PT": "Aguardando Liberações",
   "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
-const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
+const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
 
 // Map description to its unique color — single source of truth for ALL charts

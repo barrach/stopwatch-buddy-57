@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
+import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
@@ -78,7 +79,7 @@ export default function Records() {
   const parentCategorias = useMemo(() => allCategorias.filter(c => !c.categoria_pai_id && c.status === "Ativo"), [allCategorias]);
   const editSubcategorias = useMemo(() => {
     if (!editForm.categoria_id) return [];
-    return allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo");
+    return normalizeDescriptionOptions(allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo"));
   }, [allCategorias, editForm.categoria_id]);
 
   const { data: obras = [] } = useQuery({
@@ -151,7 +152,7 @@ export default function Records() {
     setEditRecord(r);
     setEditForm({
       data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
-      especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: r.descricao,
+      especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: normalizeDescriptionName(r.descricao),
       quantidade: r.quantidade, notas: r.notas || "",
     });
   };
