@@ -337,22 +337,34 @@ const getHighlightBorder = (type: "best" | "worst" | "none") => {
 };
 
 type ParetoMode = "especialidade" | "categoria";
+type TimeViewMode = "horario" | "diasemana" | "mes";
 
 interface CrossFilters {
   categoria?: string;
   rota?: string;
   especialidade?: string;
   contrato?: string;
-  horario?: string;
+  tempo?: string;
+  tempoMode?: TimeViewMode;
   descricao?: string;
   pareto?: string;
 }
+
+const WEEKDAY_NAMES = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 // Chronological time ordering helper — parses "8:00" or "08:00" to minutes
 const timeIndex = (t: string) => {
   const parts = t.split(":");
   if (parts.length < 2) return 9999;
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+};
+
+const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
+  if (mode === "horario") return record.horario || "";
+  const d = new Date(`${record.data}T12:00:00`);
+  if (mode === "diasemana") return WEEKDAY_NAMES[d.getDay()] || "";
+  return MONTH_NAMES[d.getMonth()] || "";
 };
 
 export default function Dashboard() {
