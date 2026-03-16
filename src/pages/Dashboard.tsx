@@ -1805,7 +1805,7 @@ export default function Dashboard() {
         )}
 
         {/* 6) Produtividade por Período — supports horario/weekday/month */}
-        <div id="chart-tempo" className={chartCardClass("horario")}>
+        <div id="chart-tempo" className={chartCardClass("tempo")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
