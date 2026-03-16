@@ -1926,10 +1926,10 @@ export default function Dashboard() {
 
         {/* Tempo */}
         <ChartZoomDialog title={timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"} subtitle="% de produtividade — clique para filtrar" open={zoomChart === "tempo"} onOpenChange={(o) => !o && setZoomChart(null)}>
-          <div className="flex flex-col lg:flex-row gap-4 h-full">
-            <div className="flex-1 min-h-0">
+          <div className="flex flex-col xl:flex-row gap-4 h-full">
+            <div className="min-w-0 flex-[1.9] min-h-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
+                <BarChart data={byTimeGrouped} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="time" tick={{ fontSize: 12, fill: TICK_COLOR }} />
                   <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
@@ -1955,13 +1955,8 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="lg:w-52 flex flex-col gap-1.5 overflow-auto">
-              {[...nonNpeDescriptions].reverse().map((desc) => (
-                <div key={desc} className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-                </div>
-              ))}
+            <div className="xl:w-64 xl:max-w-64 shrink-0 overflow-auto">
+              {renderLegendBlocks([...nonNpeDescriptions].reverse())}
             </div>
           </div>
         </ChartZoomDialog>
