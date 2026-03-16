@@ -1666,17 +1666,17 @@ export default function Dashboard() {
                   <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
                   {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={desc} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
+                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
                       radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="lg:w-52 flex flex-col gap-1.5 overflow-auto">
-              {allDescriptions.map((desc, i) => (
+              {allDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs text-muted-foreground leading-tight">{desc}</span>
+                  <span className="text-xs leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
