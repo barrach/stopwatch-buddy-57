@@ -2,6 +2,10 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { ChartImages, ChartDimensions } from "./chartCapture";
 
+// ═══════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════
+
 export interface PDFReportData {
   periodo: string;
   obra: string;
@@ -29,7 +33,10 @@ export interface PDFReportData {
   chartDimensions?: ChartDimensions;
 }
 
-// ── Canonical order (bottom→top of stack) ──
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+
 const CANONICAL_ORDER_FULL: string[] = [
   "Trabalhando",
   "Planejando",
@@ -47,7 +54,6 @@ const CANONICAL_ORDER_FULL: string[] = [
 
 const CANONICAL_ORDER = CANONICAL_ORDER_FULL.filter(d => d !== "Causas Naturais");
 
-// ── Description colors (same as Dashboard) ──
 const DESC_COLORS: Record<string, string> = {
   "Trabalhando": "#2563EB",
   "Planejando": "#60A5FA",
@@ -63,73 +69,31 @@ const DESC_COLORS: Record<string, string> = {
   "Causas Naturais": "#F97316",
 };
 
-// ── Theme colors ──
+type RGB = [number, number, number];
+
 const C = {
-  headerBg: [15, 23, 42] as [number, number, number],
-  sectionBg: [23, 80, 97] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
-  pageBg: [255, 255, 255] as [number, number, number],
-  textDark: [30, 30, 30] as [number, number, number],
-  textGray: [100, 100, 100] as [number, number, number],
-  textLight: [130, 130, 130] as [number, number, number],
-  cardBg: [245, 245, 245] as [number, number, number],
-  cardBorder: [220, 220, 220] as [number, number, number],
-  accentBlue: [59, 130, 246] as [number, number, number],
-  accentGreen: [22, 163, 74] as [number, number, number],
-  accentAmber: [245, 158, 11] as [number, number, number],
-  accentRed: [220, 38, 38] as [number, number, number],
-  analysisBorder: [23, 80, 97] as [number, number, number],
-  analysisBg: [240, 245, 247] as [number, number, number],
+  headerBg: [15, 23, 42] as RGB,
+  sectionBg: [23, 80, 97] as RGB,
+  white: [255, 255, 255] as RGB,
+  pageBg: [255, 255, 255] as RGB,
+  textDark: [30, 30, 30] as RGB,
+  textGray: [100, 100, 100] as RGB,
+  textLight: [130, 130, 130] as RGB,
+  cardBg: [245, 245, 245] as RGB,
+  cardBorder: [220, 220, 220] as RGB,
+  accentBlue: [59, 130, 246] as RGB,
+  accentGreen: [22, 163, 74] as RGB,
+  accentAmber: [245, 158, 11] as RGB,
+  accentRed: [220, 38, 38] as RGB,
+  analysisBorder: [23, 80, 97] as RGB,
+  analysisBg: [240, 245, 247] as RGB,
 };
 
+// ═══════════════════════════════════════════════════════════════
+// PARSERS
+// ═══════════════════════════════════════════════════════════════
+
 interface AnalysisSections { [key: string]: string; }
-
-interface RecBlock {
-  title: string;
-  problema: string;
-  causa: string;
-  acao: string;
-  responsavel: string;
-  impacto: string;
-}
-
-function parseRecommendationBlocks(text: string): RecBlock[] {
-  const blocks: RecBlock[] = [];
-  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
-  for (const part of parts) {
-    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
-    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
-    let currentField = "title";
-    for (const line of lines) {
-      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
-      const lower = clean.toLowerCase();
-      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
-        block.problema = clean.replace(/^[^:]+:\s*/, ""); currentField = "problema";
-      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
-        block.causa = clean.replace(/^[^:]+:\s*/, ""); currentField = "causa";
-      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
-        block.acao = clean.replace(/^[^:]+:\s*/, ""); currentField = "acao";
-      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
-        block.responsavel = clean.replace(/^[^:]+:\s*/, ""); currentField = "responsavel";
-      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
-        block.impacto = clean.replace(/^[^:]+:\s*/, ""); currentField = "impacto";
-      } else if (!block.title && currentField === "title") {
-        block.title = clean.replace(/^[-—]\s*/, "").trim();
-      } else {
-        if (currentField === "problema") block.problema += " " + clean;
-        else if (currentField === "causa") block.causa += " " + clean;
-        else if (currentField === "acao") block.acao += " " + clean;
-        else if (currentField === "responsavel") block.responsavel += " " + clean;
-        else if (currentField === "impacto") block.impacto += " " + clean;
-      }
-    }
-    if (block.title || block.problema) {
-      if (!block.title) block.title = block.problema.substring(0, 40);
-      blocks.push(block);
-    }
-  }
-  return blocks;
-}
 
 function parseAnalysis(aiText: string): AnalysisSections {
   const sections: AnalysisSections = {};
@@ -141,125 +105,156 @@ function parseAnalysis(aiText: string): AnalysisSections {
   return sections;
 }
 
-const normalizeInternalTitle = (rawName: string): string => {
-  return rawName
-    .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
-    .replace(/\s*={2,}\s*$/i, "")
-    .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
-    .replace(/^(?:Dia|Hora)\s+/i, "")
-    .trim();
-};
-
-const stripInternalTags = (text: string): string => {
+function stripTags(text: string): string {
   return text
     .replace(/===\s*HORA\s*:\s*(.*?)\s*===/gi, "$1")
     .replace(/===\s*DIA\s*:\s*(.*?)\s*===/gi, "$1")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-};
-
-function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
-  const blocks: Array<{ day: string; content: string }> = [];
-  const normalized = text.replace(/\r\n/g, "\n");
-  const regex = /(?:^|\n)\s*===\s*DIA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*DIA\s*:|$)/gi;
-  let m;
-  while ((m = regex.exec(normalized)) !== null) {
-    blocks.push({ day: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
-  }
-  if (blocks.length === 0 && normalized.trim()) {
-    blocks.push({ day: "", content: stripInternalTags(normalized) });
-  }
-  return blocks;
 }
 
-function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
-  const blocks: Array<{ hour: string; content: string }> = [];
+function normalizeTitle(raw: string): string {
+  return raw
+    .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
+    .replace(/\s*={2,}\s*$/i, "")
+    .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
+    .replace(/^(?:Dia|Hora)\s+/i, "")
+    .trim();
+}
+
+function parseTimedBlocks(text: string, marker: "HORA" | "DIA"): Array<{ label: string; content: string }> {
+  const blocks: Array<{ label: string; content: string }> = [];
   const normalized = text.replace(/\r\n/g, "\n");
 
-  // Try === HORA: XX:XX === format first
-  const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
+  // Try === MARKER: value === format
+  const regex = new RegExp(
+    `(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`,
+    "gi"
+  );
   let m;
   while ((m = regex.exec(normalized)) !== null) {
-    blocks.push({ hour: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
+    blocks.push({ label: normalizeTitle(m[1]), content: stripTags(m[2]) });
   }
 
-  // Fallback: try **XX:00** or bold hour patterns
-  if (blocks.length === 0) {
+  // Fallback for hours: **XX:00** patterns
+  if (blocks.length === 0 && marker === "HORA") {
     const hourRegex = /(?:^|\n)\s*\*?\*?(\d{1,2}:\d{2})\*?\*?\s*\n([\s\S]*?)(?=\n\s*\*?\*?\d{1,2}:\d{2}\*?\*?\s*\n|$)/gi;
     while ((m = hourRegex.exec(normalized)) !== null) {
-      blocks.push({ hour: m[1].trim(), content: stripInternalTags(m[2]) });
+      blocks.push({ label: m[1].trim(), content: stripTags(m[2]) });
     }
   }
 
   if (blocks.length === 0 && normalized.trim()) {
-    blocks.push({ hour: "", content: stripInternalTags(normalized) });
+    blocks.push({ label: "", content: stripTags(normalized) });
   }
   return blocks;
 }
 
-/** Hex color to RGB array */
-function hexToRgb(hex: string): [number, number, number] {
+interface RecBlock {
+  title: string;
+  problema: string;
+  causa: string;
+  acao: string;
+  responsavel: string;
+  impacto: string;
+}
+
+function parseRecommendations(text: string): RecBlock[] {
+  const blocks: RecBlock[] = [];
+  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
+  for (const part of parts) {
+    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
+    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
+    let field = "title";
+    for (const line of lines) {
+      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
+      const lower = clean.toLowerCase();
+      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
+        block.problema = clean.replace(/^[^:]+:\s*/, ""); field = "problema";
+      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
+        block.causa = clean.replace(/^[^:]+:\s*/, ""); field = "causa";
+      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
+        block.acao = clean.replace(/^[^:]+:\s*/, ""); field = "acao";
+      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
+        block.responsavel = clean.replace(/^[^:]+:\s*/, ""); field = "responsavel";
+      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
+        block.impacto = clean.replace(/^[^:]+:\s*/, ""); field = "impacto";
+      } else if (!block.title && field === "title") {
+        block.title = clean.replace(/^[-—]\s*/, "").trim();
+      } else {
+        (block as any)[field] += " " + clean;
+      }
+    }
+    if (block.title || block.problema) {
+      if (!block.title) block.title = block.problema.substring(0, 40);
+      blocks.push(block);
+    }
+  }
+  return blocks;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function hexToRgb(hex: string): RGB {
   const h = hex.replace("#", "");
   return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
 }
 
-/** Compute average percentages across all rows for each description */
-function computeLegendData(
+function computeLegendItems(
   rows: Array<{ [key: string]: any }>,
   descriptions: string[]
 ): Array<{ name: string; color: string; percent: number }> {
   if (rows.length === 0) return [];
-
   const totals: Record<string, number> = {};
-  let grandTotal = 0;
-
+  let grand = 0;
   for (const desc of descriptions) {
     let sum = 0;
     for (const row of rows) {
       const rawKey = `raw_${desc}`;
-      if (rawKey in row) {
-        sum += row[rawKey] || 0;
-      } else {
-        sum += ((row[desc] || 0) / 100) * (row.total || 0);
-      }
+      if (rawKey in row) sum += row[rawKey] || 0;
+      else sum += ((row[desc] || 0) / 100) * (row.total || 0);
     }
     totals[desc] = sum;
-    grandTotal += sum;
+    grand += sum;
   }
-
   return descriptions
     .map(name => ({
       name,
       color: DESC_COLORS[name] || "#6B7280",
-      percent: grandTotal > 0 ? +((totals[name] / grandTotal) * 100).toFixed(1) : 0,
+      percent: grand > 0 ? +((totals[name] / grand) * 100).toFixed(1) : 0,
     }))
     .filter(item => item.percent > 0);
 }
 
-// ═══════════════════════════════════════
-// Main PDF Generator
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// MAIN GENERATOR — REBUILT FROM SCRATCH
+// ═══════════════════════════════════════════════════════════════
+
 export function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210;
   const H = 297;
   const margin = 14;
   const contentW = W - margin * 2; // 182mm
-  const maxChartH = 110;
+  const bottomMargin = 14;
+  const maxY = H - bottomMargin;
+  const maxChartH = 105;
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
 
-  const images = data.chartImages || {};
+  const imgs = data.chartImages || {};
   const dims = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
 
-  // ── Proportions: 65% chart, 35% legend ──
-  const CHART_RATIO = 0.65;
-  const LEGEND_RATIO = 0.35;
+  // 70% chart / 30% legend
+  const CHART_W = contentW * 0.70;
+  const LEGEND_W = contentW * 0.30;
 
-  // ── Layout helpers ──
-  const addNewPage = () => {
+  // ─── Page management ───
+  const newPage = () => {
     if (pageNum > 0) doc.addPage("a4", "portrait");
     pageNum++;
     doc.setFillColor(...C.pageBg);
@@ -267,335 +262,353 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const ensureSpace = (needed: number) => {
-    if (curY + needed > H - 12) {
-      addNewPage();
-      curY = 12;
+    if (curY + needed > maxY) {
+      newPage();
+      curY = 14;
     }
   };
 
-  const drawSectionHeader = (title: string) => {
-    ensureSpace(12);
-    curY += 2;
+  // ─── Section header (dark teal bar, white text) ───
+  const sectionHeader = (title: string) => {
+    ensureSpace(14);
+    curY += 3;
     doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
+    doc.roundedRect(margin, curY, contentW, 10, 1.5, 1.5, "F");
     doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
-    doc.text(title, margin + 4, curY + 7);
-    curY += 11;
+    doc.text(title, margin + 5, curY + 7);
+    curY += 12;
   };
 
-  const drawSubHeader = (title: string) => {
-    const cleanName = normalizeInternalTitle(title);
-    if (!cleanName) return;
-    ensureSpace(12);
+  // ─── Sub-header (same teal bar, smaller, for hours/days/months) ───
+  const subHeader = (title: string) => {
+    const clean = normalizeTitle(title);
+    if (!clean) return;
+    ensureSpace(11);
     curY += 2;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
     doc.setFontSize(10);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
-    doc.text(cleanName, margin + 6, curY + 5.5);
-    curY += 9;
+    doc.text(clean, margin + 6, curY + 5.5);
+    curY += 10;
   };
 
-  const drawAnalysisBox = (text: string) => {
-    const sanitizedText = stripInternalTags(text || "");
-    if (!sanitizedText) return;
-    const lines = sanitizedText.split("\n").filter(l => l.trim());
+  // ─── Analysis box (left teal border, light bg) ───
+  const analysisBox = (text: string) => {
+    const clean = stripTags(text || "");
+    if (!clean) return;
+    const lines = clean.split("\n").filter(l => l.trim());
     const paragraphs: string[] = [];
     for (const line of lines) {
-      const cleaned = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
-      if (cleaned) paragraphs.push(cleaned);
+      const c = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
+      if (c) paragraphs.push(c);
     }
 
-    doc.setFontSize(8.5);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    const maxTextW = contentW - 12;
-    const wrappedParagraphs: string[][] = [];
-    for (const p of paragraphs) {
-      wrappedParagraphs.push(doc.splitTextToSize(p, maxTextW));
-    }
+    const textW = contentW - 14;
 
-    const lineH = 4;
-    const paraGap = 2;
-    const boxPadTop = 5;
-    const boxPadBot = 3;
-    let isFirstChunk = true;
-
-    const allLines: Array<{ text: string; gapAfter: number }> = [];
-    for (let pi = 0; pi < wrappedParagraphs.length; pi++) {
-      const wp = wrappedParagraphs[pi];
-      for (let li = 0; li < wp.length; li++) {
-        allLines.push({ text: wp[li], gapAfter: li === wp.length - 1 ? paraGap : 0 });
+    const allLines: Array<{ text: string; gap: number }> = [];
+    for (let pi = 0; pi < paragraphs.length; pi++) {
+      const wrapped = doc.splitTextToSize(paragraphs[pi], textW) as string[];
+      for (let li = 0; li < wrapped.length; li++) {
+        allLines.push({ text: wrapped[li], gap: li === wrapped.length - 1 ? 2 : 0 });
       }
     }
 
-    let lineIdx = 0;
-    while (lineIdx < allLines.length) {
-      const availH = H - 12 - curY;
-      if (availH < 16) {
-        addNewPage();
-        curY = 12;
+    const lineH = 4.2;
+    const padTop = 5;
+    const padBot = 4;
+    let idx = 0;
+    let first = true;
+
+    while (idx < allLines.length) {
+      if (curY + 16 > maxY) { newPage(); curY = 14; }
+      const startY = curY;
+      let drawY = curY + (first ? padTop : 3);
+      const chunk: Array<{ text: string; y: number }> = [];
+
+      while (idx < allLines.length) {
+        const need = lineH + allLines[idx].gap;
+        if (drawY + need > maxY) break;
+        chunk.push({ text: allLines[idx].text, y: drawY });
+        drawY += need;
+        idx++;
+      }
+      if (chunk.length === 0 && idx < allLines.length) {
+        chunk.push({ text: allLines[idx].text, y: drawY });
+        drawY += lineH;
+        idx++;
       }
 
-      const chunkStartY = curY;
-      let chunkY = curY + (isFirstChunk ? boxPadTop : 3);
-      const chunkLines: Array<{ text: string; y: number }> = [];
-
-      while (lineIdx < allLines.length) {
-        const needed = lineH + allLines[lineIdx].gapAfter;
-        if (chunkY + needed > H - 12) break;
-        chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
-        chunkY += needed;
-        lineIdx++;
-      }
-
-      if (chunkLines.length === 0) {
-        chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
-        chunkY += lineH + allLines[lineIdx].gapAfter;
-        lineIdx++;
-      }
-
-      const chunkH = chunkY - chunkStartY + boxPadBot;
-
+      const boxH = drawY - startY + padBot;
       doc.setFillColor(...C.analysisBg);
-      doc.roundedRect(margin, chunkStartY, contentW, chunkH, 1, 1, "F");
+      doc.roundedRect(margin, startY, contentW, boxH, 1, 1, "F");
       doc.setFillColor(...C.analysisBorder);
-      doc.rect(margin, chunkStartY, 2, chunkH, "F");
+      doc.rect(margin, startY, 2, boxH, "F");
 
-      doc.setFontSize(8.5);
-      for (const cl of chunkLines) {
+      doc.setFontSize(9);
+      for (const cl of chunk) {
         const colonIdx = cl.text.indexOf(":");
-        if (colonIdx > 0 && colonIdx < 60) {
-          const boldPart = cl.text.substring(0, colonIdx + 1);
-          const normalPart = cl.text.substring(colonIdx + 1);
+        if (colonIdx > 0 && colonIdx < 50) {
+          const bold = cl.text.substring(0, colonIdx + 1);
+          const rest = cl.text.substring(colonIdx + 1);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(...C.sectionBg);
-          doc.text(boldPart, margin + 6, cl.y);
-          const boldW = doc.getTextWidth(boldPart);
+          doc.text(bold, margin + 6, cl.y);
+          const bw = doc.getTextWidth(bold);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
-          doc.text(normalPart, margin + 6 + boldW, cl.y);
+          doc.text(rest, margin + 6 + bw, cl.y);
         } else {
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
           doc.text(cl.text, margin + 6, cl.y);
         }
       }
-
-      curY = chunkStartY + chunkH + 1;
-      isFirstChunk = false;
+      curY = startY + boxH + 1;
+      first = false;
     }
   };
 
-  /** Draw chart image preserving aspect ratio — uses CHART_RATIO width */
-  const drawChart = (chartImage: string | undefined, dimKey: string, hasLegend: boolean): { chartW: number; chartH: number } => {
-    if (!chartImage) return { chartW: 0, chartH: 0 };
+  // ─── Draw chart image (returns rendered height) ───
+  const drawChartImage = (img: string | undefined, dimKey: string, width: number): number => {
+    if (!img) return 0;
     const dim = dims[dimKey];
-    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
-    let chartW = chartAreaW;
-    let chartH: number;
-
+    let cW = width;
+    let cH: number;
     if (dim && dim.width > 0) {
-      const aspectRatio = dim.height / dim.width;
-      chartH = chartW * aspectRatio;
-      if (chartH > maxChartH) {
-        chartH = maxChartH;
-        chartW = chartH / aspectRatio;
-      }
+      const ar = dim.height / dim.width;
+      cH = cW * ar;
+      if (cH > maxChartH) { cH = maxChartH; cW = cH / ar; }
     } else {
-      chartH = chartAreaW * 0.55;
+      cH = width * 0.55;
     }
-
     try {
-      doc.addImage(chartImage, "PNG", margin, curY, chartW, chartH);
+      doc.addImage(img, "PNG", margin, curY, cW, cH);
     } catch (e) {
-      console.warn("Failed to add chart image:", e);
+      console.warn("Chart image error:", e);
+      return 0;
     }
-    return { chartW, chartH };
+    return cH;
   };
 
-  /** Draw legend next to chart — 35% width, readable fonts */
+  // ─── Draw legend (right side, readable fonts ≥12px ≈ 4.2pt) ───
   const drawLegend = (
-    legendItems: Array<{ name: string; color: string; percent: number }>,
-    legendX: number,
-    legendY: number,
-    chartH: number,
-    legendW: number
+    items: Array<{ name: string; color: string; percent: number }>,
+    x: number,
+    y: number,
+    chartH: number
   ) => {
-    if (legendItems.length === 0) return;
-    const x = legendX + 3;
-    const availLegendW = legendW - 6;
-    const maxItems = legendItems.length;
+    if (items.length === 0) return;
+    const lx = x + 4;
+    const availW = LEGEND_W - 8;
+    const count = items.length;
 
-    // Font size: aim for ~4.2pt (≈12px at 72dpi), min 3.5pt
-    const itemH = Math.min(7, Math.max(4.5, (chartH - 4) / maxItems));
-    const fontSize = Math.min(4.2, Math.max(3.2, itemH * 0.65));
-    let y = legendY + 1;
+    // Compute item height to fill chart area, min 5.5mm
+    const itemH = Math.max(5.5, Math.min(8, (chartH - 2) / count));
+    // Font: target ~4.5pt (≈12px), min 3.8pt
+    const fontSize = Math.max(3.8, Math.min(4.5, itemH * 0.65));
+    const swatchSize = Math.min(3.5, itemH - 1.5);
 
-    for (const item of legendItems) {
-      if (y + itemH > legendY + chartH) break; // don't overflow chart area
+    let ly = y + 1;
+    for (const item of items) {
+      if (ly + itemH > y + chartH + 1) break;
 
       const rgb = hexToRgb(item.color);
       const isWhite = item.color.toUpperCase() === "#FFFFFF";
-      const swatchSize = Math.min(3, itemH - 1);
 
+      // Color swatch
       doc.setFillColor(...rgb);
       if (isWhite) {
         doc.setDrawColor(200, 200, 200);
-        doc.roundedRect(x, y + 0.3, swatchSize, swatchSize, 0.3, 0.3, "FD");
+        doc.roundedRect(lx, ly + 0.5, swatchSize, swatchSize, 0.4, 0.4, "FD");
       } else {
-        doc.roundedRect(x, y + 0.3, swatchSize, swatchSize, 0.3, 0.3, "F");
+        doc.roundedRect(lx, ly + 0.5, swatchSize, swatchSize, 0.4, 0.4, "F");
       }
 
-      // Percentage right-aligned
+      // Percentage (right-aligned, bold)
       const pctText = `${item.percent}%`;
       doc.setFontSize(fontSize);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...C.textDark);
       const pctW = doc.getTextWidth(pctText);
-      const rightEdge = legendX + legendW - 2;
-      doc.text(pctText, rightEdge - pctW, y + swatchSize);
+      const rightEdge = x + LEGEND_W - 3;
+      doc.text(pctText, rightEdge - pctW, ly + swatchSize + 0.3);
 
-      // Name left-aligned after swatch
+      // Name (left of percentage)
       doc.setFont("helvetica", "normal");
       if (isWhite) {
-        doc.setTextColor(156, 163, 175); // gray for white items
+        doc.setTextColor(156, 163, 175);
       } else {
         doc.setTextColor(...C.textDark);
       }
-      const nameMaxW = availLegendW - swatchSize - pctW - 6;
-      let displayText = item.name;
-      while (doc.getTextWidth(displayText) > nameMaxW && displayText.length > 6) {
-        displayText = displayText.substring(0, displayText.length - 2) + "…";
+      const nameMaxW = availW - swatchSize - pctW - 8;
+      let displayName = item.name;
+      while (doc.getTextWidth(displayName) > nameMaxW && displayName.length > 5) {
+        displayName = displayName.substring(0, displayName.length - 2) + "…";
       }
-      doc.text(displayText, x + swatchSize + 1.5, y + swatchSize);
+      doc.text(displayName, lx + swatchSize + 2, ly + swatchSize + 0.3);
 
-      y += itemH;
+      ly += itemH;
     }
   };
 
-  /** Main chart section: Title → Chart+Legend → Analysis */
-  const drawChartWithLegend = (
+  // ═══════════════════════════════════════════════════════════════
+  // COMPOSITE RENDERERS
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Standard section: TITLE → CHART (70%) + LEGEND (30%) → ANALYSIS
+   */
+  const renderSection = (
     title: string,
-    chartImage: string | undefined,
-    analysisText: string | undefined,
+    chartImg: string | undefined,
     dimKey: string,
-    legendItems: Array<{ name: string; color: string; percent: number }>
+    legendItems: Array<{ name: string; color: string; percent: number }>,
+    analysisText: string | undefined
   ) => {
-    const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
-    let estChartH = chartAreaW * 0.55;
+    const chartW = hasLegend ? CHART_W : contentW;
+
+    // Estimate chart height for page-break check
+    const dim = dims[dimKey];
+    let estH = chartW * 0.55;
     if (dim && dim.width > 0) {
-      const ar = dim.height / dim.width;
-      estChartH = Math.min(chartAreaW * ar, maxChartH);
+      estH = Math.min(chartW * (dim.height / dim.width), maxChartH);
     }
 
-    // Only break page if we truly can't fit title + chart
-    const titleH = 12;
-    const totalNeeded = titleH + estChartH + 2;
-    if (curY + totalNeeded > H - 12) {
-      addNewPage();
-      curY = 12;
-    }
+    // Ensure title + chart fit on same page
+    ensureSpace(14 + estH);
 
-    drawSectionHeader(title);
+    // 1. TITLE
+    sectionHeader(title);
 
+    // 2. CHART + LEGEND
     const chartStartY = curY;
-    const { chartW, chartH } = drawChart(chartImage, dimKey, hasLegend);
-
+    const chartH = drawChartImage(chartImg, dimKey, chartW);
     if (hasLegend && chartH > 0) {
-      const legendW = contentW * LEGEND_RATIO;
-      const legendX = margin + chartW;
-      drawLegend(legendItems, legendX, chartStartY, chartH, legendW);
+      drawLegend(legendItems, margin + chartW, chartStartY, chartH);
     }
+    if (chartH > 0) curY = chartStartY + chartH + 3;
 
-    if (chartH > 0) {
-      curY = chartStartY + chartH + 2;
-    }
-
-    // Analysis AFTER chart
-    if (analysisText) drawAnalysisBox(analysisText);
+    // 3. ANALYSIS
+    if (analysisText) analysisBox(analysisText);
   };
 
-  /** Chart section with individual sub-blocks (hours/days) — blocks AFTER chart */
-  const drawChartWithBlocks = (
+  /**
+   * Section with per-item blocks (hours/days): TITLE → CHART + LEGEND → BLOCKS
+   */
+  const renderSectionWithBlocks = (
     title: string,
-    chartImage: string | undefined,
+    chartImg: string | undefined,
     dimKey: string,
     legendItems: Array<{ name: string; color: string; percent: number }>,
     blocks: Array<{ label: string; content: string }>
   ) => {
-    const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
-    let estChartH = chartAreaW * 0.55;
+    const chartW = hasLegend ? CHART_W : contentW;
+
+    const dim = dims[dimKey];
+    let estH = chartW * 0.55;
     if (dim && dim.width > 0) {
-      const ar = dim.height / dim.width;
-      estChartH = Math.min(chartAreaW * ar, maxChartH);
+      estH = Math.min(chartW * (dim.height / dim.width), maxChartH);
     }
 
-    const titleH = 12;
-    const totalNeeded = titleH + estChartH + 2;
-    if (curY + totalNeeded > H - 12) {
-      addNewPage();
-      curY = 12;
-    }
+    ensureSpace(14 + estH);
 
-    drawSectionHeader(title);
+    // 1. TITLE
+    sectionHeader(title);
 
-    // Chart + Legend
+    // 2. CHART + LEGEND
     const chartStartY = curY;
-    const { chartW, chartH } = drawChart(chartImage, dimKey, hasLegend);
-
+    const chartH = drawChartImage(chartImg, dimKey, chartW);
     if (hasLegend && chartH > 0) {
-      const legendW = contentW * LEGEND_RATIO;
-      const legendX = margin + chartW;
-      drawLegend(legendItems, legendX, chartStartY, chartH, legendW);
+      drawLegend(legendItems, margin + chartW, chartStartY, chartH);
     }
+    if (chartH > 0) curY = chartStartY + chartH + 3;
 
-    if (chartH > 0) {
-      curY = chartStartY + chartH + 2;
-    }
-
-    // Individual blocks AFTER chart
+    // 3. BLOCKS (each with sub-header + analysis)
     for (const block of blocks) {
-      if (block.label) drawSubHeader(block.label);
-      drawAnalysisBox(block.content);
+      if (block.label) subHeader(block.label);
+      analysisBox(block.content);
       curY += 1;
     }
   };
 
-  // ═══════════════════════════════════════
-  // 1. Header
-  // ═══════════════════════════════════════
-  addNewPage();
+  /**
+   * Pareto section: TITLE → CHART (full width, no side legend) → ANALYSIS
+   * Pareto charts show name + % on each bar, so no side legend needed.
+   */
+  const renderParetoSection = (
+    title: string,
+    chartImg: string | undefined,
+    dimKey: string,
+    analysisText: string | undefined
+  ) => {
+    renderSection(title, chartImg, dimKey, [], analysisText);
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // COMPUTE ALL LEGENDS UP FRONT
+  // ═══════════════════════════════════════════════════════════════
+
+  const legendContrato = computeLegendItems(data.byObra, CANONICAL_ORDER_FULL);
+  const legendEspecialidade = computeLegendItems(data.bySpecialty, CANONICAL_ORDER);
+  const legendHorario = data.byTimeHorario ? computeLegendItems(data.byTimeHorario, CANONICAL_ORDER) : [];
+  const legendDiaSemana = data.byTimeDiaSemana ? computeLegendItems(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
+  const legendMes = data.byTimeMes ? computeLegendItems(data.byTimeMes, CANONICAL_ORDER) : [];
+
+  const legendExternas: Array<{ name: string; color: string; percent: number }> = data.externalCausas
+    .filter(c => c.percent > 0)
+    .map(c => ({
+      name: c.name,
+      color: DESC_COLORS[c.name] || "#F97316",
+      percent: c.percent,
+    }));
+
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 1 — COVER PAGE
+  // ═══════════════════════════════════════════════════════════════
+
+  newPage();
+  // Dark header bar
   doc.setFillColor(...C.headerBg);
-  doc.rect(0, 0, W, 32, "F");
-  doc.setFontSize(22);
+  doc.rect(0, 0, W, 50, "F");
+
+  doc.setFontSize(24);
   doc.setTextColor(...C.white);
   doc.setFont("helvetica", "bold");
-  doc.text("ProdControl — Relatório de Produtividade", margin, 14);
+  doc.text("ProdControl", margin, 20);
+  doc.setFontSize(14);
+  doc.text("Relatório de Produtividade", margin, 30);
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Contrato: ${data.obra || "Todos os Contratos"} | Período: ${data.periodo}`, margin, 22);
-  doc.setFontSize(8);
-  doc.text(`Gerado em: ${dateStr}`, margin, 28);
-  curY = 36;
+  doc.text(`Contrato: ${data.obra || "Todos os Contratos"}`, margin, 40);
+  doc.text(`Período: ${data.periodo}`, margin, 46);
 
-  // ═══════════════════════════════════════
-  // 2. KPIs
-  // ═══════════════════════════════════════
-  drawSectionHeader("Indicadores Principais");
+  doc.setFontSize(9);
+  doc.setTextColor(...C.textLight);
+  doc.text(`Gerado em: ${dateStr}`, W - margin, 46, { align: "right" });
+
+  curY = 56;
+
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 2 — KPIs
+  // ═══════════════════════════════════════════════════════════════
+
+  sectionHeader("Indicadores Principais");
 
   const kpis = [
     { label: "Total de Amostras", value: String(data.totalAmostras), color: C.accentBlue },
     { label: "Produtividade", value: `${data.produtivoPct}%`, color: C.accentGreen },
     { label: "Suplementar", value: `${data.suplementarPct}%`, color: C.accentAmber },
     { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: C.accentRed },
-    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: [139, 92, 246] as [number, number, number] },
+    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: [139, 92, 246] as RGB },
   ];
 
   const kpiW = (contentW - 12) / 5;
@@ -615,169 +628,150 @@ export function generatePDFReport(data: PDFReportData) {
     doc.setFont("helvetica", "normal");
     doc.text(kpi.label, x + 4, curY + 18);
   });
-  curY += 24;
+  curY += 25;
 
-  if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);
+  // Executive summary
+  if (analysis["RESUMO"]) analysisBox(analysis["RESUMO"]);
 
-  // ═══════════════════════════════════════
-  // Compute legend data for each chart type
-  // ═══════════════════════════════════════
-  const legendContrato = computeLegendData(data.byObra, CANONICAL_ORDER_FULL);
-  const legendEspecialidade = computeLegendData(data.bySpecialty, CANONICAL_ORDER);
-  const legendHorario = data.byTimeHorario ? computeLegendData(data.byTimeHorario, CANONICAL_ORDER) : [];
-  const legendDiaSemana = data.byTimeDiaSemana ? computeLegendData(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
-  const legendMes = data.byTimeMes ? computeLegendData(data.byTimeMes, CANONICAL_ORDER) : [];
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 3 — Visão Geral por Contrato
+  // ═══════════════════════════════════════════════════════════════
 
-  // Pareto legend: each cause with its color and percent
-  const legendPareto: Array<{ name: string; color: string; percent: number }> = data.nonprodCausas
-    .filter(c => c.percent > 0)
-    .map(c => ({
-      name: c.name,
-      color: DESC_COLORS[c.name] || "#6B7280",
-      percent: c.percent,
-    }));
-
-  // NPE legend: each external cause with its color and percent
-  const legendExternas: Array<{ name: string; color: string; percent: number }> = data.externalCausas
-    .filter(c => c.percent > 0)
-    .map(c => ({
-      name: c.name,
-      color: DESC_COLORS[c.name] || "#F97316",
-      percent: c.percent,
-    }));
-
-  // ═══════════════════════════════════════
-  // 3. Visão Geral por Contrato
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  renderSection(
     "Visão Geral por Contrato",
-    images.contrato,
-    analysis["CONTRATO"],
+    imgs.contrato,
     "contrato",
-    legendContrato
+    legendContrato,
+    analysis["CONTRATO"]
   );
 
-  // ═══════════════════════════════════════
-  // 4. Distribuição por Categoria
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 4 — Distribuição por Categoria (donut — legend in chart)
+  // ═══════════════════════════════════════════════════════════════
+
+  renderSection(
     "Distribuição por Categoria",
-    images.categoria,
-    analysis["CATEGORIA"],
+    imgs.categoria,
     "categoria",
-    [] // Pie chart — legend embedded in chart image
+    [], // pie/donut chart has labels embedded
+    analysis["CATEGORIA"]
   );
 
-  // ═══════════════════════════════════════
-  // 5. Top Causas — Pareto por Categorias
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 5 — Pareto por Categorias (no side legend)
+  // ═══════════════════════════════════════════════════════════════
+
+  renderParetoSection(
     "Top Causas — Pareto por Categorias",
-    images.paretoCategoria,
-    analysis["PARETO"],
+    imgs.paretoCategoria,
     "paretoCategoria",
-    legendPareto
+    analysis["PARETO"]
   );
 
-  // ═══════════════════════════════════════
-  // 6. Top Causas — Pareto por Especialidades
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 6 — Pareto por Especialidades (no side legend)
+  // ═══════════════════════════════════════════════════════════════
+
+  renderParetoSection(
     "Top Causas — Pareto por Especialidades",
-    images.paretoEspecialidade,
-    analysis["PARETO_ESPECIALIDADE"],
+    imgs.paretoEspecialidade,
     "paretoEspecialidade",
-    []
+    analysis["PARETO_ESPECIALIDADE"]
   );
 
-  // ═══════════════════════════════════════
-  // 7. Produtividade por Especialidade
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 7 — Produtividade por Especialidade
+  // ═══════════════════════════════════════════════════════════════
+
+  renderSection(
     "Produtividade por Especialidade",
-    images.especialidade,
-    analysis["ESPECIALIDADE"],
+    imgs.especialidade,
     "especialidade",
-    legendEspecialidade
+    legendEspecialidade,
+    analysis["ESPECIALIDADE"]
   );
 
-  // ═══════════════════════════════════════
-  // 8. Causas Externas de Parada (NPE)
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 8 — Causas Externas de Parada (NPE)
+  // ═══════════════════════════════════════════════════════════════
+
+  renderSection(
     "Causas Externas de Parada (NPE)",
-    images.externas,
-    analysis["EXTERNO"],
+    imgs.externas,
     "externas",
-    legendExternas
+    legendExternas,
+    analysis["EXTERNO"]
   );
 
-  // ═══════════════════════════════════════
-  // 9. Produtividade por Horário
-  // ═══════════════════════════════════════
-  if (images.tempoHorario) {
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 9 — Produtividade por Horário (chart THEN hour blocks)
+  // ═══════════════════════════════════════════════════════════════
+
+  if (imgs.tempoHorario) {
     const hourText = analysis["HORARIO"] || "";
-    const hourBlocks = parseHourBlocks(hourText);
-    drawChartWithBlocks(
+    const hourBlocks = parseTimedBlocks(hourText, "HORA");
+    renderSectionWithBlocks(
       "Produtividade por Horário",
-      images.tempoHorario,
+      imgs.tempoHorario,
       "tempoHorario",
       legendHorario,
-      hourBlocks.map(b => ({ label: b.hour, content: b.content }))
+      hourBlocks
     );
   }
 
-  // ═══════════════════════════════════════
-  // 10. Produtividade por Dia da Semana
-  // ═══════════════════════════════════════
-  if (images.tempoDiaSemana) {
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 10 — Produtividade por Dia da Semana
+  // ═══════════════════════════════════════════════════════════════
+
+  if (imgs.tempoDiaSemana) {
     const dayText = analysis["DIA_SEMANA"] || "";
-    const dayBlocks = parseDayBlocks(dayText);
-    drawChartWithBlocks(
+    const dayBlocks = parseTimedBlocks(dayText, "DIA");
+    renderSectionWithBlocks(
       "Produtividade por Dia da Semana",
-      images.tempoDiaSemana,
+      imgs.tempoDiaSemana,
       "tempoDiaSemana",
       legendDiaSemana,
-      dayBlocks.map(b => ({ label: b.day, content: b.content }))
+      dayBlocks
     );
   }
 
-  // ═══════════════════════════════════════
-  // 11. Produtividade por Mês
-  // ═══════════════════════════════════════
-  drawChartWithLegend(
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 11 — Produtividade por Mês
+  // ═══════════════════════════════════════════════════════════════
+
+  renderSection(
     "Produtividade por Mês",
-    images.tempoMes,
-    analysis["MES"],
+    imgs.tempoMes,
     "tempoMes",
-    legendMes
+    legendMes,
+    analysis["MES"]
   );
 
-  // ═══════════════════════════════════════
-  // 12. Conclusões e Recomendações
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // SECTION 12 — Conclusões e Recomendações
+  // ═══════════════════════════════════════════════════════════════
+
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
-    const recBlocks = parseRecommendationBlocks(recText);
+    const recBlocks = parseRecommendations(recText);
     if (recBlocks.length > 0) {
-      const firstBlock = recBlocks[0];
+      // Estimate first block height so header + first block stay together
       const firstFields = [
-        { label: `PROBLEMA 1 — ${firstBlock.title}`, value: firstBlock.problema },
-        { label: "CAUSA PROVÁVEL", value: firstBlock.causa },
-        { label: "AÇÃO RECOMENDADA", value: firstBlock.acao },
-        { label: "RESPONSÁVEL", value: firstBlock.responsavel },
-        { label: "IMPACTO ESPERADO", value: firstBlock.impacto },
+        { label: "PROBLEMA", value: recBlocks[0].problema },
+        { label: "CAUSA PROVÁVEL", value: recBlocks[0].causa },
+        { label: "AÇÃO RECOMENDADA", value: recBlocks[0].acao },
+        { label: "RESPONSÁVEL", value: recBlocks[0].responsavel },
+        { label: "IMPACTO ESPERADO", value: recBlocks[0].impacto },
       ];
-      let firstBlockH = 16;
+      let firstH = 16;
       for (const f of firstFields) {
         if (!f.value) continue;
         const lines = doc.splitTextToSize(f.value, contentW - 16);
-        firstBlockH += 5 + lines.length * 3.5 + 2;
+        firstH += 5 + lines.length * 3.5 + 2;
       }
-      const minNeeded = Math.min(firstBlockH, 80);
-      ensureSpace(minNeeded);
+      ensureSpace(Math.min(firstH, 80));
 
-      drawSectionHeader("Conclusões e Recomendações");
+      sectionHeader("Conclusões e Recomendações");
 
       for (let bi = 0; bi < recBlocks.length; bi++) {
         const block = recBlocks[bi];
@@ -803,6 +797,7 @@ export function generatePDFReport(data: PDFReportData) {
           curY += 3;
         }
 
+        // Problem header bar
         doc.setFillColor(...C.sectionBg);
         doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
         doc.setFontSize(10);
@@ -813,30 +808,31 @@ export function generatePDFReport(data: PDFReportData) {
 
         for (const f of fields) {
           if (!f.value) continue;
-          doc.setFontSize(8);
+          doc.setFontSize(8.5);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(...C.sectionBg);
           doc.text(f.label, margin + 6, curY + 4);
           curY += 5;
 
-          doc.setFontSize(8.5);
+          doc.setFontSize(9);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
           const wrapped = doc.splitTextToSize(f.value, contentW - 16);
           doc.text(wrapped, margin + 10, curY + 3);
-          curY += wrapped.length * 3.5 + 3;
+          curY += wrapped.length * 3.8 + 3;
         }
         curY += 3;
       }
     } else {
-      drawSectionHeader("Conclusões e Recomendações");
-      drawAnalysisBox(recText);
+      sectionHeader("Conclusões e Recomendações");
+      analysisBox(recText);
     }
   }
 
-  // ═══════════════════════════════════════
-  // Footer on all pages
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // FOOTER on all pages
+  // ═══════════════════════════════════════════════════════════════
+
   const totalPages = pageNum;
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
