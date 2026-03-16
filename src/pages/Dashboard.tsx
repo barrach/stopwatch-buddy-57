@@ -1842,7 +1842,7 @@ export default function Dashboard() {
         <ChartZoomDialog title="Distribuição por Categoria" subtitle="Clique em uma fatia para filtrar" open={zoomChart === "categoria"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={100} outerRadius={180} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
+              <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={100} outerRadius={180} paddingAngle={3} dataKey="value" label={renderCategoryPieLabel} labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }} onClick={handlePieClick}>
                 {categoryTotals.map((entry) => (
                   <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
                     opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1} />
