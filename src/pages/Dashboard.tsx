@@ -1940,9 +1940,13 @@ export default function Dashboard() {
             <PieChart>
               <Pie data={externalCausas} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={200}
                 label={renderExternalPieLabel} labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}>
-                {externalCausas.map((causa: any, i: number) => (
-                  <Cell key={i} fill={getDescColor(causa.name)} />
-                ))}
+                {externalCausas.map((causa: any, i: number) => {
+                  const color = getDescColor(causa.name);
+                  const isWhite = color === "#FFFFFF";
+                  return (
+                    <Cell key={i} fill={color} stroke={isWhite ? "#374151" : undefined} strokeWidth={isWhite ? 2 : undefined} />
+                  );
+                })}
               </Pie>
               <Tooltip content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
