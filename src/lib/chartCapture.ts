@@ -137,8 +137,8 @@ async function captureElement(cardEl: HTMLElement): Promise<{ data: string; widt
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
-  setParetoMode: (mode: "categoria" | "especialidade" | "funcao") => void,
-  currentParetoMode: "categoria" | "especialidade" | "funcao",
+  setParetoMode: (mode: "categoria" | "especialidade") => void,
+  currentParetoMode: "categoria" | "especialidade",
 ): Promise<{ images: ChartImages; dimensions: ChartDimensions }> {
   const images: ChartImages = {};
   const dimensions: ChartDimensions = {};
