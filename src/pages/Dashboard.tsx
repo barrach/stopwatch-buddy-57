@@ -142,43 +142,36 @@ const getDescriptionCategoryColor = (cat: string, descricao?: string): string =>
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
-// Custom label renderer for inside-bar percentages
+// Determine if a color is "light" (needs dark text for contrast)
+const isLightColor = (hex: string): boolean => {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  // Relative luminance
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+};
+
+// Custom label renderer for inside-bar percentages — always show
 const BarPercentLabel = (props: any) => {
-  const { x, y, width, height, value } = props;
-  if (!value || value < 5 || !width || width < 25 || !height || height < 14) return null;
+  const { x, y, width, height, value, fill } = props;
+  if (value === undefined || value === null || value === 0 || !width || !height) return null;
+  const fitsInside = height >= 12 && width >= 20;
+  const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
   return (
     <text
       x={x + width / 2}
-      y={y + height / 2}
-      fill="#FFFFFF"
-      fontSize={9}
+      y={fitsInside ? y + height / 2 : y - 3}
+      fill={fitsInside ? textColor : "#D1D5DB"}
+      fontSize={fitsInside ? 9 : 7}
       fontWeight={600}
       textAnchor="middle"
-      dominantBaseline="middle"
-      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+      dominantBaseline={fitsInside ? "middle" : "auto"}
+      style={fitsInside ? { textShadow: "0 1px 2px rgba(0,0,0,0.3)" } : undefined}
     >
       {value}%
     </text>
   );
-};
-
-// Helper: compute overall % per description from chart data
-const computeLegendPercents = (data: any[], descriptions: string[]): Record<string, number> => {
-  const totals: Record<string, number> = {};
-  let grandTotal = 0;
-  descriptions.forEach(d => { totals[d] = 0; });
-  data.forEach(row => {
-    descriptions.forEach(d => {
-      const raw = row[`raw_${d}`] || 0;
-      totals[d] += raw;
-      grandTotal += raw;
-    });
-  });
-  const pcts: Record<string, number> = {};
-  descriptions.forEach(d => {
-    pcts[d] = grandTotal > 0 ? +((totals[d] / grandTotal) * 100).toFixed(1) : 0;
-  });
-  return pcts;
 };
 
 // Helper: render Bar components from a description list with proper stroke for white bars
@@ -685,10 +678,6 @@ export default function Dashboard() {
     });
   }, [records, isExternalRecord, timeViewMode]);
 
-  // Legend percentages for each chart
-  const contratoLegendPcts = useMemo(() => computeLegendPercents(byObra, allDescriptions), [byObra, allDescriptions]);
-  const specialtyLegendPcts = useMemo(() => computeLegendPercents(bySpecialty, nonNpeDescriptions), [bySpecialty, nonNpeDescriptions]);
-  const timeLegendPcts = useMemo(() => computeLegendPercents(byTimeGrouped, nonNpeDescriptions), [byTimeGrouped, nonNpeDescriptions]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
@@ -1379,7 +1368,7 @@ export default function Dashboard() {
               {[...allDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {contratoLegendPcts[desc] || 0}%</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1562,7 +1551,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {specialtyLegendPcts[desc] || 0}%</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1711,7 +1700,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {timeLegendPcts[desc] || 0}%</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1737,7 +1726,7 @@ export default function Dashboard() {
               {[...allDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {contratoLegendPcts[desc] || 0}%</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1850,7 +1839,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {specialtyLegendPcts[desc] || 0}%</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1921,7 +1910,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {timeLegendPcts[desc] || 0}%</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
