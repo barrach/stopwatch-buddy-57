@@ -1899,8 +1899,8 @@ export default function Dashboard() {
 
         {/* Especialidade */}
         <ChartZoomDialog title="Produtividade por Especialidade" subtitle="Ordenado por produtividade — clique para filtrar" open={zoomChart === "especialidade"} onOpenChange={(o) => !o && setZoomChart(null)}>
-          <div className="flex flex-col xl:flex-row gap-4 h-full">
-            <div className="min-w-0 flex-[1.9] min-h-0">
+          <div className="flex flex-col xl:flex-row gap-3 h-full">
+            <div className="min-w-0 min-h-0" style={{ flex: '3 1 0%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bySpecialty} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1928,7 +1928,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="xl:w-64 xl:max-w-64 shrink-0 overflow-auto">
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 20%', maxWidth: '20%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
