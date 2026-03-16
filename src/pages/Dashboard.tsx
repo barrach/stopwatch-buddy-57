@@ -1728,10 +1728,10 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height={480}>
-                <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+            <div className="min-w-0 flex-[1.8]">
+              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
+                <BarChart data={byTimeGrouped} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
@@ -1760,13 +1760,8 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="lg:w-48 flex flex-col gap-1.5">
-              {[...nonNpeDescriptions].reverse().map((desc) => (
-                <div key={desc} className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-                </div>
-              ))}
+            <div className="xl:w-60 xl:max-w-60 shrink-0">
+              {renderLegendBlocks([...nonNpeDescriptions].reverse())}
             </div>
           </div>
         </div>
