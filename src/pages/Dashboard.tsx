@@ -1929,7 +1929,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...nonNpeDescriptions].reverse())}
+              {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
         </ChartZoomDialog>
