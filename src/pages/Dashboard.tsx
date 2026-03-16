@@ -275,11 +275,61 @@ const tooltipLabelStyle: React.CSSProperties = { color: "#F9FAFB" };
 const TICK_COLOR = "#9CA3AF";
 const GRID_COLOR = "#374151";
 
-const renderPieLabel = ({ percent, x, y, textAnchor }: any) => (
-  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
-    {(percent * 100).toFixed(1)}%
-  </text>
-);
+const renderCategoryPieLabel = ({ cx, cy, midAngle, outerRadius, percent }: any) => {
+  const safePercent = Number((percent * 100).toFixed(1));
+  if (safePercent <= 0) return null;
+
+  const radius = (outerRadius || 0) + 18;
+  const radians = Math.PI / 180;
+  const x = cx + radius * Math.cos(-midAngle * radians);
+  const y = cy + radius * Math.sin(-midAngle * radians);
+  const textAnchor = x > cx ? "start" : "end";
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline="central"
+      fill="hsl(var(--foreground))"
+      fontSize={11}
+      fontWeight={700}
+      stroke="hsl(var(--background))"
+      strokeWidth={3}
+      paintOrder="stroke"
+    >
+      {safePercent.toFixed(1)}%
+    </text>
+  );
+};
+
+const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+  const safePercent = Number((percent * 100).toFixed(1));
+  if (safePercent <= 0) return null;
+
+  const radius = (outerRadius || 0) + 22;
+  const radians = Math.PI / 180;
+  const x = cx + radius * Math.cos(-midAngle * radians);
+  const y = cy + radius * Math.sin(-midAngle * radians);
+  const textAnchor = x > cx ? "start" : "end";
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline="central"
+      fill="hsl(var(--foreground))"
+      fontSize={11}
+      fontWeight={700}
+      stroke="hsl(var(--background))"
+      strokeWidth={3}
+      paintOrder="stroke"
+    >
+      {`${name} ${safePercent.toFixed(1)}%`}
+    </text>
+  );
+};
 
 // ── Auto-highlight helpers (Power BI style) ──────────────────────
 const getHighlightBorder = (type: "best" | "worst" | "none") => {
