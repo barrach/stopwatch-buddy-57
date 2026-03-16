@@ -1591,10 +1591,9 @@ export default function Dashboard() {
                   )}
                   labelLine={{ stroke: "#6B7280" }}
                 >
-                  {externalCausas.map((_: any, i: number) => {
-                    const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
-                    return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
-                  })}
+                  {externalCausas.map((causa: any, i: number) => (
+                    <Cell key={i} fill={getDescColor(causa.name)} />
+                  ))}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
