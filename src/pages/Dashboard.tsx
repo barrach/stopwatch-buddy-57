@@ -799,7 +799,12 @@ export default function Dashboard() {
   };
   const handleTimeClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("horario", e.activePayload[0].payload.time);
+    const bucket = e.activePayload[0].payload.time;
+    setCrossFilters((prev) => ({
+      ...prev,
+      tempo: prev.tempo === bucket && prev.tempoMode === timeViewMode ? undefined : bucket,
+      tempoMode: prev.tempo === bucket && prev.tempoMode === timeViewMode ? undefined : timeViewMode,
+    }));
   };
   const handleParetoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
