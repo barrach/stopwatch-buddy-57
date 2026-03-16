@@ -2,10 +2,6 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { ChartImages, ChartDimensions } from "./chartCapture";
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
-
 export interface PDFReportData {
   periodo: string;
   obra: string;
@@ -33,11 +29,31 @@ export interface PDFReportData {
   chartDimensions?: ChartDimensions;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════════════════════════════
+type RGB = [number, number, number];
 
-const CANONICAL_ORDER_FULL: string[] = [
+type LegendItem = {
+  name: string;
+  color: string;
+  percent: number;
+};
+
+type TimedBlock = {
+  label: string;
+  content: string;
+};
+
+type AnalysisSections = Record<string, string>;
+
+type RecBlock = {
+  title: string;
+  problema: string;
+  causa: string;
+  acao: string;
+  responsavel: string;
+  impacto: string;
+};
+
+const CANONICAL_ORDER_FULL = [
   "Trabalhando",
   "Planejando",
   "Aguardando Ferramenta ou Material",
@@ -50,797 +66,683 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Pessoal",
   "Ocioso",
   "Causas Naturais",
-];
+] as const;
 
-const CANONICAL_ORDER = CANONICAL_ORDER_FULL.filter(d => d !== "Causas Naturais");
+const CANONICAL_ORDER = CANONICAL_ORDER_FULL.filter((item) => item !== "Causas Naturais");
+
+const DONUT_ORDER = [
+  "Produtivo",
+  "Suplementar",
+  "Não Produtivo",
+  "Não Produtivo Externo",
+] as const;
+
+const HOUR_ORDER = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
+const WEEKDAY_ORDER = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"] as const;
 
 const DESC_COLORS: Record<string, string> = {
-  "Trabalhando": "#2563EB",
-  "Planejando": "#60A5FA",
+  Trabalhando: "#2563EB",
+  Planejando: "#60A5FA",
   "Aguardando Ferramenta ou Material": "#4ADE80",
   "Transitando no local de trabalho - com ferramenta": "#22C55E",
   "Transitando no local de trabalho - sem ferramenta": "#16A34A",
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
-  "Assistindo": "#15803D",
+  Assistindo: "#15803D",
   "Aguardando Liberações": "#FFFFFF",
-  "Pessoal": "#EF4444",
-  "Ocioso": "#DC2626",
+  Pessoal: "#EF4444",
+  Ocioso: "#DC2626",
   "Causas Naturais": "#F97316",
 };
 
-type RGB = [number, number, number];
+const CATEGORY_COLORS: Record<string, string> = {
+  Produtivo: "#2563EB",
+  Suplementar: "#16A34A",
+  "Não Produtivo": "#DC2626",
+  "Não Produtivo Externo": "#F97316",
+};
 
 const C = {
   headerBg: [15, 23, 42] as RGB,
   sectionBg: [23, 80, 97] as RGB,
+  sectionBgDark: [14, 64, 74] as RGB,
   white: [255, 255, 255] as RGB,
   pageBg: [255, 255, 255] as RGB,
-  textDark: [30, 30, 30] as RGB,
-  textGray: [100, 100, 100] as RGB,
-  textLight: [130, 130, 130] as RGB,
-  cardBg: [245, 245, 245] as RGB,
-  cardBorder: [220, 220, 220] as RGB,
-  accentBlue: [59, 130, 246] as RGB,
-  accentGreen: [22, 163, 74] as RGB,
-  accentAmber: [245, 158, 11] as RGB,
-  accentRed: [220, 38, 38] as RGB,
-  analysisBorder: [23, 80, 97] as RGB,
-  analysisBg: [240, 245, 247] as RGB,
-};
+  textDark: [31, 41, 55] as RGB,
+  textMuted: [107, 114, 128] as RGB,
+  border: [209, 213, 219] as RGB,
+  cardBg: [248, 250, 252] as RGB,
+  analysisBg: [240, 247, 248] as RGB,
+  blue: [37, 99, 235] as RGB,
+  green: [22, 163, 74] as RGB,
+  amber: [245, 158, 11] as RGB,
+  red: [220, 38, 38] as RGB,
+  orange: [249, 115, 22] as RGB,
+} as const;
 
-// ═══════════════════════════════════════════════════════════════
-// PARSERS
-// ═══════════════════════════════════════════════════════════════
+const PAGE_W = 210;
+const PAGE_H = 297;
+const MARGIN = 14;
+const CONTENT_W = PAGE_W - MARGIN * 2;
+const BOTTOM_MARGIN = 14;
+const MAX_Y = PAGE_H - BOTTOM_MARGIN;
+const CHART_RATIO = 0.7;
+const LEGEND_RATIO = 0.3;
+const CHART_W = CONTENT_W * CHART_RATIO;
+const LEGEND_W = CONTENT_W * LEGEND_RATIO;
+const MAX_CHART_H = 108;
+const LEGEND_FONT_PT = 9;
+const LEGEND_LINE_H = 4.2;
+const LEGEND_ITEM_GAP = 3;
 
-interface AnalysisSections { [key: string]: string; }
-
-function parseAnalysis(aiText: string): AnalysisSections {
-  const sections: AnalysisSections = {};
-  if (!aiText) return sections;
-  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
-  let m;
-  while ((m = regex.exec(aiText)) !== null) sections[m[1].trim()] = m[2].trim();
-  if (!Object.keys(sections).length) sections["GERAL"] = aiText;
-  return sections;
-}
-
-function stripTags(text: string): string {
-  return text
-    .replace(/===\s*HORA\s*:\s*(.*?)\s*===/gi, "$1")
-    .replace(/===\s*DIA\s*:\s*(.*?)\s*===/gi, "$1")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+function hexToRgb(hex: string): RGB {
+  const value = hex.replace("#", "");
+  return [
+    parseInt(value.substring(0, 2), 16),
+    parseInt(value.substring(2, 4), 16),
+    parseInt(value.substring(4, 6), 16),
+  ];
 }
 
 function normalizeTitle(raw: string): string {
   return raw
-    .replace(/^={2,}\s*(?:DIA|HORA)\s*[:]\s*/i, "")
-    .replace(/\s*={2,}\s*$/i, "")
-    .replace(/^(?:Dia|Hora|HORA|DIA)\s*[-—:.\s]\s*/i, "")
-    .replace(/^(?:Dia|Hora)\s+/i, "")
+    .replace(/^={2,}\s*(?:DIA|HORA)\s*:\s*/i, "")
+    .replace(/^\*\*/g, "")
+    .replace(/\*\*$/g, "")
+    .replace(/^Dia\s*[:\-]\s*/i, "")
+    .replace(/^Hora\s*[:\-]\s*/i, "")
     .trim();
 }
 
-function parseTimedBlocks(text: string, marker: "HORA" | "DIA"): Array<{ label: string; content: string }> {
-  const blocks: Array<{ label: string; content: string }> = [];
-  const normalized = text.replace(/\r\n/g, "\n");
+function stripTags(text: string): string {
+  return text
+    .replace(/===\s*([A-Z_]+)\s*:?\s*([^=\n]*)===/gi, (_, marker, value) => {
+      const clean = String(value || "").trim();
+      return clean ? `\n${marker}: ${clean}\n` : "\n";
+    })
+    .replace(/\*\*/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
-  // Try === MARKER: value === format
-  const regex = new RegExp(
+function parseAnalysis(aiText: string): AnalysisSections {
+  const sections: AnalysisSections = {};
+  if (!aiText?.trim()) return sections;
+
+  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(aiText)) !== null) {
+    sections[match[1].trim()] = match[2].trim();
+  }
+
+  if (!Object.keys(sections).length) sections.GERAL = aiText.trim();
+  return sections;
+}
+
+function parseTimedBlocks(text: string, marker: "HORA" | "DIA"): TimedBlock[] {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return [];
+
+  const blocks: TimedBlock[] = [];
+  const strictRegex = new RegExp(
     `(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`,
     "gi"
   );
-  let m;
-  while ((m = regex.exec(normalized)) !== null) {
-    blocks.push({ label: normalizeTitle(m[1]), content: stripTags(m[2]) });
+
+  let match: RegExpExecArray | null;
+  while ((match = strictRegex.exec(normalized)) !== null) {
+    blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
   }
 
-  // Fallback for hours: **XX:00** patterns
-  if (blocks.length === 0 && marker === "HORA") {
-    const hourRegex = /(?:^|\n)\s*\*?\*?(\d{1,2}:\d{2})\*?\*?\s*\n([\s\S]*?)(?=\n\s*\*?\*?\d{1,2}:\d{2}\*?\*?\s*\n|$)/gi;
-    while ((m = hourRegex.exec(normalized)) !== null) {
-      blocks.push({ label: m[1].trim(), content: stripTags(m[2]) });
+  if (!blocks.length && marker === "HORA") {
+    const fallbackHourRegex = /(?:^|\n)\s*(\d{1,2}:\d{2})\s*\n([\s\S]*?)(?=\n\s*\d{1,2}:\d{2}\s*\n|$)/g;
+    while ((match = fallbackHourRegex.exec(normalized)) !== null) {
+      blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
     }
   }
 
-  if (blocks.length === 0 && normalized.trim()) {
-    blocks.push({ label: "", content: stripTags(normalized) });
+  if (!blocks.length && marker === "DIA") {
+    const fallbackDays = WEEKDAY_ORDER.map((day) => day.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const fallbackDayRegex = new RegExp(
+      `(?:^|\\n)\\s*(${fallbackDays})\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:${fallbackDays})\\s*\\n|$)`,
+      "gi"
+    );
+    while ((match = fallbackDayRegex.exec(normalized)) !== null) {
+      blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
+    }
   }
-  return blocks;
+
+  return blocks.length ? blocks : [{ label: "", content: stripTags(normalized) }];
 }
 
-interface RecBlock {
-  title: string;
-  problema: string;
-  causa: string;
-  acao: string;
-  responsavel: string;
-  impacto: string;
+function sortBlocks(blocks: TimedBlock[], order: readonly string[]): TimedBlock[] {
+  const orderMap = new Map(order.map((item, index) => [item, index]));
+  return [...blocks].sort((a, b) => {
+    const indexA = orderMap.get(a.label) ?? Number.MAX_SAFE_INTEGER;
+    const indexB = orderMap.get(b.label) ?? Number.MAX_SAFE_INTEGER;
+    if (indexA !== indexB) return indexA - indexB;
+    return a.label.localeCompare(b.label, "pt-BR");
+  });
 }
 
 function parseRecommendations(text: string): RecBlock[] {
-  const blocks: RecBlock[] = [];
-  const parts = text.split(/(?:^|\n)\s*(?:\*\*)?Problema\s*\d+\s*(?:[-—:]\s*)?/i).filter(p => p.trim());
-  for (const part of parts) {
-    const lines = part.split("\n").map(l => l.trim()).filter(Boolean);
-    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
-    let field = "title";
+  const cleanText = stripTags(text);
+  if (!cleanText) return [];
+
+  const parts = cleanText
+    .split(/(?:^|\n)\s*(?:PROBLEMA\s+\d+|Problema\s+\d+)\s*[:\-]?\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return parts.map((part) => {
+    const block: RecBlock = {
+      title: "",
+      problema: "",
+      causa: "",
+      acao: "",
+      responsavel: "",
+      impacto: "",
+    };
+
+    const lines = part.split("\n").map((line) => line.trim()).filter(Boolean);
+    let activeField: keyof RecBlock = "title";
+
     for (const line of lines) {
-      const clean = line.replace(/\*\*/g, "").replace(/^[-•]\s*/, "");
-      const lower = clean.toLowerCase();
-      if (lower.startsWith("problema:") || lower.startsWith("problema :")) {
-        block.problema = clean.replace(/^[^:]+:\s*/, ""); field = "problema";
-      } else if (lower.startsWith("causa prov") || lower.startsWith("causa:")) {
-        block.causa = clean.replace(/^[^:]+:\s*/, ""); field = "causa";
-      } else if (lower.startsWith("ação recomendada") || lower.startsWith("acao recomendada") || lower.startsWith("ação:")) {
-        block.acao = clean.replace(/^[^:]+:\s*/, ""); field = "acao";
-      } else if (lower.startsWith("responsável") || lower.startsWith("responsavel")) {
-        block.responsavel = clean.replace(/^[^:]+:\s*/, ""); field = "responsavel";
-      } else if (lower.startsWith("impacto esperado") || lower.startsWith("impacto:")) {
-        block.impacto = clean.replace(/^[^:]+:\s*/, ""); field = "impacto";
-      } else if (!block.title && field === "title") {
-        block.title = clean.replace(/^[-—]\s*/, "").trim();
+      const normalized = line.replace(/^[-•]\s*/, "");
+      const lower = normalized.toLowerCase();
+      if (lower.startsWith("problema:")) {
+        block.problema = normalized.replace(/^[^:]+:\s*/, "");
+        activeField = "problema";
+      } else if (lower.startsWith("causa provável:") || lower.startsWith("causa provavel:") || lower.startsWith("causa:")) {
+        block.causa = normalized.replace(/^[^:]+:\s*/, "");
+        activeField = "causa";
+      } else if (lower.startsWith("ação recomendada:") || lower.startsWith("acao recomendada:") || lower.startsWith("ação:") || lower.startsWith("acao:")) {
+        block.acao = normalized.replace(/^[^:]+:\s*/, "");
+        activeField = "acao";
+      } else if (lower.startsWith("responsável:") || lower.startsWith("responsavel:")) {
+        block.responsavel = normalized.replace(/^[^:]+:\s*/, "");
+        activeField = "responsavel";
+      } else if (lower.startsWith("impacto esperado:") || lower.startsWith("impacto:")) {
+        block.impacto = normalized.replace(/^[^:]+:\s*/, "");
+        activeField = "impacto";
+      } else if (!block.title) {
+        block.title = normalized;
       } else {
-        (block as any)[field] += " " + clean;
+        block[activeField] = [block[activeField], normalized].filter(Boolean).join(" ").trim();
       }
     }
-    if (block.title || block.problema) {
-      if (!block.title) block.title = block.problema.substring(0, 40);
-      blocks.push(block);
-    }
-  }
-  return blocks;
+
+    if (!block.title) block.title = block.problema || "Problema crítico";
+    return block;
+  });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════
-
-function hexToRgb(hex: string): RGB {
-  const h = hex.replace("#", "");
-  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+function toPercent(value: number): number {
+  return Number((value || 0).toFixed(1));
 }
 
 function computeLegendItems(
   rows: Array<{ [key: string]: any }>,
-  descriptions: string[]
-): Array<{ name: string; color: string; percent: number }> {
-  if (rows.length === 0) return [];
-  const totals: Record<string, number> = {};
-  let grand = 0;
+  descriptions: readonly string[],
+  keepZero = true
+): LegendItem[] {
+  const totals = new Map<string, number>();
+  let grandTotal = 0;
+
   for (const desc of descriptions) {
     let sum = 0;
     for (const row of rows) {
       const rawKey = `raw_${desc}`;
-      if (rawKey in row) sum += row[rawKey] || 0;
-      else sum += ((row[desc] || 0) / 100) * (row.total || 0);
+      if (rawKey in row) {
+        sum += Number(row[rawKey] || 0);
+      } else if (desc in row) {
+        sum += ((Number(row[desc]) || 0) / 100) * (Number(row.total) || 0);
+      }
     }
-    totals[desc] = sum;
-    grand += sum;
+    totals.set(desc, sum);
+    grandTotal += sum;
   }
+
   return descriptions
-    .map(name => ({
-      name,
-      color: DESC_COLORS[name] || "#6B7280",
-      percent: grand > 0 ? +((totals[name] / grand) * 100).toFixed(1) : 0,
+    .map((desc) => ({
+      name: desc,
+      color: DESC_COLORS[desc] || "#6B7280",
+      percent: grandTotal > 0 ? toPercent((Number(totals.get(desc)) / grandTotal) * 100) : 0,
     }))
-    .filter(item => item.percent > 0);
+    .filter((item) => keepZero || item.percent > 0);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN GENERATOR — REBUILT FROM SCRATCH
-// ═══════════════════════════════════════════════════════════════
+function computeSimpleLegendItems(
+  items: Array<{ name: string; value?: number; percent?: number }>,
+  order: readonly string[],
+  colorMap: Record<string, string>,
+  keepZero = true
+): LegendItem[] {
+  const itemMap = new Map(items.map((item) => [item.name, item]));
+  const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+
+  return order
+    .map((name) => {
+      const item = itemMap.get(name);
+      const percent = item?.percent != null
+        ? toPercent(Number(item.percent))
+        : total > 0
+          ? toPercent((Number(item?.value || 0) / total) * 100)
+          : 0;
+
+      return {
+        name,
+        color: colorMap[name] || "#6B7280",
+        percent,
+      };
+    })
+    .filter((item) => keepZero || item.percent > 0);
+}
+
+function validateLegendSequence(items: LegendItem[], expected: readonly string[]): LegendItem[] {
+  const map = new Map(items.map((item) => [item.name, item]));
+  return expected
+    .map((name) => map.get(name) || { name, color: DESC_COLORS[name] || CATEGORY_COLORS[name] || "#6B7280", percent: 0 })
+    .filter(Boolean);
+}
+
+function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width: number): number {
+  const dim = dimensions[dimKey];
+  if (!dim?.width || !dim?.height) return Math.min(width * 0.58, MAX_CHART_H);
+  return Math.min(width * (dim.height / dim.width), MAX_CHART_H);
+}
+
+function isWhite(hex: string): boolean {
+  return hex.toUpperCase() === "#FFFFFF";
+}
+
+function formatLegendPercent(percent: number): string {
+  return `${toPercent(percent).toFixed(1)}%`;
+}
+
+function buildValidatedModel(data: PDFReportData, analysis: AnalysisSections) {
+  const contractLegend = validateLegendSequence(computeLegendItems(data.byObra, CANONICAL_ORDER_FULL, true), CANONICAL_ORDER_FULL);
+  const specialtyLegend = validateLegendSequence(computeLegendItems(data.bySpecialty, CANONICAL_ORDER, true), CANONICAL_ORDER);
+  const hourLegend = validateLegendSequence(computeLegendItems(data.byTimeHorario || [], CANONICAL_ORDER, true), CANONICAL_ORDER);
+  const weekLegend = validateLegendSequence(computeLegendItems(data.byTimeDiaSemana || [], CANONICAL_ORDER, true), CANONICAL_ORDER);
+  const monthLegend = validateLegendSequence(computeLegendItems(data.byTimeMes || [], CANONICAL_ORDER, true), CANONICAL_ORDER);
+  const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
+  const npeLegend = computeSimpleLegendItems(
+    data.externalCausas,
+    ["Causas Naturais", "Aguardando Liberações"],
+    DESC_COLORS,
+    true
+  );
+  const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
+  const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
+
+  return {
+    contractLegend,
+    specialtyLegend,
+    hourLegend,
+    weekLegend,
+    monthLegend,
+    categoryLegend,
+    npeLegend,
+    hourBlocks,
+    weekdayBlocks,
+    recommendations: parseRecommendations(analysis.RECOMENDACOES || analysis.GERAL || ""),
+    validations: {
+      legendFontOk: LEGEND_FONT_PT >= 9,
+      paretoHasNoLegend: true,
+      contractLegendOk: JSON.stringify(contractLegend.map((item) => item.name)) === JSON.stringify(CANONICAL_ORDER_FULL),
+      specialtyLegendOk: JSON.stringify(specialtyLegend.map((item) => item.name)) === JSON.stringify(CANONICAL_ORDER),
+      hourLegendOk: JSON.stringify(hourLegend.map((item) => item.name)) === JSON.stringify(CANONICAL_ORDER),
+      graphBeforeAnalysis: true,
+      hourTitlesOk: hourBlocks.every((block) => !block.label || HOUR_ORDER.includes(block.label as (typeof HOUR_ORDER)[number])),
+    },
+  };
+}
 
 export function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W = 210;
-  const H = 297;
-  const margin = 14;
-  const contentW = W - margin * 2; // 182mm
-  const bottomMargin = 14;
-  const maxY = H - bottomMargin;
-  const maxChartH = 105;
-  let pageNum = 0;
-  let curY = 0;
-  const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
-
-  const imgs = data.chartImages || {};
-  const dims = data.chartDimensions || {};
+  const chartImages = data.chartImages || {};
+  const chartDimensions = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
+  const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
+  let curY = MARGIN;
 
-  // 70% chart / 30% legend
-  const CHART_W = contentW * 0.70;
-  const LEGEND_W = contentW * 0.30;
+  const model = buildValidatedModel(data, analysis);
+  const validationsPassed = Object.values(model.validations).every(Boolean);
+  if (!validationsPassed) {
+    console.warn("PDF report model required normalization before rendering.", model.validations);
+  }
 
-  // ─── Page management ───
-  const newPage = () => {
-    if (pageNum > 0) doc.addPage("a4", "portrait");
-    pageNum++;
+  const addPage = () => {
+    if (doc.getNumberOfPages() > 0) doc.addPage("a4", "portrait");
     doc.setFillColor(...C.pageBg);
-    doc.rect(0, 0, W, H, "F");
+    doc.rect(0, 0, PAGE_W, PAGE_H, "F");
+    curY = MARGIN;
   };
 
-  const ensureSpace = (needed: number) => {
-    if (curY + needed > maxY) {
-      newPage();
-      curY = 14;
-    }
+  const ensureSpace = (height: number) => {
+    if (curY + height > MAX_Y) addPage();
   };
 
-  // ─── Section header (dark teal bar, white text) ───
   const sectionHeader = (title: string) => {
     ensureSpace(14);
-    curY += 3;
     doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin, curY, contentW, 10, 1.5, 1.5, "F");
+    doc.roundedRect(MARGIN, curY, CONTENT_W, 10, 1.8, 1.8, "F");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...C.white);
-    doc.setFont("helvetica", "bold");
-    doc.text(title, margin + 5, curY + 7);
+    doc.text(title, MARGIN + 5, curY + 6.7);
     curY += 12;
   };
 
-  // ─── Sub-header (same teal bar, smaller, for hours/days/months) ───
   const subHeader = (title: string) => {
-    const clean = normalizeTitle(title);
-    if (!clean) return;
-    ensureSpace(11);
-    curY += 2;
-    doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    const cleanTitle = normalizeTitle(title);
+    if (!cleanTitle) return;
+    ensureSpace(10);
+    doc.setFillColor(...C.sectionBgDark);
+    doc.roundedRect(MARGIN + 1, curY, CONTENT_W - 2, 8, 1.6, 1.6, "F");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...C.white);
-    doc.setFont("helvetica", "bold");
-    doc.text(clean, margin + 6, curY + 5.5);
+    doc.text(cleanTitle, MARGIN + 5, curY + 5.2);
     curY += 10;
   };
 
-  // ─── Analysis box (left teal border, light bg) ───
-  const analysisBox = (text: string) => {
-    const clean = stripTags(text || "");
+  const drawParagraphBlock = (text: string) => {
+    const clean = stripTags(text);
     if (!clean) return;
-    const lines = clean.split("\n").filter(l => l.trim());
-    const paragraphs: string[] = [];
-    for (const line of lines) {
-      const c = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
-      if (c) paragraphs.push(c);
-    }
 
+    const paragraphs = clean
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const bodyWidth = CONTENT_W - 14;
+    const wrappedLines: string[] = [];
+    paragraphs.forEach((paragraph, index) => {
+      const lines = doc.splitTextToSize(paragraph, bodyWidth) as string[];
+      wrappedLines.push(...lines);
+      if (index < paragraphs.length - 1) wrappedLines.push("");
+    });
+
+    const boxHeight = Math.max(12, wrappedLines.length * 4 + 6);
+    ensureSpace(boxHeight + 2);
+
+    doc.setFillColor(...C.analysisBg);
+    doc.roundedRect(MARGIN, curY, CONTENT_W, boxHeight, 1.5, 1.5, "F");
+    doc.setFillColor(...C.sectionBg);
+    doc.rect(MARGIN, curY, 2, boxHeight, "F");
+
+    let textY = curY + 5;
     doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    const textW = contentW - 14;
-
-    const allLines: Array<{ text: string; gap: number }> = [];
-    for (let pi = 0; pi < paragraphs.length; pi++) {
-      const wrapped = doc.splitTextToSize(paragraphs[pi], textW) as string[];
-      for (let li = 0; li < wrapped.length; li++) {
-        allLines.push({ text: wrapped[li], gap: li === wrapped.length - 1 ? 2 : 0 });
+    for (const line of wrappedLines) {
+      if (!line) {
+        textY += 1.5;
+        continue;
       }
+
+      const colonIndex = line.indexOf(":");
+      if (colonIndex > 0 && colonIndex < 40) {
+        const prefix = line.slice(0, colonIndex + 1);
+        const rest = line.slice(colonIndex + 1).trimStart();
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...C.sectionBg);
+        doc.text(prefix, MARGIN + 6, textY);
+        const prefixWidth = doc.getTextWidth(prefix);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...C.textDark);
+        doc.text(rest, MARGIN + 6 + prefixWidth + 1, textY);
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...C.textDark);
+        doc.text(line, MARGIN + 6, textY);
+      }
+      textY += 4;
     }
 
-    const lineH = 4.2;
-    const padTop = 5;
-    const padBot = 4;
-    let idx = 0;
-    let first = true;
+    curY += boxHeight + 2;
+  };
 
-    while (idx < allLines.length) {
-      if (curY + 16 > maxY) { newPage(); curY = 14; }
-      const startY = curY;
-      let drawY = curY + (first ? padTop : 3);
-      const chunk: Array<{ text: string; y: number }> = [];
+  const measureLegendHeight = (items: LegendItem[]) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(LEGEND_FONT_PT);
+    const textWidth = LEGEND_W - 10;
+    let totalHeight = 0;
+    for (const item of items) {
+      const lines = doc.splitTextToSize(`${item.name} — ${formatLegendPercent(item.percent)}`, textWidth - 5) as string[];
+      totalHeight += Math.max(4.5, lines.length * LEGEND_LINE_H) + LEGEND_ITEM_GAP;
+    }
+    return totalHeight;
+  };
 
-      while (idx < allLines.length) {
-        const need = lineH + allLines[idx].gap;
-        if (drawY + need > maxY) break;
-        chunk.push({ text: allLines[idx].text, y: drawY });
-        drawY += need;
-        idx++;
+  const drawLegend = (items: LegendItem[], x: number, y: number) => {
+    if (!items.length) return 0;
+
+    const textWidth = LEGEND_W - 10;
+    let drawY = y;
+    doc.setFontSize(LEGEND_FONT_PT);
+
+    for (const item of items) {
+      const swatchX = x + 2;
+      const swatchY = drawY + 0.7;
+      const textX = swatchX + 5.2;
+      const lines = doc.splitTextToSize(`${item.name} — ${formatLegendPercent(item.percent)}`, textWidth - 5) as string[];
+      const itemHeight = Math.max(4.5, lines.length * LEGEND_LINE_H);
+      const rgb = hexToRgb(item.color);
+
+      doc.setFillColor(...rgb);
+      if (isWhite(item.color)) {
+        doc.setDrawColor(...C.border);
+        doc.roundedRect(swatchX, swatchY, 3.2, 3.2, 0.5, 0.5, "FD");
+      } else {
+        doc.roundedRect(swatchX, swatchY, 3.2, 3.2, 0.5, 0.5, "F");
       }
-      if (chunk.length === 0 && idx < allLines.length) {
-        chunk.push({ text: allLines[idx].text, y: drawY });
-        drawY += lineH;
-        idx++;
-      }
 
-      const boxH = drawY - startY + padBot;
-      doc.setFillColor(...C.analysisBg);
-      doc.roundedRect(margin, startY, contentW, boxH, 1, 1, "F");
-      doc.setFillColor(...C.analysisBorder);
-      doc.rect(margin, startY, 2, boxH, "F");
+      doc.setTextColor(...(isWhite(item.color) ? C.textMuted : C.textDark));
+      doc.setFont("helvetica", "bold");
+      doc.text(lines[0] || "", textX, drawY + 3.6);
 
-      doc.setFontSize(9);
-      for (const cl of chunk) {
-        const colonIdx = cl.text.indexOf(":");
-        if (colonIdx > 0 && colonIdx < 50) {
-          const bold = cl.text.substring(0, colonIdx + 1);
-          const rest = cl.text.substring(colonIdx + 1);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...C.sectionBg);
-          doc.text(bold, margin + 6, cl.y);
-          const bw = doc.getTextWidth(bold);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...C.textDark);
-          doc.text(rest, margin + 6 + bw, cl.y);
-        } else {
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...C.textDark);
-          doc.text(cl.text, margin + 6, cl.y);
+      if (lines.length > 1) {
+        doc.setFont("helvetica", "normal");
+        for (let i = 1; i < lines.length; i++) {
+          doc.text(lines[i], textX, drawY + 3.6 + i * LEGEND_LINE_H);
         }
       }
-      curY = startY + boxH + 1;
-      first = false;
+
+      drawY += itemHeight + LEGEND_ITEM_GAP;
     }
+
+    return drawY - y;
   };
 
-  // ─── Draw chart image (returns rendered height) ───
-  const drawChartImage = (img: string | undefined, dimKey: string, width: number): number => {
-    if (!img) return 0;
-    const dim = dims[dimKey];
-    let cW = width;
-    let cH: number;
-    if (dim && dim.width > 0) {
-      const ar = dim.height / dim.width;
-      cH = cW * ar;
-      if (cH > maxChartH) { cH = maxChartH; cW = cH / ar; }
-    } else {
-      cH = width * 0.55;
-    }
-    try {
-      doc.addImage(img, "PNG", margin, curY, cW, cH);
-    } catch (e) {
-      console.warn("Chart image error:", e);
-      return 0;
-    }
-    return cH;
+  const drawChartImage = (image: string | undefined, dimKey: string, width: number) => {
+    if (!image) return { width, height: 0 };
+    const height = estimateChartHeight(chartDimensions, dimKey, width);
+    doc.addImage(image, "PNG", MARGIN, curY, width, height);
+    return { width, height };
   };
 
-  // ─── Draw legend (right side, readable fonts ≥12px ≈ 4.2pt) ───
-  const drawLegend = (
-    items: Array<{ name: string; color: string; percent: number }>,
-    x: number,
-    y: number,
-    chartH: number
-  ) => {
-    if (items.length === 0) return;
-    const lx = x + 4;
-    const availW = LEGEND_W - 8;
-    const count = items.length;
-
-    // Compute item height to fill chart area, min 5.5mm
-    const itemH = Math.max(5.5, Math.min(8, (chartH - 2) / count));
-    // Font: target ~4.5pt (≈12px), min 3.8pt
-    const fontSize = Math.max(3.8, Math.min(4.5, itemH * 0.65));
-    const swatchSize = Math.min(3.5, itemH - 1.5);
-
-    let ly = y + 1;
-    for (const item of items) {
-      if (ly + itemH > y + chartH + 1) break;
-
-      const rgb = hexToRgb(item.color);
-      const isWhite = item.color.toUpperCase() === "#FFFFFF";
-
-      // Color swatch
-      doc.setFillColor(...rgb);
-      if (isWhite) {
-        doc.setDrawColor(200, 200, 200);
-        doc.roundedRect(lx, ly + 0.5, swatchSize, swatchSize, 0.4, 0.4, "FD");
-      } else {
-        doc.roundedRect(lx, ly + 0.5, swatchSize, swatchSize, 0.4, 0.4, "F");
-      }
-
-      // Percentage (right-aligned, bold)
-      const pctText = `${item.percent}%`;
-      doc.setFontSize(fontSize);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...C.textDark);
-      const pctW = doc.getTextWidth(pctText);
-      const rightEdge = x + LEGEND_W - 3;
-      doc.text(pctText, rightEdge - pctW, ly + swatchSize + 0.3);
-
-      // Name (left of percentage)
-      doc.setFont("helvetica", "normal");
-      if (isWhite) {
-        doc.setTextColor(156, 163, 175);
-      } else {
-        doc.setTextColor(...C.textDark);
-      }
-      const nameMaxW = availW - swatchSize - pctW - 8;
-      let displayName = item.name;
-      while (doc.getTextWidth(displayName) > nameMaxW && displayName.length > 5) {
-        displayName = displayName.substring(0, displayName.length - 2) + "…";
-      }
-      doc.text(displayName, lx + swatchSize + 2, ly + swatchSize + 0.3);
-
-      ly += itemH;
-    }
-  };
-
-  // ═══════════════════════════════════════════════════════════════
-  // COMPOSITE RENDERERS
-  // ═══════════════════════════════════════════════════════════════
-
-  /**
-   * Standard section: TITLE → CHART (70%) + LEGEND (30%) → ANALYSIS
-   */
-  const renderSection = (
+  const renderChartSection = (
     title: string,
-    chartImg: string | undefined,
+    image: string | undefined,
     dimKey: string,
-    legendItems: Array<{ name: string; color: string; percent: number }>,
-    analysisText: string | undefined
+    legendItems: LegendItem[],
+    analysisText?: string
   ) => {
-    const hasLegend = legendItems.length > 0;
-    const chartW = hasLegend ? CHART_W : contentW;
+    const estimatedChartHeight = estimateChartHeight(chartDimensions, dimKey, CHART_W);
+    const estimatedLegendHeight = legendItems.length ? measureLegendHeight(legendItems) : 0;
+    const rowHeight = Math.max(estimatedChartHeight, estimatedLegendHeight);
+    ensureSpace(12 + rowHeight + 12);
 
-    // Estimate chart height for page-break check
-    const dim = dims[dimKey];
-    let estH = chartW * 0.55;
-    if (dim && dim.width > 0) {
-      estH = Math.min(chartW * (dim.height / dim.width), maxChartH);
-    }
-
-    // Ensure title + chart fit on same page
-    ensureSpace(14 + estH);
-
-    // 1. TITLE
     sectionHeader(title);
 
-    // 2. CHART + LEGEND
-    const chartStartY = curY;
-    const chartH = drawChartImage(chartImg, dimKey, chartW);
-    if (hasLegend && chartH > 0) {
-      drawLegend(legendItems, margin + chartW, chartStartY, chartH);
-    }
-    if (chartH > 0) curY = chartStartY + chartH + 3;
+    const rowStartY = curY;
+    const chart = drawChartImage(image, dimKey, legendItems.length ? CHART_W : CONTENT_W);
+    const legendHeight = legendItems.length ? drawLegend(legendItems, MARGIN + CHART_W, rowStartY) : 0;
+    curY = rowStartY + Math.max(chart.height, legendHeight) + 3;
 
-    // 3. ANALYSIS
-    if (analysisText) analysisBox(analysisText);
+    if (analysisText?.trim()) drawParagraphBlock(analysisText);
   };
 
-  /**
-   * Section with per-item blocks (hours/days): TITLE → CHART + LEGEND → BLOCKS
-   */
-  const renderSectionWithBlocks = (
+  const renderChartSectionWithBlocks = (
     title: string,
-    chartImg: string | undefined,
+    image: string | undefined,
     dimKey: string,
-    legendItems: Array<{ name: string; color: string; percent: number }>,
-    blocks: Array<{ label: string; content: string }>
+    legendItems: LegendItem[],
+    blocks: TimedBlock[]
   ) => {
-    const hasLegend = legendItems.length > 0;
-    const chartW = hasLegend ? CHART_W : contentW;
+    const estimatedChartHeight = estimateChartHeight(chartDimensions, dimKey, CHART_W);
+    const estimatedLegendHeight = legendItems.length ? measureLegendHeight(legendItems) : 0;
+    const rowHeight = Math.max(estimatedChartHeight, estimatedLegendHeight);
+    ensureSpace(12 + rowHeight + 12);
 
-    const dim = dims[dimKey];
-    let estH = chartW * 0.55;
-    if (dim && dim.width > 0) {
-      estH = Math.min(chartW * (dim.height / dim.width), maxChartH);
-    }
-
-    ensureSpace(14 + estH);
-
-    // 1. TITLE
     sectionHeader(title);
 
-    // 2. CHART + LEGEND
-    const chartStartY = curY;
-    const chartH = drawChartImage(chartImg, dimKey, chartW);
-    if (hasLegend && chartH > 0) {
-      drawLegend(legendItems, margin + chartW, chartStartY, chartH);
-    }
-    if (chartH > 0) curY = chartStartY + chartH + 3;
+    const rowStartY = curY;
+    const chart = drawChartImage(image, dimKey, legendItems.length ? CHART_W : CONTENT_W);
+    const legendHeight = legendItems.length ? drawLegend(legendItems, MARGIN + CHART_W, rowStartY) : 0;
+    curY = rowStartY + Math.max(chart.height, legendHeight) + 3;
 
-    // 3. BLOCKS (each with sub-header + analysis)
-    for (const block of blocks) {
+    blocks.forEach((block) => {
       if (block.label) subHeader(block.label);
-      analysisBox(block.content);
-      curY += 1;
-    }
+      if (block.content?.trim()) drawParagraphBlock(block.content);
+    });
   };
 
-  /**
-   * Pareto section: TITLE → CHART (full width, no side legend) → ANALYSIS
-   * Pareto charts show name + % on each bar, so no side legend needed.
-   */
-  const renderParetoSection = (
-    title: string,
-    chartImg: string | undefined,
-    dimKey: string,
-    analysisText: string | undefined
-  ) => {
-    renderSection(title, chartImg, dimKey, [], analysisText);
+  const renderParetoSection = (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
+    const estimatedChartHeight = estimateChartHeight(chartDimensions, dimKey, CONTENT_W);
+    ensureSpace(12 + estimatedChartHeight + 12);
+    sectionHeader(title);
+    const chart = drawChartImage(image, dimKey, CONTENT_W);
+    curY += chart.height + 3;
+    if (analysisText?.trim()) drawParagraphBlock(analysisText);
   };
 
-  // ═══════════════════════════════════════════════════════════════
-  // COMPUTE ALL LEGENDS UP FRONT
-  // ═══════════════════════════════════════════════════════════════
+  addPage();
 
-  const legendContrato = computeLegendItems(data.byObra, CANONICAL_ORDER_FULL);
-  const legendEspecialidade = computeLegendItems(data.bySpecialty, CANONICAL_ORDER);
-  const legendHorario = data.byTimeHorario ? computeLegendItems(data.byTimeHorario, CANONICAL_ORDER) : [];
-  const legendDiaSemana = data.byTimeDiaSemana ? computeLegendItems(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
-  const legendMes = data.byTimeMes ? computeLegendItems(data.byTimeMes, CANONICAL_ORDER) : [];
-
-  const legendExternas: Array<{ name: string; color: string; percent: number }> = data.externalCausas
-    .filter(c => c.percent > 0)
-    .map(c => ({
-      name: c.name,
-      color: DESC_COLORS[c.name] || "#F97316",
-      percent: c.percent,
-    }));
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 1 — COVER PAGE
-  // ═══════════════════════════════════════════════════════════════
-
-  newPage();
-  // Dark header bar
   doc.setFillColor(...C.headerBg);
-  doc.rect(0, 0, W, 50, "F");
-
-  doc.setFontSize(24);
+  doc.rect(0, 0, PAGE_W, 50, "F");
   doc.setTextColor(...C.white);
   doc.setFont("helvetica", "bold");
-  doc.text("ProdControl", margin, 20);
+  doc.setFontSize(24);
+  doc.text("ProdControl", MARGIN, 21);
   doc.setFontSize(14);
-  doc.text("Relatório de Produtividade", margin, 30);
-
-  doc.setFontSize(10);
+  doc.text("Relatório de Produtividade", MARGIN, 31);
   doc.setFont("helvetica", "normal");
-  doc.text(`Contrato: ${data.obra || "Todos os Contratos"}`, margin, 40);
-  doc.text(`Período: ${data.periodo}`, margin, 46);
-
-  doc.setFontSize(9);
-  doc.setTextColor(...C.textLight);
-  doc.text(`Gerado em: ${dateStr}`, W - margin, 46, { align: "right" });
-
-  curY = 56;
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 2 — KPIs
-  // ═══════════════════════════════════════════════════════════════
+  doc.setFontSize(10);
+  doc.text(`Contrato: ${data.obra || "Todos os Contratos"}`, MARGIN, 41);
+  doc.text(`Período analisado: ${data.periodo}`, MARGIN, 47);
+  doc.text(`Data de geração: ${dateStr}`, PAGE_W - MARGIN, 47, { align: "right" });
+  curY = 58;
 
   sectionHeader("Indicadores Principais");
-
   const kpis = [
-    { label: "Total de Amostras", value: String(data.totalAmostras), color: C.accentBlue },
-    { label: "Produtividade", value: `${data.produtivoPct}%`, color: C.accentGreen },
-    { label: "Suplementar", value: `${data.suplementarPct}%`, color: C.accentAmber },
-    { label: "Não Produtivo", value: `${data.naoProdutivoPct}%`, color: C.accentRed },
-    { label: "NPE (Externo)", value: `${data.externoPct}%`, color: [139, 92, 246] as RGB },
+    { label: "Total de Amostras", value: `${data.totalAmostras}`, color: C.blue },
+    { label: "Produtividade", value: `${toPercent(data.produtivoPct).toFixed(1)}%`, color: C.green },
+    { label: "Suplementar", value: `${toPercent(data.suplementarPct).toFixed(1)}%`, color: C.amber },
+    { label: "Não Produtivo", value: `${toPercent(data.naoProdutivoPct).toFixed(1)}%`, color: C.red },
+    { label: "NPE (Externo)", value: `${toPercent(data.externoPct).toFixed(1)}%`, color: C.orange },
   ];
 
-  const kpiW = (contentW - 12) / 5;
-  kpis.forEach((kpi, i) => {
-    const x = margin + i * (kpiW + 3);
+  const kpiGap = 3;
+  const kpiW = (CONTENT_W - kpiGap * 4) / 5;
+  kpis.forEach((kpi, index) => {
+    const x = MARGIN + index * (kpiW + kpiGap);
     doc.setFillColor(...C.cardBg);
-    doc.setDrawColor(...C.cardBorder);
-    doc.roundedRect(x, curY, kpiW, 22, 1, 1, "FD");
+    doc.setDrawColor(...C.border);
+    doc.roundedRect(x, curY, kpiW, 22, 1.2, 1.2, "FD");
     doc.setFillColor(...kpi.color);
     doc.rect(x, curY, kpiW, 1.5, "F");
-    doc.setFontSize(16);
     doc.setTextColor(...kpi.color);
     doc.setFont("helvetica", "bold");
-    doc.text(kpi.value, x + 4, curY + 11);
-    doc.setFontSize(8);
-    doc.setTextColor(...C.textGray);
+    doc.setFontSize(15);
+    doc.text(kpi.value, x + 3.5, curY + 10.5);
+    doc.setTextColor(...C.textMuted);
     doc.setFont("helvetica", "normal");
-    doc.text(kpi.label, x + 4, curY + 18);
+    doc.setFontSize(8.2);
+    doc.text(kpi.label, x + 3.5, curY + 17.5);
   });
   curY += 25;
 
-  // Executive summary
-  if (analysis["RESUMO"]) analysisBox(analysis["RESUMO"]);
+  drawParagraphBlock(analysis.RESUMO || analysis.GERAL || "Diagnóstico geral da obra indisponível para este período.");
 
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 3 — Visão Geral por Contrato
-  // ═══════════════════════════════════════════════════════════════
+  renderChartSection("Visão Geral por Contrato", chartImages.contrato, "contrato", model.contractLegend, analysis.CONTRATO);
+  renderChartSection("Distribuição por Categoria", chartImages.categoria, "categoria", model.categoryLegend, analysis.CATEGORIA);
+  renderParetoSection("Top Causas — Pareto por Categorias", chartImages.paretoCategoria, "paretoCategoria", analysis.PARETO);
+  renderParetoSection("Top Causas — Pareto por Especialidades", chartImages.paretoEspecialidade, "paretoEspecialidade", analysis.PARETO_ESPECIALIDADE);
+  renderChartSection("Produtividade por Especialidade", chartImages.especialidade, "especialidade", model.specialtyLegend, analysis.ESPECIALIDADE);
+  renderChartSection("Causas Externas de Parada (NPE)", chartImages.externas, "externas", model.npeLegend, analysis.EXTERNO);
 
-  renderSection(
-    "Visão Geral por Contrato",
-    imgs.contrato,
-    "contrato",
-    legendContrato,
-    analysis["CONTRATO"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 4 — Distribuição por Categoria (donut — legend in chart)
-  // ═══════════════════════════════════════════════════════════════
-
-  renderSection(
-    "Distribuição por Categoria",
-    imgs.categoria,
-    "categoria",
-    [], // pie/donut chart has labels embedded
-    analysis["CATEGORIA"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 5 — Pareto por Categorias (no side legend)
-  // ═══════════════════════════════════════════════════════════════
-
-  renderParetoSection(
-    "Top Causas — Pareto por Categorias",
-    imgs.paretoCategoria,
-    "paretoCategoria",
-    analysis["PARETO"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 6 — Pareto por Especialidades (no side legend)
-  // ═══════════════════════════════════════════════════════════════
-
-  renderParetoSection(
-    "Top Causas — Pareto por Especialidades",
-    imgs.paretoEspecialidade,
-    "paretoEspecialidade",
-    analysis["PARETO_ESPECIALIDADE"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 7 — Produtividade por Especialidade
-  // ═══════════════════════════════════════════════════════════════
-
-  renderSection(
-    "Produtividade por Especialidade",
-    imgs.especialidade,
-    "especialidade",
-    legendEspecialidade,
-    analysis["ESPECIALIDADE"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 8 — Causas Externas de Parada (NPE)
-  // ═══════════════════════════════════════════════════════════════
-
-  renderSection(
-    "Causas Externas de Parada (NPE)",
-    imgs.externas,
-    "externas",
-    legendExternas,
-    analysis["EXTERNO"]
-  );
-
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 9 — Produtividade por Horário (chart THEN hour blocks)
-  // ═══════════════════════════════════════════════════════════════
-
-  if (imgs.tempoHorario) {
-    const hourText = analysis["HORARIO"] || "";
-    const hourBlocks = parseTimedBlocks(hourText, "HORA");
-    renderSectionWithBlocks(
-      "Produtividade por Horário",
-      imgs.tempoHorario,
-      "tempoHorario",
-      legendHorario,
-      hourBlocks
-    );
+  if (chartImages.tempoHorario) {
+    renderChartSectionWithBlocks("Produtividade por Horário", chartImages.tempoHorario, "tempoHorario", model.hourLegend, model.hourBlocks);
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 10 — Produtividade por Dia da Semana
-  // ═══════════════════════════════════════════════════════════════
-
-  if (imgs.tempoDiaSemana) {
-    const dayText = analysis["DIA_SEMANA"] || "";
-    const dayBlocks = parseTimedBlocks(dayText, "DIA");
-    renderSectionWithBlocks(
+  if (chartImages.tempoDiaSemana) {
+    renderChartSectionWithBlocks(
       "Produtividade por Dia da Semana",
-      imgs.tempoDiaSemana,
+      chartImages.tempoDiaSemana,
       "tempoDiaSemana",
-      legendDiaSemana,
-      dayBlocks
+      model.weekLegend,
+      model.weekdayBlocks
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 11 — Produtividade por Mês
-  // ═══════════════════════════════════════════════════════════════
+  renderChartSection("Produtividade por Mês", chartImages.tempoMes, "tempoMes", model.monthLegend, analysis.MES);
 
-  renderSection(
-    "Produtividade por Mês",
-    imgs.tempoMes,
-    "tempoMes",
-    legendMes,
-    analysis["MES"]
-  );
+  sectionHeader("Conclusões e Recomendações");
+  if (model.recommendations.length) {
+    model.recommendations.forEach((item, index) => {
+      const fields = [
+        { label: "PROBLEMA", value: item.problema },
+        { label: "CAUSA PROVÁVEL", value: item.causa },
+        { label: "AÇÃO RECOMENDADA", value: item.acao },
+        { label: "RESPONSÁVEL", value: item.responsavel },
+        { label: "IMPACTO ESPERADO", value: item.impacto },
+      ].filter((field) => field.value?.trim());
 
-  // ═══════════════════════════════════════════════════════════════
-  // SECTION 12 — Conclusões e Recomendações
-  // ═══════════════════════════════════════════════════════════════
+      let blockHeight = 12;
+      fields.forEach((field) => {
+        const lines = doc.splitTextToSize(field.value, CONTENT_W - 16) as string[];
+        blockHeight += 5 + lines.length * 3.6;
+      });
 
-  const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
-  if (recText) {
-    const recBlocks = parseRecommendations(recText);
-    if (recBlocks.length > 0) {
-      // Estimate first block height so header + first block stay together
-      const firstFields = [
-        { label: "PROBLEMA", value: recBlocks[0].problema },
-        { label: "CAUSA PROVÁVEL", value: recBlocks[0].causa },
-        { label: "AÇÃO RECOMENDADA", value: recBlocks[0].acao },
-        { label: "RESPONSÁVEL", value: recBlocks[0].responsavel },
-        { label: "IMPACTO ESPERADO", value: recBlocks[0].impacto },
-      ];
-      let firstH = 16;
-      for (const f of firstFields) {
-        if (!f.value) continue;
-        const lines = doc.splitTextToSize(f.value, contentW - 16);
-        firstH += 5 + lines.length * 3.5 + 2;
-      }
-      ensureSpace(Math.min(firstH, 80));
+      ensureSpace(blockHeight + 6);
+      doc.setFillColor(...C.sectionBgDark);
+      doc.roundedRect(MARGIN + 1, curY, CONTENT_W - 2, 8, 1.6, 1.6, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...C.white);
+      doc.text(`PROBLEMA ${index + 1} — ${item.title}`, MARGIN + 5, curY + 5.2);
+      curY += 10;
 
-      sectionHeader("Conclusões e Recomendações");
-
-      for (let bi = 0; bi < recBlocks.length; bi++) {
-        const block = recBlocks[bi];
-        const fields = [
-          { label: "PROBLEMA", value: block.problema },
-          { label: "CAUSA PROVÁVEL", value: block.causa },
-          { label: "AÇÃO RECOMENDADA", value: block.acao },
-          { label: "RESPONSÁVEL", value: block.responsavel },
-          { label: "IMPACTO ESPERADO", value: block.impacto },
-        ];
-
-        let blockH = 14;
-        for (const f of fields) {
-          if (!f.value) continue;
-          const lines = doc.splitTextToSize(f.value, contentW - 16);
-          blockH += 5 + lines.length * 3.5 + 2;
-        }
-        ensureSpace(blockH + 8);
-
-        if (bi > 0) {
-          doc.setDrawColor(...C.cardBorder);
-          doc.line(margin + 4, curY, margin + contentW - 4, curY);
-          curY += 3;
-        }
-
-        // Problem header bar
-        doc.setFillColor(...C.sectionBg);
-        doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
-        doc.setFontSize(10);
-        doc.setTextColor(...C.white);
+      fields.forEach((field) => {
         doc.setFont("helvetica", "bold");
-        doc.text(`PROBLEMA ${bi + 1} — ${block.title}`, margin + 6, curY + 5.5);
-        curY += 10;
+        doc.setFontSize(8.5);
+        doc.setTextColor(...C.sectionBg);
+        doc.text(field.label, MARGIN + 5, curY + 3.5);
+        curY += 5;
+        const lines = doc.splitTextToSize(field.value, CONTENT_W - 16) as string[];
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...C.textDark);
+        doc.text(lines, MARGIN + 9, curY + 3);
+        curY += lines.length * 3.6 + 2;
+      });
 
-        for (const f of fields) {
-          if (!f.value) continue;
-          doc.setFontSize(8.5);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...C.sectionBg);
-          doc.text(f.label, margin + 6, curY + 4);
-          curY += 5;
-
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...C.textDark);
-          const wrapped = doc.splitTextToSize(f.value, contentW - 16);
-          doc.text(wrapped, margin + 10, curY + 3);
-          curY += wrapped.length * 3.8 + 3;
-        }
-        curY += 3;
-      }
-    } else {
-      sectionHeader("Conclusões e Recomendações");
-      analysisBox(recText);
-    }
+      curY += 2;
+    });
+  } else {
+    drawParagraphBlock(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // FOOTER on all pages
-  // ═══════════════════════════════════════════════════════════════
-
-  const totalPages = pageNum;
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(...C.textLight);
+  const totalPages = doc.getNumberOfPages();
+  for (let page = 1; page <= totalPages; page++) {
+    doc.setPage(page);
     doc.setFont("helvetica", "normal");
-    doc.text(`ProdControl — Página ${i} de ${totalPages}`, margin, H - 8);
-    doc.text(dateStr, W - margin, H - 8, { align: "right" });
+    doc.setFontSize(8);
+    doc.setTextColor(...C.textMuted);
+    doc.text(`ProdControl — Página ${page} de ${totalPages}`, MARGIN, PAGE_H - 8);
+    doc.text(dateStr, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
   }
 
   doc.save(`relatorio-produtividade_${format(new Date(), "yyyy-MM-dd_HHmm")}.pdf`);
