@@ -916,7 +916,7 @@ export default function Dashboard() {
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
       obra: obraName,
       porEspecialidade,
-      porFuncao,
+      
       porHorario,
       porDiaSemana: ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
         .filter(d => byWeekday[d])
