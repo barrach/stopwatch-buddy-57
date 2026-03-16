@@ -446,8 +446,24 @@ export default function Dashboard() {
     "Preparando, Organizando": 18,
     // Não Produtivo
     "Pessoal": 20, "Ocioso": 21, "Retrabalho": 22, "Deslocamento": 23,
+    // NPE
+    "Causas Naturais": 30, "Vazamento / Interferência da Planta": 31, "Aguardando Liberação de PT": 32,
   };
   const allDescriptions = useMemo(() => {
+    const descs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = r.descricao || "Sem descrição";
+      descs.add(desc);
+    });
+    return Array.from(descs).sort((a, b) => {
+      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
+      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
+      return orderA - orderB;
+    });
+  }, [records]);
+
+  // Descriptions excluding NPE (for non-contrato charts)
+  const nonNpeDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
