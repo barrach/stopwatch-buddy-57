@@ -21,8 +21,6 @@ const STATIC_CHART_IDS = [
   "contrato",
   "categoria",
   "especialidade",
-  "funcao",
-  "naoprod",
   "externas",
 ] as const;
 
