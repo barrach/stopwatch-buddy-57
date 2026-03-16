@@ -156,7 +156,7 @@ const isLightColor = (hex: string): boolean => {
 };
 
 const STACKED_CHART_HEIGHT = 600;
-const STACKED_CHART_MARGIN = { top: 44, right: 12, bottom: 20, left: 0 };
+const STACKED_CHART_MARGIN = { top: 50, right: 12, bottom: 20, left: 0 };
 const ZOOM_STACKED_CHART_MARGIN = { top: 44, right: 20, bottom: 30, left: 0 };
 
 const DESCRIPTION_GROUPS = {
@@ -250,8 +250,8 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
 };
 
 const renderLegendList = (descriptions: string[]) => (
-  <div className="flex flex-col gap-[5px] overflow-y-auto pr-1" style={{ maxHeight: STACKED_CHART_HEIGHT }}>
-    {[...descriptions].reverse().map((desc) => (
+  <div className="flex flex-col justify-end gap-[5px] overflow-y-auto pr-1" style={{ height: STACKED_CHART_HEIGHT }}>
+    {descriptions.map((desc) => (
       <div key={desc} className="flex items-center gap-2">
         <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
         <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
