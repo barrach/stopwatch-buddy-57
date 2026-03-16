@@ -1443,7 +1443,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
               {renderLegendList(allDescriptions)}
             </div>
           </div>
@@ -1635,7 +1635,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
               {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
@@ -1779,7 +1779,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
               {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
@@ -1800,7 +1800,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
               {renderLegendList(allDescriptions)}
             </div>
           </div>
@@ -1908,7 +1908,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
               {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
@@ -1974,7 +1974,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
               {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
