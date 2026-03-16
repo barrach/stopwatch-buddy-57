@@ -211,37 +211,16 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendBlocks = (descriptions: string[]) => {
-  const grouped = DESCRIPTION_GROUP_ORDER
-    .map((group) => ({
-      group,
-      items: descriptions.filter((desc) => getDescriptionGroup(desc) === group),
-    }))
-    .filter(({ items }) => items.length > 0);
-
-  return (
-    <div className="grid gap-2.5">
-      {grouped.map(({ group, items }) => (
-        <div key={group} className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{group}</p>
-          <div className="grid gap-1">
-            {items.map((desc) => (
-              <div key={desc} className="flex items-start gap-2 leading-none">
-                <span className="mt-0.5 h-3 w-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                <span
-                  className="min-w-0 text-[10px] leading-[1.2]"
-                  style={{ color: getLegendTextColor(desc), overflowWrap: "anywhere" }}
-                >
-                  {displayName(desc)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
+const renderLegendList = (descriptions: string[]) => (
+  <div className="flex flex-col gap-1.5">
+    {descriptions.map((desc) => (
+      <div key={desc} className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+        <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+      </div>
+    ))}
+  </div>
+);
 
 // Helper: render Bar components from a description list with proper stroke for white bars
 const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boolean) =>
