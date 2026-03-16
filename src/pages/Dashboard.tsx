@@ -137,7 +137,6 @@ interface CrossFilters {
   horario?: string;
   descricao?: string;
   pareto?: string;
-  funcao?: string;
 }
 
 // Chronological time ordering helper — parses "8:00" or "08:00" to minutes
