@@ -121,6 +121,7 @@ const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando movimentação de carga": "Assistindo",
 };
 const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
+const canonicalDescription = (desc: string): string => displayName(desc);
 
 // Map description to its unique color — single source of truth for ALL charts
 const getDescColor = (desc: string): string => {
