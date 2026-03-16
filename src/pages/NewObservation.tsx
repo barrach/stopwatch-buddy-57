@@ -166,7 +166,6 @@ export default function NewObservation() {
     setRotaId(lastObs.rotaId);
     setObraId(lastObs.obraId);
     setEspecialidadeId(lastObs.especialidadeId);
-    setFuncaoId(lastObs.funcaoId);
     setCategoriaId(lastObs.categoriaId);
     setQuantity(lastObs.quantity);
     setNotes(lastObs.notes);
