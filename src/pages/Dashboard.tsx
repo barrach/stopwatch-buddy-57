@@ -190,6 +190,7 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   const h = Math.max(Number(height) || 0, 1);
   const w = Math.max(Number(width) || 0, 1);
   const fitsInside = h >= 16 && w >= 34;
+  const isWhiteFill = fill === "#FFFFFF" || fill === "#ffffff";
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
   const stackIndex = labelKey ? CANONICAL_ORDER_FULL.indexOf(labelKey) : -1;
   const xNudge = !fitsInside && stackIndex >= 0 ? ((stackIndex % 2 === 0 ? -1 : 1) * Math.min(12, w * 0.14)) : 0;
@@ -205,7 +206,7 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
       textAnchor="middle"
       dominantBaseline={fitsInside ? "middle" : "auto"}
       paintOrder="stroke"
-      stroke={fitsInside ? (textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
+      stroke={fitsInside ? (isWhiteFill ? "rgba(17,24,39,0.15)" : textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
       strokeWidth={fitsInside ? 2 : 3}
       style={{ pointerEvents: "none" }}
     >
