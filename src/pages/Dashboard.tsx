@@ -1464,7 +1464,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...allDescriptions].reverse())}
+              {renderLegendList(allDescriptions)}
             </div>
           </div>
         </div>
