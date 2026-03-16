@@ -1684,7 +1684,7 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={480}>
                 <BarChart data={byTimeGrouped} onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
