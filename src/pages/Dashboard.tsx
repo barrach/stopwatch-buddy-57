@@ -1496,13 +1496,16 @@ export default function Dashboard() {
                   onClick={handlePieClick}
                   label={renderCategoryPieLabel}
                 >
-                  {categoryTotals.map((entry) => (
-                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
-                      opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
-                      stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : "none"}
-                      strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
-                    />
-                  ))}
+                  {categoryTotals.map((entry) => {
+                    const isWhite = CATEGORY_COLORS[entry.name] === "#FFFFFF";
+                    return (
+                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
+                        opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
+                        stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : isWhite ? "#374151" : "none"}
+                        strokeWidth={crossFilters.categoria === entry.name ? 3 : isWhite ? 2 : 0}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
