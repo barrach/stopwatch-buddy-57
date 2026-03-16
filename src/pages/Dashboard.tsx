@@ -589,9 +589,6 @@ export default function Dashboard() {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("descricao", e.activePayload[0].payload.name);
   };
-  const handleNonprodClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
   };
 
   // ── Export ─────────────────────────────────────────────────────
