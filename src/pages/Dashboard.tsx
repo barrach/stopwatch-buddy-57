@@ -1928,7 +1928,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 20%', maxWidth: '20%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
