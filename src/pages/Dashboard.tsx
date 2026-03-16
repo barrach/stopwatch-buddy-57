@@ -156,7 +156,7 @@ const isLightColor = (hex: string): boolean => {
 };
 
 const STACKED_CHART_HEIGHT = 600;
-const STACKED_CHART_MARGIN = { top: 44, right: 12, bottom: 20, left: 0 };
+const STACKED_CHART_MARGIN = { top: 50, right: 12, bottom: 20, left: 0 };
 const ZOOM_STACKED_CHART_MARGIN = { top: 44, right: 20, bottom: 30, left: 0 };
 
 const DESCRIPTION_GROUPS = {
