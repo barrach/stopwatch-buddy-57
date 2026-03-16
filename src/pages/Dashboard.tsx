@@ -867,10 +867,6 @@ export default function Dashboard() {
       })
       .join("\n");
 
-    const porFuncao = Object.entries(byFunc)
-      .sort(([, a], [, b]) => b.total - a.total).slice(0, 6)
-      .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
-      .join("\n");
 
     const porHorario = Object.entries(byHour)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
