@@ -102,6 +102,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#FFFFFF",
+  "Aguardando Liberação": "#FFFFFF",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
