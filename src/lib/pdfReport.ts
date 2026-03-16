@@ -694,7 +694,7 @@ export function generatePDFReport(data: PDFReportData) {
   }
 
   // ─── SECTION 11: Produtividade por Mês ───
-  renderBlock("Produtividade por Mês", images.tempoMes, "tempoMes", model.monthLegend, analysis.MES);
+  renderBlockWithSubs("Produtividade por Mês", images.tempoMes, "tempoMes", model.monthLegend, model.monthBlocks);
 
   // ─── SECTION 12: Conclusões e Recomendações ───
   sectionHeader("Conclusões e Recomendações");
