@@ -1810,7 +1810,7 @@ export default function Dashboard() {
             <div>
               <h3 className="text-sm font-semibold text-foreground">
                 {timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"}
-                {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
+                {crossFilters.tempo && crossFilters.tempoMode === timeViewMode && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.tempo}</span>}
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
