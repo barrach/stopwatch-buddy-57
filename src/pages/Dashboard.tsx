@@ -65,9 +65,12 @@ const getSpecialtyColor = (name: string): string => {
 };
 
 // ── Canonical stacking order (bottom → top) — FIXED for all charts ──
-const CANONICAL_ORDER: string[] = [
+// Full order including NPE (used for Contrato chart)
+const CANONICAL_ORDER_FULL: string[] = [
+  // Produtivo
   "Trabalhando",
   "Planejando",
+  // Suplementar
   "Aguardando Ferramenta ou Material",
   "Transitando no local de trabalho - com ferramenta",
   "Transitando no local de trabalho - sem ferramenta",
@@ -75,9 +78,17 @@ const CANONICAL_ORDER: string[] = [
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
   "Aguardando Liberação de PT",
+  // Não Produtivo
   "Pessoal",
   "Ocioso",
+  // Não Produtivo Externo
+  "Causas Naturais",
+  "Vazamento / Interferência da Planta",
 ];
+// Without NPE (used for Especialidade + Tempo charts)
+const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
+  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta"
+);
 
 // ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
@@ -481,33 +492,45 @@ export default function Dashboard() {
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
-  // Sort descriptions using canonical order
-  const sortByCanonical = (a: string, b: string) => {
-    const dispA = displayName(a);
-    const dispB = displayName(b);
-    const idxA = CANONICAL_ORDER.indexOf(dispA);
-    const idxB = CANONICAL_ORDER.indexOf(dispB);
-    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-  };
-
+  // Build ordered description lists strictly from canonical order
+  // Only include descriptions that exist in the data, but always in canonical order
   const allDescriptions = useMemo(() => {
     const descs = new Set<string>();
-    records.forEach((r: any) => {
-      const desc = r.descricao || "Sem descrição";
-      descs.add(desc);
-    });
-    return Array.from(descs).sort(sortByCanonical);
+    records.forEach((r: any) => descs.add(r.descricao || "Sem descrição"));
+    // Map data descriptions to their canonical display names for matching
+    const normalizedDescs = new Set(Array.from(descs).map(d => displayName(d)));
+    // Start with canonical order, then append any unknown descriptions
+    const ordered: string[] = [];
+    const usedRaw = new Set<string>();
+    for (const canonical of CANONICAL_ORDER_FULL) {
+      // Find matching raw description in data
+      const raw = Array.from(descs).find(d => displayName(d) === canonical);
+      if (raw) { ordered.push(raw); usedRaw.add(raw); }
+    }
+    // Append any descriptions not in canonical order
+    for (const d of descs) {
+      if (!usedRaw.has(d)) ordered.push(d);
+    }
+    return ordered;
   }, [records]);
 
-  // Descriptions excluding NPE (for non-contrato charts)
+  // Descriptions excluding NPE (for non-contrato charts) — same strict canonical order
   const nonNpeDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
-      const desc = r.descricao || "Sem descrição";
-      descs.add(desc);
+      descs.add(r.descricao || "Sem descrição");
     });
-    return Array.from(descs).sort(sortByCanonical);
+    const ordered: string[] = [];
+    const usedRaw = new Set<string>();
+    for (const canonical of CANONICAL_ORDER) {
+      const raw = Array.from(descs).find(d => displayName(d) === canonical);
+      if (raw) { ordered.push(raw); usedRaw.add(raw); }
+    }
+    for (const d of descs) {
+      if (!usedRaw.has(d)) ordered.push(d);
+    }
+    return ordered;
   }, [records, isExternalRecord]);
 
   const byObra = useMemo(() => {
