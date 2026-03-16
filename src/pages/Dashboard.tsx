@@ -1535,7 +1535,7 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={480}>
                 <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
