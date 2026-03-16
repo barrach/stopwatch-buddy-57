@@ -159,6 +159,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
+  const [npeExclude, setNpeExclude] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
   const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
