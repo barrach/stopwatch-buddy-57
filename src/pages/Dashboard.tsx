@@ -1982,7 +1982,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="xl:w-64 xl:max-w-64 shrink-0 overflow-auto">
-              {renderLegendBlocks([...nonNpeDescriptions].reverse())}
+              {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
         </ChartZoomDialog>
