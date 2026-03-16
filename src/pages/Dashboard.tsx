@@ -784,7 +784,7 @@ export default function Dashboard() {
   const aiStats = useMemo(() => {
     let total = 0, prod = 0, supl = 0, naoProd = 0, externo = 0;
     const byEsp: Record<string, { prod: number; supl: number; naoProd: number; total: number }> = {};
-    const byFunc: Record<string, { prod: number; total: number }> = {};
+    
     const byCat: Record<string, number> = {};
     const byParentCat: Record<string, number> = {};
     const byHour: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
