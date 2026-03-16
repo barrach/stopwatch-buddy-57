@@ -17,7 +17,7 @@ export interface PDFReportData {
   externoPct: number;
   byObra: Array<{ name: string; total: number; [key: string]: any }>;
   bySpecialty: Array<{ name: string; total: number; [key: string]: any }>;
-  byFunction: Array<{ name: string; total: number; [key: string]: any }>;
+  byFunction?: Array<{ name: string; total: number; [key: string]: any }>;
   nonprodCausas: Array<{ name: string; value: number; percent: number; cat: string }>;
   externalCausas: Array<{ name: string; value: number; percent: number }>;
   categoryTotals: Array<{ name: string; value: number }>;
