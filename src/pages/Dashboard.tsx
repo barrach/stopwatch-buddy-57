@@ -1719,9 +1719,13 @@ export default function Dashboard() {
                   label={renderExternalPieLabel}
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
-                  {externalCausas.map((causa: any, i: number) => (
-                    <Cell key={i} fill={getDescColor(causa.name)} />
-                  ))}
+                  {externalCausas.map((causa: any, i: number) => {
+                    const color = getDescColor(causa.name);
+                    const isWhite = color === "#FFFFFF";
+                    return (
+                      <Cell key={i} fill={color} stroke={isWhite ? "#374151" : undefined} strokeWidth={isWhite ? 2 : undefined} />
+                    );
+                  })}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
