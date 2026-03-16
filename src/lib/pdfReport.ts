@@ -175,11 +175,22 @@ function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
 function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
   const blocks: Array<{ hour: string; content: string }> = [];
   const normalized = text.replace(/\r\n/g, "\n");
+  
+  // Try === HORA: XX:XX === format first
   const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
   let m;
   while ((m = regex.exec(normalized)) !== null) {
     blocks.push({ hour: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
   }
+  
+  // Fallback: try **XX:00** or bold hour patterns
+  if (blocks.length === 0) {
+    const hourRegex = /(?:^|\n)\s*\*?\*?(\d{1,2}:\d{2})\*?\*?\s*\n([\s\S]*?)(?=\n\s*\*?\*?\d{1,2}:\d{2}\*?\*?\s*\n|$)/gi;
+    while ((m = hourRegex.exec(normalized)) !== null) {
+      blocks.push({ hour: m[1].trim(), content: stripInternalTags(m[2]) });
+    }
+  }
+  
   if (blocks.length === 0 && normalized.trim()) {
     blocks.push({ hour: "", content: stripInternalTags(normalized) });
   }
@@ -404,7 +415,7 @@ export function generatePDFReport(data: PDFReportData) {
     return { chartW, chartH };
   };
 
-  /** Draw legend next to chart */
+  /** Draw legend next to chart — readable size */
   const drawLegend = (
     legendItems: Array<{ name: string; color: string; percent: number }>,
     chartX: number,
@@ -414,41 +425,43 @@ export function generatePDFReport(data: PDFReportData) {
   ) => {
     if (legendItems.length === 0) return;
     const x = chartX + 3;
-    const itemH = Math.min(3.8, (chartH - 4) / legendItems.length);
-    const fontSize = Math.min(7, itemH * 0.85);
+    const maxItems = legendItems.length;
+    const itemH = Math.min(5.5, Math.max(3.5, (chartH - 6) / maxItems));
+    const fontSize = Math.min(7.5, Math.max(5.5, itemH * 0.8));
     let y = chartY + 2;
 
     for (const item of legendItems) {
       // Color swatch
       const rgb = hexToRgb(item.color);
       const isWhite = item.color.toUpperCase() === "#FFFFFF";
+      const swatchH = Math.min(3.5, itemH - 1);
+      const swatchW = 4;
       
       doc.setFillColor(...rgb);
       if (isWhite) {
         doc.setDrawColor(200, 200, 200);
-        doc.roundedRect(x, y, 3, 2.5, 0.3, 0.3, "FD");
+        doc.roundedRect(x, y, swatchW, swatchH, 0.4, 0.4, "FD");
       } else {
-        doc.roundedRect(x, y, 3, 2.5, 0.3, 0.3, "F");
+        doc.roundedRect(x, y, swatchW, swatchH, 0.4, 0.4, "F");
       }
 
-      // Text: "Name — X%"
+      // Percentage right-aligned first to know space
+      const pctText = `${item.percent}%`;
       doc.setFontSize(fontSize);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...C.textDark);
+      const pctW = doc.getTextWidth(pctText);
+      doc.text(pctText, chartX + legendW - pctW - 1, y + swatchH - 0.3);
+
+      // Name text
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...C.textDark);
-      
-      // Truncate long names to fit
-      const maxNameW = legendW - 18;
+      const maxNameW = legendW - swatchW - pctW - 10;
       let displayText = item.name;
-      while (doc.getTextWidth(displayText) > maxNameW && displayText.length > 10) {
+      while (doc.getTextWidth(displayText) > maxNameW && displayText.length > 8) {
         displayText = displayText.substring(0, displayText.length - 2) + "…";
       }
-      doc.text(displayText, x + 4.5, y + 2);
-
-      // Percentage right-aligned
-      const pctText = `${item.percent}%`;
-      doc.setFont("helvetica", "bold");
-      const pctW = doc.getTextWidth(pctText);
-      doc.text(pctText, chartX + legendW - pctW - 1, y + 2);
+      doc.text(displayText, x + swatchW + 1.5, y + swatchH - 0.3);
 
       y += itemH;
     }
@@ -465,7 +478,7 @@ export function generatePDFReport(data: PDFReportData) {
     // Estimate chart height
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 58 : 0;
+    const legendW = hasLegend ? 70 : 0;
     const chartAvailW = contentW - legendW;
     let estChartH = chartAvailW * 0.55;
     if (dim && dim.width > 0) {
@@ -507,7 +520,7 @@ export function generatePDFReport(data: PDFReportData) {
   ) => {
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 58 : 0;
+    const legendW = hasLegend ? 70 : 0;
     const chartAvailW = contentW - legendW;
     let estChartH = chartAvailW * 0.55;
     if (dim && dim.width > 0) {
@@ -534,7 +547,7 @@ export function generatePDFReport(data: PDFReportData) {
       curY = chartStartY + chartH + 4;
     }
 
-    // Individual blocks after chart
+    // Individual blocks AFTER chart
     for (const block of blocks) {
       if (block.label) drawSubHeader(block.label);
       drawAnalysisBox(block.content);
@@ -602,6 +615,24 @@ export function generatePDFReport(data: PDFReportData) {
   const legendDiaSemana = data.byTimeDiaSemana ? computeLegendData(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
   const legendMes = data.byTimeMes ? computeLegendData(data.byTimeMes, CANONICAL_ORDER) : [];
 
+  // Pareto legend: each category with its color and percent
+  const legendPareto: Array<{ name: string; color: string; percent: number }> = data.nonprodCausas
+    .filter(c => c.percent > 0)
+    .map(c => ({
+      name: c.name,
+      color: DESC_COLORS[c.name] || "#6B7280",
+      percent: c.percent,
+    }));
+
+  // NPE legend: each external cause with its color and percent
+  const legendExternas: Array<{ name: string; color: string; percent: number }> = data.externalCausas
+    .filter(c => c.percent > 0)
+    .map(c => ({
+      name: c.name,
+      color: DESC_COLORS[c.name] || "#F97316",
+      percent: c.percent,
+    }));
+
   // ═══════════════════════════════════════
   // 3. Visão Geral por Contrato
   // ═══════════════════════════════════════
@@ -621,7 +652,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.categoria,
     analysis["CATEGORIA"],
     "categoria",
-    [] // Pie chart — no stacked bar legend
+    [] // Pie chart — legend embedded in chart image
   );
 
   // ═══════════════════════════════════════
@@ -632,7 +663,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.paretoCategoria,
     analysis["PARETO"],
     "paretoCategoria",
-    []
+    legendPareto
   );
 
   // ═══════════════════════════════════════
@@ -665,7 +696,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.externas,
     analysis["EXTERNO"],
     "externas",
-    []
+    legendExternas
   );
 
   // ═══════════════════════════════════════
