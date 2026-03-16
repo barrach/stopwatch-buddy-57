@@ -604,6 +604,24 @@ export function generatePDFReport(data: PDFReportData) {
   const legendDiaSemana = data.byTimeDiaSemana ? computeLegendData(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
   const legendMes = data.byTimeMes ? computeLegendData(data.byTimeMes, CANONICAL_ORDER) : [];
 
+  // Pareto legend: each category with its color and percent
+  const legendPareto: Array<{ name: string; color: string; percent: number }> = data.nonprodCausas
+    .filter(c => c.percent > 0)
+    .map(c => ({
+      name: c.name,
+      color: DESC_COLORS[c.name] || "#6B7280",
+      percent: c.percent,
+    }));
+
+  // NPE legend: each external cause with its color and percent
+  const legendExternas: Array<{ name: string; color: string; percent: number }> = data.externalCausas
+    .filter(c => c.percent > 0)
+    .map(c => ({
+      name: c.name,
+      color: DESC_COLORS[c.name] || "#F97316",
+      percent: c.percent,
+    }));
+
   // ═══════════════════════════════════════
   // 3. Visão Geral por Contrato
   // ═══════════════════════════════════════
@@ -623,7 +641,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.categoria,
     analysis["CATEGORIA"],
     "categoria",
-    [] // Pie chart — no stacked bar legend
+    [] // Pie chart — legend embedded in chart image
   );
 
   // ═══════════════════════════════════════
@@ -634,7 +652,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.paretoCategoria,
     analysis["PARETO"],
     "paretoCategoria",
-    []
+    legendPareto
   );
 
   // ═══════════════════════════════════════
@@ -667,7 +685,7 @@ export function generatePDFReport(data: PDFReportData) {
     images.externas,
     analysis["EXTERNO"],
     "externas",
-    []
+    legendExternas
   );
 
   // ═══════════════════════════════════════
