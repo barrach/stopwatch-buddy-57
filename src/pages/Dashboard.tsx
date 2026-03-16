@@ -881,6 +881,47 @@ export default function Dashboard() {
 
       // 3) Generate PDF
       const { generatePDFReport } = await import("@/lib/pdfReport");
+      // Compute time data for all 3 modes for PDF legends
+      const computeTimeData = (mode: "horario" | "diasemana" | "mes") => {
+        const result: Record<string, Record<string, number>> = {};
+        records.forEach((r: any) => {
+          const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
+          if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+          let key = "";
+          if (mode === "horario") {
+            key = r.horario || "";
+          } else if (mode === "diasemana") {
+            const d = new Date(r.data + "T12:00:00");
+            key = WEEKDAY_NAMES[d.getDay()];
+          } else {
+            const d = new Date(r.data + "T12:00:00");
+            key = MONTH_NAMES[d.getMonth()];
+          }
+          if (!result[key]) {
+            result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+          }
+          const desc = canonicalDescription(r.descricao || "Sem descrição");
+          const qty = r.quantidade || 0;
+          if (desc in result[key]) {
+            result[key][desc] = (result[key][desc] || 0) + qty;
+          }
+        });
+        const entries = Object.entries(result);
+        if (mode === "horario") entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
+        else if (mode === "diasemana") entries.sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b));
+        else entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
+        return entries.map(([label, descs]) => {
+          const total = Object.values(descs).reduce((s, v) => s + v, 0);
+          const row: any = { time: label, total };
+          for (const desc of CANONICAL_ORDER_FULL) {
+            const qty = descs[desc] || 0;
+            row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
+            row[`raw_${desc}`] = qty;
+          }
+          return row;
+        });
+      };
+
       generatePDFReport({
         periodo: aiStats.periodo,
         obra: aiStats.obra,
@@ -896,6 +937,9 @@ export default function Dashboard() {
         externoPct: aiStats.externoPct,
         byObra,
         bySpecialty,
+        byTimeHorario: computeTimeData("horario"),
+        byTimeDiaSemana: computeTimeData("diasemana"),
+        byTimeMes: computeTimeData("mes"),
         nonprodCausas,
         externalCausas,
         categoryTotals,
