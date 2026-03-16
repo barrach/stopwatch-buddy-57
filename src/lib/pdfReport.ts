@@ -18,6 +18,9 @@ export interface PDFReportData {
   byObra: Array<{ name: string; total: number; [key: string]: any }>;
   bySpecialty: Array<{ name: string; total: number; [key: string]: any }>;
   byFunction?: Array<{ name: string; total: number; [key: string]: any }>;
+  byTimeHorario?: Array<{ time: string; total: number; [key: string]: any }>;
+  byTimeDiaSemana?: Array<{ time: string; total: number; [key: string]: any }>;
+  byTimeMes?: Array<{ time: string; total: number; [key: string]: any }>;
   nonprodCausas: Array<{ name: string; value: number; percent: number; cat: string }>;
   externalCausas: Array<{ name: string; value: number; percent: number }>;
   categoryTotals: Array<{ name: string; value: number }>;
@@ -25,6 +28,40 @@ export interface PDFReportData {
   chartImages?: ChartImages;
   chartDimensions?: ChartDimensions;
 }
+
+// ── Canonical order (bottom→top of stack) ──
+const CANONICAL_ORDER_FULL: string[] = [
+  "Trabalhando",
+  "Planejando",
+  "Aguardando Ferramenta ou Material",
+  "Transitando no local de trabalho - com ferramenta",
+  "Transitando no local de trabalho - sem ferramenta",
+  "Transitando fora do local de trabalho - com ferramenta",
+  "Transitando fora do local de trabalho - sem ferramenta",
+  "Assistindo",
+  "Aguardando Liberações",
+  "Pessoal",
+  "Ocioso",
+  "Causas Naturais",
+];
+
+const CANONICAL_ORDER = CANONICAL_ORDER_FULL.filter(d => d !== "Causas Naturais");
+
+// ── Description colors (same as Dashboard) ──
+const DESC_COLORS: Record<string, string> = {
+  "Trabalhando": "#2563EB",
+  "Planejando": "#60A5FA",
+  "Aguardando Ferramenta ou Material": "#4ADE80",
+  "Transitando no local de trabalho - com ferramenta": "#22C55E",
+  "Transitando no local de trabalho - sem ferramenta": "#16A34A",
+  "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
+  "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo": "#15803D",
+  "Aguardando Liberações": "#FFFFFF",
+  "Pessoal": "#EF4444",
+  "Ocioso": "#DC2626",
+  "Causas Naturais": "#F97316",
+};
 
 // ── Theme colors ──
 const C = {
@@ -126,18 +163,12 @@ function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
   const normalized = text.replace(/\r\n/g, "\n");
   const regex = /(?:^|\n)\s*===\s*DIA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*DIA\s*:|$)/gi;
   let m;
-
   while ((m = regex.exec(normalized)) !== null) {
-    blocks.push({
-      day: normalizeInternalTitle(m[1]),
-      content: stripInternalTags(m[2]),
-    });
+    blocks.push({ day: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
   }
-
   if (blocks.length === 0 && normalized.trim()) {
     blocks.push({ day: "", content: stripInternalTags(normalized) });
   }
-
   return blocks;
 }
 
@@ -146,28 +177,67 @@ function parseHourBlocks(text: string): Array<{ hour: string; content: string }>
   const normalized = text.replace(/\r\n/g, "\n");
   const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
   let m;
-
   while ((m = regex.exec(normalized)) !== null) {
-    blocks.push({
-      hour: normalizeInternalTitle(m[1]),
-      content: stripInternalTags(m[2]),
-    });
+    blocks.push({ hour: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
   }
-
   if (blocks.length === 0 && normalized.trim()) {
     blocks.push({ hour: "", content: stripInternalTags(normalized) });
   }
-
   return blocks;
 }
 
+/** Hex color to RGB array */
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+/** Compute average percentages across all rows for each description */
+function computeLegendData(
+  rows: Array<{ [key: string]: any }>,
+  descriptions: string[]
+): Array<{ name: string; color: string; percent: number }> {
+  if (rows.length === 0) return [];
+  
+  // Sum raw values across all rows to get overall percentages
+  const totals: Record<string, number> = {};
+  let grandTotal = 0;
+  
+  for (const desc of descriptions) {
+    let sum = 0;
+    for (const row of rows) {
+      // Use raw values if available, otherwise use percentage * total to reconstruct
+      const rawKey = `raw_${desc}`;
+      if (rawKey in row) {
+        sum += row[rawKey] || 0;
+      } else {
+        // Rows have percentage values and total
+        sum += ((row[desc] || 0) / 100) * (row.total || 0);
+      }
+    }
+    totals[desc] = sum;
+    grandTotal += sum;
+  }
+  
+  return descriptions
+    .map(name => ({
+      name,
+      color: DESC_COLORS[name] || "#6B7280",
+      percent: grandTotal > 0 ? +((totals[name] / grandTotal) * 100).toFixed(1) : 0,
+    }))
+    .filter(item => item.percent > 0);
+}
+
+// ═══════════════════════════════════════
+// Main PDF Generator
+// ═══════════════════════════════════════
 export function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210;
   const H = 297;
   const margin = 20;
   const contentW = W - margin * 2; // 170mm
-  const maxChartH = 110; // mm — max chart height as specified
+  const maxChartH = 100;
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
@@ -176,6 +246,7 @@ export function generatePDFReport(data: PDFReportData) {
   const dims = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
 
+  // ── Layout helpers ──
   const addNewPage = () => {
     if (pageNum > 0) doc.addPage("a4", "portrait");
     pageNum++;
@@ -184,28 +255,41 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const ensureSpace = (needed: number) => {
-    if (curY + needed > H - 20) {
+    if (curY + needed > H - 15) {
       addNewPage();
-      curY = 16;
+      curY = 14;
     }
   };
 
   const drawSectionHeader = (title: string) => {
-    ensureSpace(20);
-    curY += 6; // reduced spacing before section
+    ensureSpace(14);
+    curY += 4;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
     doc.text(title, margin + 4, curY + 7);
-    curY += 12; // ~10px gap between title and chart
+    curY += 12;
+  };
+
+  const drawSubHeader = (title: string) => {
+    const cleanName = normalizeInternalTitle(title);
+    ensureSpace(14);
+    curY += 3;
+    doc.setFillColor(...C.sectionBg);
+    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...C.white);
+    doc.setFont("helvetica", "bold");
+    doc.text(cleanName, margin + 6, curY + 5.5);
+    curY += 10;
   };
 
   const drawAnalysisBox = (text: string) => {
     const sanitizedText = stripInternalTags(text || "");
     if (!sanitizedText) return;
-    const lines = sanitizedText.split("\n").filter((l) => l.trim());
+    const lines = sanitizedText.split("\n").filter(l => l.trim());
     const paragraphs: string[] = [];
     for (const line of lines) {
       const cleaned = line.trim().replace(/^[-•]\s*/, "").replace(/\*\*/g, "");
@@ -214,41 +298,32 @@ export function generatePDFReport(data: PDFReportData) {
 
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    const maxTextW = contentW - 12; // safe text width inside box
+    const maxTextW = contentW - 12;
     const wrappedParagraphs: string[][] = [];
     for (const p of paragraphs) {
-      const wrapped = doc.splitTextToSize(p, maxTextW);
-      wrappedParagraphs.push(wrapped);
+      wrappedParagraphs.push(doc.splitTextToSize(p, maxTextW));
     }
 
-    // Render line by line with page break support
     const lineH = 4;
     const paraGap = 2;
     const boxPadTop = 5;
     const boxPadBot = 3;
     let isFirstChunk = true;
 
-    const startBox = () => {
-      // Draw background and left border from curY to bottom of current content
-    };
-
-    // Flatten all lines with paragraph gaps for rendering
     const allLines: Array<{ text: string; gapAfter: number }> = [];
     for (let pi = 0; pi < wrappedParagraphs.length; pi++) {
       const wp = wrappedParagraphs[pi];
       for (let li = 0; li < wp.length; li++) {
-        const isLastLineOfPara = li === wp.length - 1;
-        allLines.push({ text: wp[li], gapAfter: isLastLineOfPara ? paraGap : 0 });
+        allLines.push({ text: wp[li], gapAfter: li === wp.length - 1 ? paraGap : 0 });
       }
     }
 
-    // Render in chunks that fit on each page
     let lineIdx = 0;
     while (lineIdx < allLines.length) {
-      const availH = H - 20 - curY;
+      const availH = H - 15 - curY;
       if (availH < 16) {
         addNewPage();
-        curY = 16;
+        curY = 14;
       }
 
       const chunkStartY = curY;
@@ -257,14 +332,13 @@ export function generatePDFReport(data: PDFReportData) {
 
       while (lineIdx < allLines.length) {
         const needed = lineH + allLines[lineIdx].gapAfter;
-        if (chunkY + needed > H - 20) break;
+        if (chunkY + needed > H - 15) break;
         chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
         chunkY += needed;
         lineIdx++;
       }
 
       if (chunkLines.length === 0) {
-        // Force at least one line
         chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
         chunkY += lineH + allLines[lineIdx].gapAfter;
         lineIdx++;
@@ -272,13 +346,11 @@ export function generatePDFReport(data: PDFReportData) {
 
       const chunkH = chunkY - chunkStartY + boxPadBot;
 
-      // Draw box background
       doc.setFillColor(...C.analysisBg);
       doc.roundedRect(margin, chunkStartY, contentW, chunkH, 1, 1, "F");
       doc.setFillColor(...C.analysisBorder);
       doc.rect(margin, chunkStartY, 2, chunkH, "F");
 
-      // Draw text with bold before ":"
       doc.setFontSize(8.5);
       for (const cl of chunkLines) {
         const colonIdx = cl.text.indexOf(":");
@@ -299,63 +371,179 @@ export function generatePDFReport(data: PDFReportData) {
         }
       }
 
-      curY = chunkStartY + chunkH + 3;
+      curY = chunkStartY + chunkH + 2;
       isFirstChunk = false;
     }
   };
 
-  /** Draw chart preserving original aspect ratio, max 170mm wide × 120mm tall */
-  const drawChart = (chartImage: string | undefined, dimKey: string) => {
-    if (!chartImage) return;
+  /** Draw chart image preserving aspect ratio */
+  const drawChart = (chartImage: string | undefined, dimKey: string, legendW: number = 0): { chartW: number; chartH: number } => {
+    if (!chartImage) return { chartW: 0, chartH: 0 };
     const dim = dims[dimKey];
-    let chartW = contentW; // 170mm full width
+    const availableW = contentW - legendW;
+    let chartW = availableW;
     let chartH: number;
 
     if (dim && dim.width > 0) {
       const aspectRatio = dim.height / dim.width;
       chartH = chartW * aspectRatio;
-      // Cap at max height, scale down width proportionally if needed
       if (chartH > maxChartH) {
         chartH = maxChartH;
         chartW = chartH / aspectRatio;
       }
     } else {
-      chartH = contentW * 0.55;
+      chartH = availableW * 0.55;
     }
 
-    ensureSpace(chartH + 6);
     try {
-      // Center horizontally if width was reduced
-      const xOffset = margin + (contentW - chartW) / 2;
+      const xOffset = margin;
       doc.addImage(chartImage, "PNG", xOffset, curY, chartW, chartH);
-      curY += chartH + 5; // ~15px spacing after chart before analysis
     } catch (e) {
       console.warn("Failed to add chart image:", e);
     }
+    return { chartW, chartH };
   };
 
-  /** Smart page break: if title + chart won't fit, break before the section */
-  const drawChartSection = (title: string, chartImage: string | undefined, analysisText: string | undefined, dimKey: string) => {
-    // Estimate chart height for smart page break
+  /** Draw legend next to chart */
+  const drawLegend = (
+    legendItems: Array<{ name: string; color: string; percent: number }>,
+    chartX: number,
+    chartY: number,
+    chartH: number,
+    legendW: number
+  ) => {
+    if (legendItems.length === 0) return;
+    const x = chartX + 3;
+    const itemH = Math.min(3.8, (chartH - 4) / legendItems.length);
+    const fontSize = Math.min(7, itemH * 0.85);
+    let y = chartY + 2;
+
+    for (const item of legendItems) {
+      // Color swatch
+      const rgb = hexToRgb(item.color);
+      const isWhite = item.color.toUpperCase() === "#FFFFFF";
+      
+      doc.setFillColor(...rgb);
+      if (isWhite) {
+        doc.setDrawColor(200, 200, 200);
+        doc.roundedRect(x, y, 3, 2.5, 0.3, 0.3, "FD");
+      } else {
+        doc.roundedRect(x, y, 3, 2.5, 0.3, 0.3, "F");
+      }
+
+      // Text: "Name — X%"
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...C.textDark);
+      
+      // Truncate long names to fit
+      const maxNameW = legendW - 18;
+      let displayText = item.name;
+      while (doc.getTextWidth(displayText) > maxNameW && displayText.length > 10) {
+        displayText = displayText.substring(0, displayText.length - 2) + "…";
+      }
+      doc.text(displayText, x + 4.5, y + 2);
+
+      // Percentage right-aligned
+      const pctText = `${item.percent}%`;
+      doc.setFont("helvetica", "bold");
+      const pctW = doc.getTextWidth(pctText);
+      doc.text(pctText, chartX + legendW - pctW - 1, y + 2);
+
+      y += itemH;
+    }
+  };
+
+  /** Main chart section: Title → Chart+Legend → Analysis */
+  const drawChartWithLegend = (
+    title: string,
+    chartImage: string | undefined,
+    analysisText: string | undefined,
+    dimKey: string,
+    legendItems: Array<{ name: string; color: string; percent: number }>
+  ) => {
+    // Estimate chart height
     const dim = dims[dimKey];
-    let estChartH = contentW * 0.55;
+    const hasLegend = legendItems.length > 0;
+    const legendW = hasLegend ? 58 : 0;
+    const chartAvailW = contentW - legendW;
+    let estChartH = chartAvailW * 0.55;
     if (dim && dim.width > 0) {
       const ar = dim.height / dim.width;
-      estChartH = Math.min(contentW * ar, maxChartH);
+      estChartH = Math.min(chartAvailW * ar, maxChartH);
     }
-    // Title (10mm) + gap (2mm) + chart + gap (5mm) = minimum needed
-    const totalNeeded = 12 + estChartH + 5;
-    if (curY + totalNeeded > H - 20) {
+    
+    const totalNeeded = 12 + estChartH + 4;
+    if (curY + totalNeeded > H - 15) {
       addNewPage();
-      curY = 16;
+      curY = 14;
     }
+
     drawSectionHeader(title);
-    drawChart(chartImage, dimKey);
+
+    // Chart + Legend side by side
+    const chartStartY = curY;
+    const { chartW, chartH } = drawChart(chartImage, dimKey, legendW);
+
+    if (hasLegend && chartH > 0) {
+      drawLegend(legendItems, margin + chartW, chartStartY, chartH, legendW);
+    }
+
+    if (chartH > 0) {
+      curY = chartStartY + chartH + 4;
+    }
+
+    // Analysis after chart
     if (analysisText) drawAnalysisBox(analysisText);
   };
 
+  /** Chart section with individual sub-blocks (hours/days) */
+  const drawChartWithBlocks = (
+    title: string,
+    chartImage: string | undefined,
+    dimKey: string,
+    legendItems: Array<{ name: string; color: string; percent: number }>,
+    blocks: Array<{ label: string; content: string }>
+  ) => {
+    const dim = dims[dimKey];
+    const hasLegend = legendItems.length > 0;
+    const legendW = hasLegend ? 58 : 0;
+    const chartAvailW = contentW - legendW;
+    let estChartH = chartAvailW * 0.55;
+    if (dim && dim.width > 0) {
+      const ar = dim.height / dim.width;
+      estChartH = Math.min(chartAvailW * ar, maxChartH);
+    }
+
+    const totalNeeded = 12 + estChartH + 4;
+    if (curY + totalNeeded > H - 15) {
+      addNewPage();
+      curY = 14;
+    }
+
+    drawSectionHeader(title);
+
+    const chartStartY = curY;
+    const { chartW, chartH } = drawChart(chartImage, dimKey, legendW);
+
+    if (hasLegend && chartH > 0) {
+      drawLegend(legendItems, margin + chartW, chartStartY, chartH, legendW);
+    }
+
+    if (chartH > 0) {
+      curY = chartStartY + chartH + 4;
+    }
+
+    // Individual blocks after chart
+    for (const block of blocks) {
+      if (block.label) drawSubHeader(block.label);
+      drawAnalysisBox(block.content);
+      curY += 2;
+    }
+  };
+
   // ═══════════════════════════════════════
-  // Header
+  // 1. Header
   // ═══════════════════════════════════════
   addNewPage();
   doc.setFillColor(...C.headerBg);
@@ -369,10 +557,10 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Contrato: ${data.obra || "Todos os Contratos"} | Período: ${data.periodo}`, margin, 22);
   doc.setFontSize(8);
   doc.text(`Gerado em: ${dateStr}`, margin, 28);
-  curY = 40;
+  curY = 38;
 
   // ═══════════════════════════════════════
-  // KPIs
+  // 2. KPIs
   // ═══════════════════════════════════════
   drawSectionHeader("Indicadores Principais");
 
@@ -403,71 +591,126 @@ export function generatePDFReport(data: PDFReportData) {
   });
   curY += 26;
 
-  doc.setFontSize(8);
-  doc.setTextColor(...C.textGray);
-  doc.text(`Total de amostras: ${data.totalAmostras} | Produtivo: ${data.produtivoPct}% | Suplementar: ${data.suplementarPct}% | Não Produtivo: ${data.naoProdutivoPct}% | NPE: ${data.externoPct}%`, margin, curY);
-  curY += 4;
-
   if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);
 
   // ═══════════════════════════════════════
-  // Chart sections — ordered as specified
+  // Compute legend data for each chart type
   // ═══════════════════════════════════════
-  const chartSections: Array<{ title: string; image: string | undefined; section: string; dimKey: string; dayByDay?: boolean }> = [
-    { title: "Visão Geral por Contrato", image: images.contrato, section: "CONTRATO", dimKey: "contrato" },
-    { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
-    { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
-    { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE", dimKey: "paretoEspecialidade" },
-    { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
-    { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
-    { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario", dayByDay: true },
-    { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana", dayByDay: true },
-    { title: "Produtividade por Mês", image: images.tempoMes, section: "MES", dimKey: "tempoMes" },
-  ];
+  const legendContrato = computeLegendData(data.byObra, CANONICAL_ORDER_FULL);
+  const legendEspecialidade = computeLegendData(data.bySpecialty, CANONICAL_ORDER);
+  const legendHorario = data.byTimeHorario ? computeLegendData(data.byTimeHorario, CANONICAL_ORDER) : [];
+  const legendDiaSemana = data.byTimeDiaSemana ? computeLegendData(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
+  const legendMes = data.byTimeMes ? computeLegendData(data.byTimeMes, CANONICAL_ORDER) : [];
 
-  const drawSubHeader = (rawName: string) => {
-    const cleanName = normalizeInternalTitle(rawName);
-    ensureSpace(16);
-    curY += 6;
-    doc.setFillColor(...C.sectionBg);
-    doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
-    doc.setFontSize(10);
-    doc.setTextColor(...C.white);
-    doc.setFont("helvetica", "bold");
-    doc.text(cleanName, margin + 6, curY + 5.5);
-    curY += 12;
-  };
+  // ═══════════════════════════════════════
+  // 3. Visão Geral por Contrato
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Visão Geral por Contrato",
+    images.contrato,
+    analysis["CONTRATO"],
+    "contrato",
+    legendContrato
+  );
 
-  for (const cs of chartSections) {
-    if (cs.image) {
-      const analysisText = analysis[cs.section] || (cs.section.startsWith("PARETO_") ? analysis["PARETO"] : undefined);
-      
-      if (cs.dayByDay && cs.section === "DIA_SEMANA" && analysisText) {
-        // Order: TITLE → CHART → individual day analyses
-        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
-        const dayBlocks = parseDayBlocks(analysisText);
-        for (const block of dayBlocks) {
-          if (block.day) drawSubHeader(block.day);
-          drawAnalysisBox(block.content);
-          curY += 4; // spacing between day blocks
-        }
-      } else if (cs.dayByDay && cs.section === "HORARIO" && analysisText) {
-        // Order: TITLE → CHART → individual hour analyses
-        drawChartSection(cs.title, cs.image, undefined, cs.dimKey);
-        const hourBlocks = parseHourBlocks(analysisText);
-        for (const block of hourBlocks) {
-          if (block.hour) drawSubHeader(block.hour);
-          drawAnalysisBox(block.content);
-          curY += 4; // spacing between hour blocks
-        }
-      } else {
-        drawChartSection(cs.title, cs.image, analysisText, cs.dimKey);
-      }
-    }
+  // ═══════════════════════════════════════
+  // 4. Distribuição por Categoria
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Distribuição por Categoria",
+    images.categoria,
+    analysis["CATEGORIA"],
+    "categoria",
+    [] // Pie chart — no stacked bar legend
+  );
+
+  // ═══════════════════════════════════════
+  // 5. Top Causas — Pareto por Categorias
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Top Causas — Pareto por Categorias",
+    images.paretoCategoria,
+    analysis["PARETO"],
+    "paretoCategoria",
+    []
+  );
+
+  // ═══════════════════════════════════════
+  // 6. Top Causas — Pareto por Especialidades
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Top Causas — Pareto por Especialidades",
+    images.paretoEspecialidade,
+    analysis["PARETO_ESPECIALIDADE"],
+    "paretoEspecialidade",
+    []
+  );
+
+  // ═══════════════════════════════════════
+  // 7. Produtividade por Especialidade
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Produtividade por Especialidade",
+    images.especialidade,
+    analysis["ESPECIALIDADE"],
+    "especialidade",
+    legendEspecialidade
+  );
+
+  // ═══════════════════════════════════════
+  // 8. Causas Externas de Parada (NPE)
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Causas Externas de Parada (NPE)",
+    images.externas,
+    analysis["EXTERNO"],
+    "externas",
+    []
+  );
+
+  // ═══════════════════════════════════════
+  // 9. Produtividade por Horário
+  // ═══════════════════════════════════════
+  if (images.tempoHorario) {
+    const hourText = analysis["HORARIO"] || "";
+    const hourBlocks = parseHourBlocks(hourText);
+    drawChartWithBlocks(
+      "Produtividade por Horário",
+      images.tempoHorario,
+      "tempoHorario",
+      legendHorario,
+      hourBlocks.map(b => ({ label: b.hour, content: b.content }))
+    );
   }
 
   // ═══════════════════════════════════════
-  // Conclusões e Recomendações — grouped blocks
+  // 10. Produtividade por Dia da Semana
+  // ═══════════════════════════════════════
+  if (images.tempoDiaSemana) {
+    const dayText = analysis["DIA_SEMANA"] || "";
+    const dayBlocks = parseDayBlocks(dayText);
+    drawChartWithBlocks(
+      "Produtividade por Dia da Semana",
+      images.tempoDiaSemana,
+      "tempoDiaSemana",
+      legendDiaSemana,
+      dayBlocks.map(b => ({ label: b.day, content: b.content }))
+    );
+  }
+
+  // ═══════════════════════════════════════
+  // 11. Produtividade por Mês
+  // ═══════════════════════════════════════
+  drawChartWithLegend(
+    "Produtividade por Mês",
+    images.tempoMes,
+    analysis["MES"],
+    "tempoMes",
+    legendMes
+  );
+
+  // ═══════════════════════════════════════
+  // 12. Conclusões e Recomendações
   // ═══════════════════════════════════════
   const recText = analysis["RECOMENDACOES"] || analysis["GERAL"] || "";
   if (recText) {
@@ -482,16 +725,13 @@ export function generatePDFReport(data: PDFReportData) {
         { label: "RESPONSÁVEL", value: firstBlock.responsavel },
         { label: "IMPACTO ESPERADO", value: firstBlock.impacto },
       ];
-      let firstBlockH = 16; // section header (12) + problem header (10) + padding
+      let firstBlockH = 16;
       for (const f of firstFields) {
-        if (!f.value) {
-          continue;
-        }
+        if (!f.value) continue;
         const lines = doc.splitTextToSize(f.value, contentW - 16);
         firstBlockH += 5 + lines.length * 3.5 + 2;
       }
-      // Ensure title + first block fit together — if not, break before
-      const minNeeded = Math.min(firstBlockH, 80); // cap to avoid forcing empty pages
+      const minNeeded = Math.min(firstBlockH, 80);
       ensureSpace(minNeeded);
 
       drawSectionHeader("Conclusões e Recomendações");
@@ -506,30 +746,27 @@ export function generatePDFReport(data: PDFReportData) {
           { label: "IMPACTO ESPERADO", value: block.impacto },
         ];
 
-        // Estimate block height
-        let blockH = 14; // problem header box
+        let blockH = 14;
         for (const f of fields) {
           if (!f.value) continue;
           const lines = doc.splitTextToSize(f.value, contentW - 16);
           blockH += 5 + lines.length * 3.5 + 2;
         }
-        ensureSpace(blockH + 10);
+        ensureSpace(blockH + 8);
 
-        // Separator line between blocks
         if (bi > 0) {
           doc.setDrawColor(...C.cardBorder);
           doc.line(margin + 4, curY, margin + contentW - 4, curY);
-          curY += 6;
+          curY += 4;
         }
 
-        // Problem title header — styled box matching section header style
         doc.setFillColor(...C.sectionBg);
         doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
         doc.setFontSize(10);
         doc.setTextColor(...C.white);
         doc.setFont("helvetica", "bold");
         doc.text(`PROBLEMA ${bi + 1} — ${block.title}`, margin + 6, curY + 5.5);
-        curY += 12;
+        curY += 10;
 
         for (const f of fields) {
           if (!f.value) continue;
@@ -546,7 +783,7 @@ export function generatePDFReport(data: PDFReportData) {
           doc.text(wrapped, margin + 10, curY + 3);
           curY += wrapped.length * 3.5 + 3;
         }
-        curY += 6; // spacing between blocks
+        curY += 4;
       }
     } else {
       drawSectionHeader("Conclusões e Recomendações");
@@ -554,7 +791,9 @@ export function generatePDFReport(data: PDFReportData) {
     }
   }
 
+  // ═══════════════════════════════════════
   // Footer on all pages
+  // ═══════════════════════════════════════
   const totalPages = pageNum;
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
