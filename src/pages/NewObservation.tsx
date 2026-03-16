@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
+import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;

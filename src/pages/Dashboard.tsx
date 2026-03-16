@@ -19,6 +19,7 @@ import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
