@@ -283,6 +283,7 @@ const renderCategoryPieLabel = ({ cx, cy, midAngle, outerRadius, percent }: any)
 };
 
 const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+  // percent is already a value like 0.686, so multiply by 100 to get 68.6
   const safePercent = Number((percent * 100).toFixed(1));
   if (safePercent <= 0) return null;
 
