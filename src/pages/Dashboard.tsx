@@ -77,7 +77,7 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberação",
+  "Aguardando Liberações",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
@@ -102,7 +102,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#FFFFFF",
-  "Aguardando Liberação": "#FFFFFF",
+  "Aguardando Liberações": "#FFFFFF",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
@@ -119,8 +119,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
-  "Aguardando Liberação de PT": "Aguardando Liberação",
-  "Vazamento / Interferência da Planta": "Aguardando Liberação",
+  "Aguardando Liberação de PT": "Aguardando Liberações",
+  "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
 const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
 const canonicalDescription = (desc: string): string => displayName(desc);
@@ -167,7 +167,7 @@ const DESCRIPTION_GROUPS = {
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
     "Assistindo",
-    "Aguardando Liberação",
+    "Aguardando Liberações",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
   "Não Produtivo Externo": ["Causas Naturais"],
