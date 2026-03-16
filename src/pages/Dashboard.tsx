@@ -211,12 +211,12 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendList = (descriptions: string[], maxHeight?: number) => (
-  <div className="flex flex-col gap-0.5 overflow-y-auto pr-1" style={{ maxHeight: maxHeight || STACKED_CHART_HEIGHT - 20 }}>
+const renderLegendList = (descriptions: string[]) => (
+  <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: STACKED_CHART_HEIGHT }}>
     {descriptions.map((desc) => (
-      <div key={desc} className="flex items-start gap-1.5 py-px">
-        <span className="w-2.5 h-2.5 rounded-sm shrink-0 border border-border/50 mt-[2px]" style={{ backgroundColor: getDescColor(desc) }} />
-        <span className="text-[10px] leading-snug break-words" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+      <div key={desc} className="flex items-center gap-2">
+        <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+        <span className="text-[13px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
       </div>
     ))}
   </div>
@@ -1451,8 +1451,8 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          <div className="flex flex-col xl:flex-row gap-2 xl:gap-3">
-            <div className="min-w-0" style={{ flex: '3 1 0%' }}>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
                 <BarChart data={byObra} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleContratoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1463,7 +1463,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 22%', maxWidth: '22%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...allDescriptions].reverse())}
             </div>
           </div>
@@ -1623,8 +1623,8 @@ export default function Dashboard() {
             </div>
             <ZoomButton onClick={() => setZoomChart("especialidade")} />
           </div>
-          <div className="flex flex-col xl:flex-row gap-2 xl:gap-3">
-            <div className="min-w-0" style={{ flex: '3 1 0%' }}>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
                 <BarChart data={bySpecialty} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1655,7 +1655,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 22%', maxWidth: '22%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
@@ -1767,8 +1767,8 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col xl:flex-row gap-2 xl:gap-3">
-            <div className="min-w-0" style={{ flex: '3 1 0%' }}>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
                 <BarChart data={byTimeGrouped} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1799,7 +1799,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 22%', maxWidth: '22%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
@@ -1809,7 +1809,7 @@ export default function Dashboard() {
         {/* Contrato */}
         <ChartZoomDialog title="Visão Geral por Contrato" subtitle="Clique em uma barra para filtrar" open={zoomChart === "contrato"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <div className="flex flex-col xl:flex-row gap-3 h-full">
-            <div className="min-w-0 min-h-0" style={{ flex: '3 1 0%' }}>
+            <div className="min-w-0 min-h-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byObra} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleContratoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1820,7 +1820,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 20%', maxWidth: '20%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...allDescriptions].reverse())}
             </div>
           </div>
@@ -1900,7 +1900,7 @@ export default function Dashboard() {
         {/* Especialidade */}
         <ChartZoomDialog title="Produtividade por Especialidade" subtitle="Ordenado por produtividade — clique para filtrar" open={zoomChart === "especialidade"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <div className="flex flex-col xl:flex-row gap-3 h-full">
-            <div className="min-w-0 min-h-0" style={{ flex: '3 1 0%' }}>
+            <div className="min-w-0 min-h-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bySpecialty} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1928,7 +1928,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 20%', maxWidth: '20%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
@@ -1966,7 +1966,7 @@ export default function Dashboard() {
         {/* Tempo */}
         <ChartZoomDialog title={timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"} subtitle="% de produtividade — clique para filtrar" open={zoomChart === "tempo"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <div className="flex flex-col xl:flex-row gap-3 h-full">
-            <div className="min-w-0 min-h-0" style={{ flex: '3 1 0%' }}>
+            <div className="min-w-0 min-h-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byTimeGrouped} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1994,7 +1994,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 20%', maxWidth: '20%' }}>
+            <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
               {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
