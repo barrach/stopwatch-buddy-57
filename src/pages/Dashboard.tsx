@@ -305,7 +305,7 @@ const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }
       strokeWidth={3}
       paintOrder="stroke"
     >
-      {`${name} ${safePercent.toFixed(1)}%`}
+      {`${name} ${safePercent}%`}
     </text>
   );
 };
