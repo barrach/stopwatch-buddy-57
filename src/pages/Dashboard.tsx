@@ -1654,7 +1654,7 @@ export default function Dashboard() {
               </h3>
               <ZoomButton onClick={() => setZoomChart("externas")} />
             </div>
-            <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe — NÃO impactam o cálculo de produtividade</p>
+            <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
             {/* Summary: total lost hours */}
             {(() => {
