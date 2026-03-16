@@ -147,7 +147,7 @@ export default function NewObservation() {
         obra_id: obraId,
         contrato_id: null,
         especialidade_id: especialidadeId,
-        funcao_id: funcaoId || null,
+        funcao_id: null,
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
