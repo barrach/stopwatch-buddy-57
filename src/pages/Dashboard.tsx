@@ -216,23 +216,28 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendList = (descriptions: string[]) => (
-  <div
-    className="flex flex-col justify-end gap-[5px] overflow-y-auto pr-1"
-    style={{
-      height: STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom,
-      marginTop: STACKED_CHART_MARGIN.top,
-      marginBottom: STACKED_CHART_MARGIN.bottom,
-    }}
-  >
-    {descriptions.map((desc) => (
-      <div key={desc} className="flex items-center gap-2">
-        <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-        <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-      </div>
-    ))}
-  </div>
-);
+const renderLegendList = (descriptions: string[]) => {
+  // Bars stack bottom→top. Legend reads top→bottom.
+  // Reverse so top-of-stack (last in array) = first legend item (top).
+  const legendOrder = [...descriptions].reverse();
+  return (
+    <div
+      className="flex flex-col justify-start gap-[5px] overflow-y-auto pr-1"
+      style={{
+        height: STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom,
+        marginTop: STACKED_CHART_MARGIN.top,
+        marginBottom: STACKED_CHART_MARGIN.bottom,
+      }}
+    >
+      {legendOrder.map((desc) => (
+        <div key={desc} className="flex items-center gap-2">
+          <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+          <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // Helper: render Bar components from a description list with proper stroke for white bars
 const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boolean) =>
