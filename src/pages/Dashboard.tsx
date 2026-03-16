@@ -1673,10 +1673,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
                   <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
-                  {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
-                      radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(allDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
