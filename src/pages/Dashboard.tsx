@@ -1748,7 +1748,7 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
             <div className="min-w-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
                 <BarChart data={byTimeGrouped} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
