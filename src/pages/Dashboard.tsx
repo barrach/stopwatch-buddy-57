@@ -1866,14 +1866,13 @@ export default function Dashboard() {
                     if (!data || !item) return null;
                     const desc = item.dataKey as string;
                     const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
-                    const rawQty = data[`raw_${desc}`] || 0;
                     return (
                       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                         <strong style={{ fontSize: 14, display: "block", marginBottom: 8 }}>{data.time}</strong>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 12 }}>
                           <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block" }} />
                           <span style={{ flex: 1 }}>{displayName(desc)}</span>
-                          <span style={{ fontWeight: 600 }}>{rawQty} ({pct}%)</span>
+                          <span style={{ fontWeight: 600 }}>{pct}%</span>
                         </div>
                       </div>
                     );
