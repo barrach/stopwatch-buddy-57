@@ -77,17 +77,16 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberação de PT",
+  "Aguardando Liberação",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
   // Não Produtivo Externo
   "Causas Naturais",
-  "Vazamento / Interferência da Planta",
 ];
-// Without NPE (used for Especialidade + Tempo charts) — excludes all 3 NPE categories
+// Without NPE (used for Especialidade + Tempo charts) — excludes Causas Naturais only
 const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta" && d !== "Aguardando Liberação de PT"
+  d => d !== "Causas Naturais"
 );
 
 // ── Per-description unique colors (engessadas) ──────────
