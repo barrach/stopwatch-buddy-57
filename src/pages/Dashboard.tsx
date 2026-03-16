@@ -337,22 +337,34 @@ const getHighlightBorder = (type: "best" | "worst" | "none") => {
 };
 
 type ParetoMode = "especialidade" | "categoria";
+type TimeViewMode = "horario" | "diasemana" | "mes";
 
 interface CrossFilters {
   categoria?: string;
   rota?: string;
   especialidade?: string;
   contrato?: string;
-  horario?: string;
+  tempo?: string;
+  tempoMode?: TimeViewMode;
   descricao?: string;
   pareto?: string;
 }
+
+const WEEKDAY_NAMES = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 // Chronological time ordering helper — parses "8:00" or "08:00" to minutes
 const timeIndex = (t: string) => {
   const parts = t.split(":");
   if (parts.length < 2) return 9999;
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+};
+
+const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
+  if (mode === "horario") return record.horario || "";
+  const d = new Date(`${record.data}T12:00:00`);
+  if (mode === "diasemana") return WEEKDAY_NAMES[d.getDay()] || "";
+  return MONTH_NAMES[d.getMonth()] || "";
 };
 
 export default function Dashboard() {
@@ -518,7 +530,10 @@ export default function Dashboard() {
       if (crossFilters.rota && ((r.rotas as any)?.nome || "Sem rota") !== crossFilters.rota) return false;
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
-      if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
+      if (crossFilters.tempo) {
+        const bucket = getTimeBucketLabel(r, crossFilters.tempoMode || "horario");
+        if (bucket !== crossFilters.tempo) return false;
+      }
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
@@ -728,28 +743,20 @@ export default function Dashboard() {
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
-  const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
       // Allow "Aguardando Liberações" through, exclude other NPE
       if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
-      let key = "";
-      if (timeViewMode === "horario") {
-        key = r.horario || "";
-      } else if (timeViewMode === "diasemana") {
-        const d = new Date(r.data + "T12:00:00");
-        key = WEEKDAY_NAMES[d.getDay()];
-      } else {
-        const d = new Date(r.data + "T12:00:00");
-        key = MONTH_NAMES[d.getMonth()];
-      }
+
+      const key = getTimeBucketLabel(r, timeViewMode);
+      if (!key) return;
+
       if (!result[key]) {
         result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
       }
+
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
       if (desc in result[key]) {
@@ -792,7 +799,12 @@ export default function Dashboard() {
   };
   const handleTimeClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("horario", e.activePayload[0].payload.time);
+    const bucket = e.activePayload[0].payload.time;
+    setCrossFilters((prev) => ({
+      ...prev,
+      tempo: prev.tempo === bucket && prev.tempoMode === timeViewMode ? undefined : bucket,
+      tempoMode: prev.tempo === bucket && prev.tempoMode === timeViewMode ? undefined : timeViewMode,
+    }));
   };
   const handleParetoClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
@@ -1402,9 +1414,9 @@ export default function Dashboard() {
                 Especialidade: {crossFilters.especialidade} <X className="w-3 h-3" />
               </Badge>
             )}
-            {crossFilters.horario && (
-              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("horario", crossFilters.horario!)}>
-                Horário: {crossFilters.horario} <X className="w-3 h-3" />
+            {crossFilters.tempo && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setCrossFilters((prev) => ({ ...prev, tempo: undefined, tempoMode: undefined }))}>
+                {crossFilters.tempoMode === "horario" ? "Horário" : crossFilters.tempoMode === "diasemana" ? "Dia" : "Mês"}: {crossFilters.tempo} <X className="w-3 h-3" />
               </Badge>
             )}
             {crossFilters.descricao && (
@@ -1793,12 +1805,12 @@ export default function Dashboard() {
         )}
 
         {/* 6) Produtividade por Período — supports horario/weekday/month */}
-        <div id="chart-tempo" className={chartCardClass("horario")}>
+        <div id="chart-tempo" className={chartCardClass("tempo")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
                 {timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"}
-                {crossFilters.horario && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.horario}</span>}
+                {crossFilters.tempo && crossFilters.tempoMode === timeViewMode && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.tempo}</span>}
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
