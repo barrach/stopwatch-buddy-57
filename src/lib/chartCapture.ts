@@ -5,10 +5,7 @@ export interface ChartImages {
   categoria?: string;
   paretoCategoria?: string;
   paretoEspecialidade?: string;
-  paretoFuncao?: string;
   especialidade?: string;
-  funcao?: string;
-  naoprod?: string;
   externas?: string;
   tempoHorario?: string;
   tempoDiaSemana?: string;
