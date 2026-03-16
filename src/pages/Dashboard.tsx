@@ -721,9 +721,9 @@ export default function Dashboard() {
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
       // Allow "Aguardando Liberações" through, exclude other NPE
-      if (isExternalRecord(r) && desc !== "Aguardando Liberações") return;
+      if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
       let key = "";
       if (timeViewMode === "horario") {
         key = r.horario || "";
