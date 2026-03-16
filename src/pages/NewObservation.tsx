@@ -22,7 +22,7 @@ import { addToQueue } from "@/lib/offlineQueue";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
-  funcaoId: string; categoriaId: string; descricao: string; quantity: string; notes: string;
+  categoriaId: string; descricao: string; quantity: string; notes: string;
 }
 
 export default function NewObservation() {
@@ -36,7 +36,7 @@ export default function NewObservation() {
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
-  const [funcaoId, setFuncaoId] = useState("");
+  
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -63,17 +63,6 @@ export default function NewObservation() {
     ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
   );
 
-  const { data: funcoes = [] } = useOfflineQuery<{ id: string; nome: string; especialidade_id: string | null }>(
-    ["funcoes", "ativas"], "funcoes" as any, "id, nome, especialidade_id",
-    [{ column: "status", value: "Ativo" }], "nome"
-  );
-
-  const filteredFuncoes = useMemo(
-    () => especialidadeId
-      ? funcoes.filter((f) => f.especialidade_id === especialidadeId || !f.especialidade_id)
-      : funcoes,
-    [funcoes, especialidadeId]
-  );
 
   const parentCategorias = useMemo(
     () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
@@ -106,7 +95,7 @@ export default function NewObservation() {
       }
       // Save last observation for repeat
       setLastObs({
-        time, rotaId, obraId, especialidadeId, funcaoId, categoriaId, descricao, quantity, notes,
+        time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
       });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
@@ -114,7 +103,6 @@ export default function NewObservation() {
       setCategoriaId("");
       setDescricao("");
       setEspecialidadeId("");
-      setFuncaoId("");
       setRotaId("");
       setObraId("");
       setTime("");
@@ -159,7 +147,7 @@ export default function NewObservation() {
         obra_id: obraId,
         contrato_id: null,
         especialidade_id: especialidadeId,
-        funcao_id: funcaoId || null,
+        funcao_id: null,
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
@@ -178,7 +166,6 @@ export default function NewObservation() {
     setRotaId(lastObs.rotaId);
     setObraId(lastObs.obraId);
     setEspecialidadeId(lastObs.especialidadeId);
-    setFuncaoId(lastObs.funcaoId);
     setCategoriaId(lastObs.categoriaId);
     setQuantity(lastObs.quantity);
     setNotes(lastObs.notes);
@@ -373,20 +360,10 @@ export default function NewObservation() {
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Especialidade *</Label>
-                <Select value={especialidadeId} onValueChange={(v) => { setEspecialidadeId(v); setFuncaoId(""); }}>
+                <Select value={especialidadeId} onValueChange={setEspecialidadeId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a especialidade..." /></SelectTrigger>
                   <SelectContent>
                     {especialidades.map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-muted-foreground">Função</Label>
-                <Select value={funcaoId} onValueChange={setFuncaoId} disabled={!especialidadeId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder={especialidadeId ? "Selecione a função..." : "Selecione a especialidade primeiro"} /></SelectTrigger>
-                  <SelectContent>
-                    {filteredFuncoes.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

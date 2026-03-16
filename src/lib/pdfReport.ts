@@ -17,7 +17,7 @@ export interface PDFReportData {
   externoPct: number;
   byObra: Array<{ name: string; total: number; [key: string]: any }>;
   bySpecialty: Array<{ name: string; total: number; [key: string]: any }>;
-  byFunction: Array<{ name: string; total: number; [key: string]: any }>;
+  byFunction?: Array<{ name: string; total: number; [key: string]: any }>;
   nonprodCausas: Array<{ name: string; value: number; percent: number; cat: string }>;
   externalCausas: Array<{ name: string; value: number; percent: number }>;
   categoryTotals: Array<{ name: string; value: number }>;
@@ -418,10 +418,7 @@ export function generatePDFReport(data: PDFReportData) {
     { title: "Distribuição por Categoria", image: images.categoria, section: "CATEGORIA", dimKey: "categoria" },
     { title: "Top Causas — Pareto por Categorias", image: images.paretoCategoria, section: "PARETO", dimKey: "paretoCategoria" },
     { title: "Top Causas — Pareto por Especialidades", image: images.paretoEspecialidade, section: "PARETO_ESPECIALIDADE", dimKey: "paretoEspecialidade" },
-    { title: "Top Causas — Pareto por Funções", image: images.paretoFuncao, section: "PARETO_FUNCAO", dimKey: "paretoFuncao" },
     { title: "Produtividade por Especialidade", image: images.especialidade, section: "ESPECIALIDADE", dimKey: "especialidade" },
-    { title: "Produtividade por Função", image: images.funcao, section: "FUNCAO", dimKey: "funcao" },
-    { title: "Causas de Não Produtividade", image: images.naoprod, section: "NAO_PRODUTIVO", dimKey: "naoprod" },
     { title: "Causas Externas de Parada (NPE)", image: images.externas, section: "EXTERNO", dimKey: "externas" },
     { title: "Produtividade por Horário", image: images.tempoHorario, section: "HORARIO", dimKey: "tempoHorario", dayByDay: true },
     { title: "Produtividade por Dia da Semana", image: images.tempoDiaSemana, section: "DIA_SEMANA", dimKey: "tempoDiaSemana", dayByDay: true },

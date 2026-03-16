@@ -75,24 +75,11 @@ export default function Records() {
     },
   });
 
-  const { data: funcoes = [] } = useQuery({
-    queryKey: ["funcoes", "ativas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("funcoes").select("id, nome, especialidade_id").eq("status", "Ativo").order("nome");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const parentCategorias = useMemo(() => allCategorias.filter(c => !c.categoria_pai_id && c.status === "Ativo"), [allCategorias]);
   const editSubcategorias = useMemo(() => {
     if (!editForm.categoria_id) return [];
     return allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo");
   }, [allCategorias, editForm.categoria_id]);
-  const editFilteredFuncoes = useMemo(() => {
-    if (!editForm.especialidade_id) return funcoes;
-    return funcoes.filter(f => f.especialidade_id === editForm.especialidade_id || !f.especialidade_id);
-  }, [funcoes, editForm.especialidade_id]);
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
@@ -164,8 +151,7 @@ export default function Records() {
     setEditRecord(r);
     setEditForm({
       data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
-      especialidade_id: r.especialidade_id, funcao_id: r.funcao_id || "",
-      categoria_id: r.categoria_id, descricao: r.descricao,
+      especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: r.descricao,
       quantidade: r.quantidade, notas: r.notas || "",
     });
   };
@@ -176,7 +162,7 @@ export default function Records() {
       const { error } = await supabase.from("observacoes").update({
         data: editForm.data, horario: editForm.horario, obra_id: editForm.obra_id,
         rota_id: editForm.rota_id, especialidade_id: editForm.especialidade_id,
-        funcao_id: editForm.funcao_id || null, categoria_id: editForm.categoria_id,
+        funcao_id: null, categoria_id: editForm.categoria_id,
         descricao: editForm.descricao, quantidade: parseInt(editForm.quantidade, 10),
         notas: editForm.notas || null,
       }).eq("id", editRecord.id);
@@ -694,16 +680,9 @@ export default function Records() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Especialidade</Label>
-              <Select value={editForm.especialidade_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, especialidade_id: v, funcao_id: "" }))}>
+              <Select value={editForm.especialidade_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, especialidade_id: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{especialidades.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Função</Label>
-              <Select value={editForm.funcao_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, funcao_id: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>{editFilteredFuncoes.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>

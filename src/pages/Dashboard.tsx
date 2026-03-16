@@ -87,7 +87,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   // NPE (Não Produtivo Externo) — tons de ROXO
   "Causas Naturais": "#A855F7",                  // violeta
   "Vazamento / Interferência da Planta": "#7C3AED", // roxo
-  "Aguardando Liberação de PT": "#C084FC",        // lilás
+  "Aguardando Liberação de PT": "#FFFFFF",        // branco
 };
 
 // Map description to its unique color — single source of truth for ALL charts
@@ -127,7 +127,7 @@ const getHighlightBorder = (type: "best" | "worst" | "none") => {
   return "";
 };
 
-type ParetoMode = "especialidade" | "categoria" | "funcao";
+type ParetoMode = "especialidade" | "categoria";
 
 interface CrossFilters {
   categoria?: string;
@@ -137,7 +137,6 @@ interface CrossFilters {
   horario?: string;
   descricao?: string;
   pareto?: string;
-  funcao?: string;
 }
 
 // Chronological time ordering helper — parses "8:00" or "08:00" to minutes
@@ -160,6 +159,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [zoomChart, setZoomChart] = useState<string | null>(null);
+  const [npeExclude, setNpeExclude] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
   const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
@@ -220,7 +220,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome), funcoes(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false });
       if (error) throw error;
@@ -310,12 +310,10 @@ export default function Dashboard() {
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
       if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
-      if (crossFilters.funcao && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.funcao) return false;
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
         if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
-        if (paretoMode === "funcao" && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.pareto) return false;
       }
       return true;
     });
@@ -415,7 +413,6 @@ export default function Dashboard() {
       if (isExternalRecord(r)) return; // Exclude NPE from Pareto
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
-      else if (paretoMode === "funcao") key = (r as any).funcoes?.nome || "Sem função";
       else key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -450,8 +447,24 @@ export default function Dashboard() {
     "Preparando, Organizando": 18,
     // Não Produtivo
     "Pessoal": 20, "Ocioso": 21, "Retrabalho": 22, "Deslocamento": 23,
+    // NPE
+    "Causas Naturais": 30, "Vazamento / Interferência da Planta": 31, "Aguardando Liberação de PT": 32,
   };
   const allDescriptions = useMemo(() => {
+    const descs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = r.descricao || "Sem descrição";
+      descs.add(desc);
+    });
+    return Array.from(descs).sort((a, b) => {
+      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
+      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
+      return orderA - orderB;
+    });
+  }, [records]);
+
+  // Descriptions excluding NPE (for non-contrato charts)
+  const nonNpeDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
@@ -468,7 +481,8 @@ export default function Dashboard() {
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from contract chart
+      // Include NPE but allow exclusion for comparison
+      if (npeExclude && isExternalRecord(r) && r.descricao === npeExclude) return;
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = {};
       const desc = r.descricao || "Sem descrição";
@@ -490,6 +504,15 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
+  }, [records, isExternalRecord, npeExclude]);
+
+  // NPE descriptions for comparison button
+  const npeDescList = useMemo(() => {
+    const descs = new Set<string>();
+    records.forEach((r: any) => {
+      if (isExternalRecord(r)) descs.add(r.descricao || "");
+    });
+    return Array.from(descs).filter(Boolean);
   }, [records, isExternalRecord]);
 
 
@@ -520,31 +543,6 @@ export default function Dashboard() {
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records, isExternalRecord]);
   
-
-  // By Function — description-level breakdown, sorted by "Trabalhando" desc
-  const byFunction = useMemo(() => {
-    const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
-      if (isExternalRecord(r)) return;
-      const fName = (r as any).funcoes?.nome || "Sem função";
-      if (!result[fName]) result[fName] = {};
-      const desc = r.descricao || "Sem descrição";
-      const qty = r.quantidade || 0;
-      result[fName][desc] = (result[fName][desc] || 0) + qty;
-    });
-    return Object.entries(result)
-      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
-      .map(([name, descs]) => {
-        const total = Object.values(descs).reduce((s, v) => s + v, 0);
-        const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
-        }
-        return row;
-      })
-      .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
   const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -610,19 +608,11 @@ export default function Dashboard() {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("pareto", e.activePayload[0].payload.name);
   };
-  const handleFunctionClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("funcao", e.activePayload[0].payload.name);
-  };
   const handlePieClick = (_: any, index: number) => {
     const entry = categoryTotals[index];
     if (entry) toggleCrossFilter("categoria", entry.name);
   };
   const handleCausaClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("descricao", e.activePayload[0].payload.name);
-  };
-  const handleNonprodClick = (e: any) => {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("descricao", e.activePayload[0].payload.name);
   };
@@ -635,7 +625,7 @@ export default function Dashboard() {
         Contrato: (r.obras as any)?.nome || "",
         Rota: (r.rotas as any)?.nome || "",
         Especialidade: (r.especialidades as any)?.nome || "",
-        Função: (r as any).funcoes?.nome || "",
+        
         Categoria: getParentCatName(r),
         Descrição: r.descricao,
         Quantidade: r.quantidade,
@@ -716,7 +706,6 @@ export default function Dashboard() {
         externoPct: aiStats.externoPct,
         byObra,
         bySpecialty,
-        byFunction,
         nonprodCausas,
         externalCausas,
         categoryTotals,
@@ -802,7 +791,6 @@ export default function Dashboard() {
         externoPct: aiStats.externoPct,
         byObra,
         bySpecialty,
-        byFunction,
         nonprodCausas,
         externalCausas,
         categoryTotals,
@@ -823,7 +811,7 @@ export default function Dashboard() {
   const aiStats = useMemo(() => {
     let total = 0, prod = 0, supl = 0, naoProd = 0, externo = 0;
     const byEsp: Record<string, { prod: number; supl: number; naoProd: number; total: number }> = {};
-    const byFunc: Record<string, { prod: number; total: number }> = {};
+    
     const byCat: Record<string, number> = {};
     const byParentCat: Record<string, number> = {};
     const byHour: Record<string, { prod: number; supl: number; naoProd: number; npe: number; total: number }> = {};
@@ -861,13 +849,6 @@ export default function Dashboard() {
         else byEsp[espName].naoProd += qty;
       }
 
-      // Per function (exclude external)
-      if (!isExt) {
-        const fName = (r as any).funcoes?.nome || "Sem função";
-        if (!byFunc[fName]) byFunc[fName] = { prod: 0, total: 0 };
-        byFunc[fName].total += qty;
-        if (cat === "Produtivo") byFunc[fName].prod += qty;
-      }
 
       // Per hour
       const h = r.horario || "";
@@ -913,10 +894,6 @@ export default function Dashboard() {
       })
       .join("\n");
 
-    const porFuncao = Object.entries(byFunc)
-      .sort(([, a], [, b]) => b.total - a.total).slice(0, 6)
-      .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
-      .join("\n");
 
     const porHorario = Object.entries(byHour)
       .sort(([a], [b]) => timeIndex(a) - timeIndex(b))
@@ -966,7 +943,7 @@ export default function Dashboard() {
       periodo: dateMode === "day" ? selectedDate : dateMode === "period" ? `${startDate} a ${endDate}` : "Todo o período",
       obra: obraName,
       porEspecialidade,
-      porFuncao,
+      
       porHorario,
       porDiaSemana: ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
         .filter(d => byWeekday[d])
@@ -1062,7 +1039,7 @@ export default function Dashboard() {
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
 
-  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : paretoMode === "funcao" ? "Funções" : "Categorias";
+  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : "Categorias";
 
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
@@ -1197,11 +1174,6 @@ export default function Dashboard() {
                 Horário: {crossFilters.horario} <X className="w-3 h-3" />
               </Badge>
             )}
-            {crossFilters.funcao && (
-              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("funcao", crossFilters.funcao!)}>
-                Função: {crossFilters.funcao} <X className="w-3 h-3" />
-              </Badge>
-            )}
             {crossFilters.descricao && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("descricao", crossFilters.descricao!)}>
                 Descrição: {crossFilters.descricao} <X className="w-3 h-3" />
@@ -1273,10 +1245,22 @@ export default function Dashboard() {
               <h3 className="text-sm font-semibold text-foreground">
                 Visão Geral por Contrato
                 {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
+                {npeExclude && <span className="text-xs font-normal text-destructive ml-2">• Sem "{npeExclude}"</span>}
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
             </div>
-            <ZoomButton onClick={() => setZoomChart("contrato")} />
+            <div className="flex items-center gap-2">
+              <ZoomButton onClick={() => setZoomChart("contrato")} />
+              {npeDescList.length > 0 && (
+                <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
+                  <SelectTrigger className="w-44 h-7 text-[10px]"><SelectValue placeholder="Comparar sem..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Com todos os fatores</SelectItem>
+                    {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
@@ -1296,13 +1280,13 @@ export default function Dashboard() {
             </div>
             {/* Legenda lateral */}
             <div className="lg:w-48 flex flex-col gap-1.5">
-              {allDescriptions.map((desc, i) => (
+              {allDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span 
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
                     style={{ backgroundColor: getDescColor(desc) }}
                   />
-                  <span className="text-[11px] text-muted-foreground leading-tight">{desc}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{desc}</span>
                 </div>
               ))}
             </div>
@@ -1379,13 +1363,13 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 shrink-0">
                 <ZoomButton onClick={() => setZoomChart("pareto")} />
                 <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
-                {(["categoria", "especialidade", "funcao"] as ParetoMode[]).map(mode => (
+                {(["categoria", "especialidade"] as ParetoMode[]).map(mode => (
                   <button key={mode} onClick={() => handleParetoModeChange(mode)}
                     className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
                       paretoMode === mode ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
                     }`}
                   >
-                    {mode === "categoria" ? "Categorias" : mode === "especialidade" ? "Especialidades" : "Funções"}
+                    {mode === "categoria" ? "Categorias" : "Especialidades"}
                   </button>
                 ))}
               </div>
@@ -1494,128 +1478,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* 4) Produtividade por Função */}
-        <div id="chart-funcao" className={`stat-card animate-fade-in mb-6 transition-all ${crossFilters.funcao ? "ring-2 ring-primary/50" : ""}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                Produtividade por Função
-                {crossFilters.funcao && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.funcao}</span>}
-              </h3>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Ordenado por produtividade — clique para filtrar</p>
-            </div>
-            <ZoomButton onClick={() => setZoomChart("funcao")} />
-          </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={byFunction} margin={{ bottom: 20 }} onClick={handleFunctionClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-               <Tooltip
-                shared={false}
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
 
-                  const desc = item.dataKey as string;
-                  const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
-                  const raw = data[`raw_${desc}`] || 0;
 
-                  return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
-                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{desc}</span>
-                        <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              {allDescriptions.map((desc, i) => (
-                <Bar
-                  key={desc}
-                  dataKey={desc}
-                  name={desc}
-                  fill={getDescriptionCategoryColor("", desc)}
-                  stackId="a"
-                  className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
-                />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* 5) Causas de Não Produtividade */}
-        <div className="mb-8">
-          {/* 5) Causas de Não Produtividade */}
-          <div id="chart-naoprod" className={`stat-card animate-fade-in transition-all`}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Causas de Não Produtividade</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Registros "Suplementar" e "Não Produtivo" — clique para filtrar</p>
-              </div>
-              <ZoomButton onClick={() => setZoomChart("naoprod")} />
-            </div>
-            {nonprodCausas.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[240px] text-center gap-2">
-                <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">Sem registros de não produtividade</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 60 }} onClick={handleNonprodClick}>
-                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                   <XAxis dataKey="name" tick={(props: any) => {
-                     const { x, y, payload } = props;
-                     return (
-                       <text x={x} y={y + 10} textAnchor="end" fill={TICK_COLOR} fontSize={9} transform={`rotate(-45, ${x}, ${y})`}>
-                         {payload.value.length > 20 ? payload.value.slice(0, 20) + "…" : payload.value}
-                       </text>
-                     );
-                   }} interval={0} height={80} />
-                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-                   <Tooltip
-                     content={({ active, payload }) => {
-                       if (!active || !payload?.length) return null;
-                       const data = payload[0]?.payload;
-                       if (!data) return null;
-                       return (
-                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
-                             <strong style={{ fontSize: 13 }}>{data.name}</strong>
-                           </div>
-                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                             <div>Categoria: <strong>{data.cat}</strong></div>
-                             <div>Quantidade: <strong>{data.value}</strong></div>
-                             <div>Percentual: <strong>{data.percent}%</strong></div>
-                           </div>
-                         </div>
-                       );
-                     }}
-                   />
-                   <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                      {nonprodCausas.map((item, i) => (
-                        <Cell key={i} fill={getDescColor(item.name)} />
-                      ))}
-                     <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 9, fill: TICK_COLOR }} />
-                   </Bar>
-                   
-                </ComposedChart>
-              </ResponsiveContainer>
-            )}
-            <div className="flex items-center gap-4 mt-2 justify-center">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Suplementar"] }} /><span className="text-[10px] text-muted-foreground">Suplementar</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS["Não Produtivo"] }} /><span className="text-[10px] text-muted-foreground">Não Produtivo</span></div>
-            </div>
-          </div>
-        </div>
 
         {/* Causas Externas de Parada */}
         {externalCausas.length > 0 && (
@@ -1917,79 +1781,6 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </ChartZoomDialog>
 
-        {/* Função */}
-        <ChartZoomDialog title="Produtividade por Função" subtitle="Ordenado por produtividade — clique para filtrar" open={zoomChart === "funcao"} onOpenChange={(o) => !o && setZoomChart(null)}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byFunction} margin={{ bottom: 40 }} onClick={handleFunctionClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip shared={false} content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
-                const data = item?.payload;
-                if (!data || !item) return null;
-                const desc = item.dataKey as string;
-                const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
-                const raw = data[`raw_${desc}`] || 0;
-                return (
-                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                    <strong style={{ fontSize: 14, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 12 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block" }} />
-                      <span style={{ flex: 1 }}>{desc}</span>
-                      <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-                    </div>
-                  </div>
-                );
-              }} />
-              <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
-              {allDescriptions.map((desc, i) => (
-                <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartZoomDialog>
-
-        {/* Não Produtividade */}
-        <ChartZoomDialog title="Causas de Não Produtividade" subtitle="Registros Suplementar e Não Produtivo" open={zoomChart === "naoprod"} onOpenChange={(o) => !o && setZoomChart(null)}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={nonprodCausas} margin={{ left: 10, right: 10, bottom: 80 }} onClick={handleNonprodClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey="name" tick={(props: any) => {
-                const { x, y, payload } = props;
-                return (
-                  <text x={x} y={y + 10} textAnchor="end" fill={TICK_COLOR} fontSize={11} transform={`rotate(-45, ${x}, ${y})`}>
-                    {payload.value.length > 30 ? payload.value.slice(0, 30) + "…" : payload.value}
-                  </text>
-                );
-              }} interval={0} height={100} />
-              <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const data = payload[0]?.payload;
-                if (!data) return null;
-                return (
-                  <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
-                    <strong style={{ fontSize: 14 }}>{data.name}</strong>
-                    <div style={{ fontSize: 12, lineHeight: 1.8, marginTop: 6 }}>
-                      <div>Categoria: <strong>{data.cat}</strong></div>
-                      <div>Quantidade: <strong>{data.value}</strong></div>
-                      <div>Percentual: <strong>{data.percent}%</strong></div>
-                    </div>
-                  </div>
-                );
-              }} />
-              <Bar dataKey="percent" name="Percentual" radius={[4, 4, 0, 0]} className="cursor-pointer">
-                {nonprodCausas.map((item, i) => (
-                  <Cell key={i} fill={getDescColor(item.name)} />
-                ))}
-                <LabelList dataKey="percent" position="top" formatter={(v: number) => `${v}%`} style={{ fontSize: 11, fill: TICK_COLOR }} />
-              </Bar>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartZoomDialog>
 
         {/* Causas Externas */}
         <ChartZoomDialog title="Causas Externas de Parada" subtitle="Eventos fora do controle da equipe" open={zoomChart === "externas"} onOpenChange={(o) => !o && setZoomChart(null)}>

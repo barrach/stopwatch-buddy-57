@@ -5,10 +5,7 @@ export interface ChartImages {
   categoria?: string;
   paretoCategoria?: string;
   paretoEspecialidade?: string;
-  paretoFuncao?: string;
   especialidade?: string;
-  funcao?: string;
-  naoprod?: string;
   externas?: string;
   tempoHorario?: string;
   tempoDiaSemana?: string;
@@ -24,8 +21,6 @@ const STATIC_CHART_IDS = [
   "contrato",
   "categoria",
   "especialidade",
-  "funcao",
-  "naoprod",
   "externas",
 ] as const;
 
@@ -142,8 +137,8 @@ async function captureElement(cardEl: HTMLElement): Promise<{ data: string; widt
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
-  setParetoMode: (mode: "categoria" | "especialidade" | "funcao") => void,
-  currentParetoMode: "categoria" | "especialidade" | "funcao",
+  setParetoMode: (mode: "categoria" | "especialidade") => void,
+  currentParetoMode: "categoria" | "especialidade",
 ): Promise<{ images: ChartImages; dimensions: ChartDimensions }> {
   const images: ChartImages = {};
   const dimensions: ChartDimensions = {};
@@ -163,10 +158,9 @@ export async function captureAllCharts(
   }
 
   // Capture Pareto — all 3 variants
-  const paretoModes: Array<{ mode: "categoria" | "especialidade" | "funcao"; key: keyof ChartImages }> = [
+  const paretoModes: Array<{ mode: "categoria" | "especialidade"; key: keyof ChartImages }> = [
     { mode: "categoria", key: "paretoCategoria" },
     { mode: "especialidade", key: "paretoEspecialidade" },
-    { mode: "funcao", key: "paretoFuncao" },
   ];
 
   for (const { mode, key } of paretoModes) {
