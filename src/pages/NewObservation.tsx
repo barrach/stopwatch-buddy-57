@@ -22,7 +22,7 @@ import { addToQueue } from "@/lib/offlineQueue";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
-  funcaoId: string; categoriaId: string; descricao: string; quantity: string; notes: string;
+  categoriaId: string; descricao: string; quantity: string; notes: string;
 }
 
 export default function NewObservation() {
