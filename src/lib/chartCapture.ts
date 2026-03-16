@@ -12,6 +12,7 @@ export interface ChartImages {
   tempoMes?: string;
 }
 
+/** Stores original pixel dimensions of each captured chart */
 export interface ChartDimensions {
   [key: string]: { width: number; height: number };
 }
@@ -24,63 +25,115 @@ const STATIC_CHART_IDS = [
 ] as const;
 
 /**
- * Capture the FULL card element (chart + legend together).
- * Temporarily clean visual noise (shadows, borders, dark backgrounds).
+ * Finds the inner chart element (recharts container/wrapper or svg) inside a card,
+ * so we capture ONLY the chart — never the card background/shadow/border.
  */
-async function captureCard(cardEl: HTMLElement): Promise<{ data: string; width: number; height: number }> {
-  // Save and override styles for a clean white capture
-  const saved = new Map<HTMLElement, Record<string, string>>();
+function findChartElement(cardEl: HTMLElement): HTMLElement {
+  // Priority: recharts-responsive-container > recharts-wrapper > svg > card
+  const responsive = cardEl.querySelector(".recharts-responsive-container") as HTMLElement;
+  if (responsive) return responsive;
+  const wrapper = cardEl.querySelector(".recharts-wrapper") as HTMLElement;
+  if (wrapper) return wrapper;
+  const svg = cardEl.querySelector("svg.recharts-surface") as HTMLElement;
+  if (svg) return svg;
+  return cardEl;
+}
 
-  const clean = (el: HTMLElement) => {
-    const orig: Record<string, string> = {};
-    const props = ["background", "backgroundColor", "boxShadow", "border", "borderRadius", "outline"] as const;
-    for (const p of props) orig[p] = el.style[p as any];
-    el.style.background = "#ffffff";
-    el.style.backgroundColor = "#ffffff";
-    el.style.boxShadow = "none";
-    el.style.border = "none";
-    el.style.borderRadius = "0";
-    el.style.outline = "none";
-    saved.set(el, orig);
+/**
+ * Temporarily strip ALL card/dashboard styles so the capture is clean:
+ * white background, no shadow, no border, no border-radius.
+ * Also cleans all ancestor elements up to the card boundary.
+ */
+function applyCleanStyles(el: HTMLElement): () => void {
+  const restoreFns: Array<() => void> = [];
+
+  // Clean the card element itself
+  const cleanElement = (target: HTMLElement) => {
+    const orig = {
+      background: target.style.background,
+      backgroundColor: target.style.backgroundColor,
+      boxShadow: target.style.boxShadow,
+      border: target.style.border,
+      borderRadius: target.style.borderRadius,
+      outline: target.style.outline,
+    };
+    target.style.background = "white";
+    target.style.backgroundColor = "#ffffff";
+    target.style.boxShadow = "none";
+    target.style.border = "none";
+    target.style.borderRadius = "0";
+    target.style.outline = "none";
+
+    restoreFns.push(() => {
+      target.style.background = orig.background;
+      target.style.backgroundColor = orig.backgroundColor;
+      target.style.boxShadow = orig.boxShadow;
+      target.style.border = orig.border;
+      target.style.borderRadius = orig.borderRadius;
+      target.style.outline = orig.outline;
+    });
   };
 
-  clean(cardEl);
-  // Also clean 2 ancestor levels (grid wrappers may add shadow)
-  let parent = cardEl.parentElement;
-  for (let i = 0; i < 2 && parent; i++) {
-    const cs = window.getComputedStyle(parent);
-    if (cs.boxShadow !== "none" || cs.borderRadius !== "0px") clean(parent);
+  cleanElement(el);
+
+  // Also clean immediate parent containers that may add visual noise
+  let parent = el.parentElement;
+  let depth = 0;
+  while (parent && depth < 3) {
+    const computed = window.getComputedStyle(parent);
+    if (computed.boxShadow !== "none" || computed.borderRadius !== "0px") {
+      cleanElement(parent);
+    }
     parent = parent.parentElement;
+    depth++;
   }
 
-  await new Promise((r) => setTimeout(r, 600));
+  return () => {
+    restoreFns.forEach((fn) => fn());
+  };
+}
 
-  const canvas = await html2canvas(cardEl, {
+async function captureElement(cardEl: HTMLElement): Promise<{ data: string; width: number; height: number }> {
+  const chartEl = findChartElement(cardEl);
+
+  // Temporarily clean the card wrapper and parent styles
+  const restoreCard = applyCleanStyles(cardEl);
+
+  // Wait for chart animations/renders to fully settle (500ms as specified)
+  await new Promise((r) => setTimeout(r, 500));
+
+  const canvas = await html2canvas(chartEl, {
     backgroundColor: "#FFFFFF",
-    scale: 3,
+    scale: 4,
     logging: false,
     useCORS: true,
     allowTaint: true,
     scrollX: 0,
     scrollY: 0,
-    windowWidth: cardEl.scrollWidth,
-    windowHeight: cardEl.scrollHeight,
-    width: cardEl.scrollWidth,
-    height: cardEl.scrollHeight,
+    windowWidth: chartEl.scrollWidth,
+    windowHeight: chartEl.scrollHeight,
+    width: chartEl.scrollWidth,
+    height: chartEl.scrollHeight,
   });
 
-  // Restore
-  for (const [el, orig] of saved) {
-    for (const [k, v] of Object.entries(orig)) (el.style as any)[k] = v;
-  }
+  // Restore original styles
+  restoreCard();
+
+  // Apply light compression (quality 0.95)
+  const data = canvas.toDataURL("image/png", 0.95);
 
   return {
-    data: canvas.toDataURL("image/png", 0.92),
-    width: cardEl.scrollWidth,
-    height: cardEl.scrollHeight,
+    data,
+    width: chartEl.scrollWidth,
+    height: chartEl.scrollHeight,
   };
 }
 
+/**
+ * Captures all dashboard charts as base64 PNG images.
+ * Captures ONLY the inner chart element (not the card wrapper).
+ * Returns both images and their original dimensions for proper aspect ratio in exports.
+ */
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
@@ -90,51 +143,61 @@ export async function captureAllCharts(
   const images: ChartImages = {};
   const dimensions: ChartDimensions = {};
 
-  // Static charts
+  // Capture static charts
   for (const id of STATIC_CHART_IDS) {
     const el = document.getElementById(`chart-${id}`);
     if (el) {
       try {
-        const r = await captureCard(el);
-        images[id] = r.data;
-        dimensions[id] = { width: r.width, height: r.height };
-      } catch (e) { console.warn(`Capture chart-${id} failed:`, e); }
+        const result = await captureElement(el);
+        images[id] = result.data;
+        dimensions[id] = { width: result.width, height: result.height };
+      } catch (e) {
+        console.warn(`Failed to capture chart-${id}:`, e);
+      }
     }
   }
 
-  // Pareto variants
-  for (const { mode, key } of [
-    { mode: "categoria" as const, key: "paretoCategoria" as keyof ChartImages },
-    { mode: "especialidade" as const, key: "paretoEspecialidade" as keyof ChartImages },
-  ]) {
+  // Capture Pareto — all 3 variants
+  const paretoModes: Array<{ mode: "categoria" | "especialidade"; key: keyof ChartImages }> = [
+    { mode: "categoria", key: "paretoCategoria" },
+    { mode: "especialidade", key: "paretoEspecialidade" },
+  ];
+
+  for (const { mode, key } of paretoModes) {
     setParetoMode(mode);
     await new Promise((r) => setTimeout(r, 1200));
     const el = document.getElementById("chart-pareto");
     if (el) {
       try {
-        const r = await captureCard(el);
-        images[key] = r.data;
-        dimensions[key as string] = { width: r.width, height: r.height };
-      } catch (e) { console.warn(`Capture pareto ${mode} failed:`, e); }
+        const result = await captureElement(el);
+        images[key] = result.data;
+        dimensions[key as string] = { width: result.width, height: result.height };
+      } catch (e) {
+        console.warn(`Failed to capture chart-pareto (${mode}):`, e);
+      }
     }
   }
   setParetoMode(currentParetoMode);
 
-  // Time variants
-  for (const { mode, key } of [
-    { mode: "horario" as const, key: "tempoHorario" as keyof ChartImages },
-    { mode: "diasemana" as const, key: "tempoDiaSemana" as keyof ChartImages },
-    { mode: "mes" as const, key: "tempoMes" as keyof ChartImages },
-  ]) {
+  // Capture time charts — all 3 variants
+  const timeModes: Array<{ mode: "horario" | "diasemana" | "mes"; key: keyof ChartImages }> = [
+    { mode: "horario", key: "tempoHorario" },
+    { mode: "diasemana", key: "tempoDiaSemana" },
+    { mode: "mes", key: "tempoMes" },
+  ];
+
+  for (const { mode, key } of timeModes) {
     setTimeViewMode(mode);
     await new Promise((r) => setTimeout(r, 1200));
     const el = document.getElementById("chart-tempo");
     if (el) {
       try {
-        const r = await captureCard(el);
-        images[key] = r.data;
-        dimensions[key as string] = { width: r.width, height: r.height };
-      } catch (e) { console.warn(`Capture tempo ${mode} failed:`, e); }
+        const result = await captureElement(el);
+        images[key] = result.data;
+        dimensions[key as string] = { width: result.width, height: result.height };
+      } catch (e) {
+        console.warn(`Failed to capture chart-tempo (${mode}):`, e);
+      }
     }
   }
   setTimeViewMode(currentTimeViewMode);
