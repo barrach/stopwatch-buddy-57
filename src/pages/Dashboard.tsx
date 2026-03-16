@@ -822,13 +822,6 @@ export default function Dashboard() {
         else byEsp[espName].naoProd += qty;
       }
 
-      // Per function (exclude external)
-      if (!isExt) {
-        const fName = (r as any).funcoes?.nome || "Sem função";
-        if (!byFunc[fName]) byFunc[fName] = { prod: 0, total: 0 };
-        byFunc[fName].total += qty;
-        if (cat === "Produtivo") byFunc[fName].prod += qty;
-      }
 
       // Per hour
       const h = r.horario || "";
