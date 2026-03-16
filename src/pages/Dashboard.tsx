@@ -121,6 +121,7 @@ const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando movimentação de carga": "Assistindo",
 };
 const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
+const canonicalDescription = (desc: string): string => displayName(desc);
 
 // Map description to its unique color — single source of truth for ALL charts
 const getDescColor = (desc: string): string => {
@@ -628,61 +629,32 @@ export default function Dashboard() {
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
   // Build ordered description lists strictly from canonical order
   // Only include descriptions that exist in the data, but always in canonical order
-  const allDescriptions = useMemo(() => {
-    const descs = new Set<string>();
-    records.forEach((r: any) => descs.add(r.descricao || "Sem descrição"));
-    // Map data descriptions to their canonical display names for matching
-    const normalizedDescs = new Set(Array.from(descs).map(d => displayName(d)));
-    // Start with canonical order, then append any unknown descriptions
-    const ordered: string[] = [];
-    const usedRaw = new Set<string>();
-    for (const canonical of CANONICAL_ORDER_FULL) {
-      // Find matching raw description in data
-      const raw = Array.from(descs).find(d => displayName(d) === canonical);
-      if (raw) { ordered.push(raw); usedRaw.add(raw); }
-    }
-    // Append any descriptions not in canonical order
-    for (const d of descs) {
-      if (!usedRaw.has(d)) ordered.push(d);
-    }
-    return ordered;
-  }, [records]);
+  const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
-  // Descriptions excluding NPE (for non-contrato charts) — same strict canonical order
-  const nonNpeDescriptions = useMemo(() => {
-    const descs = new Set<string>();
-    records.forEach((r: any) => {
-      if (isExternalRecord(r)) return;
-      descs.add(r.descricao || "Sem descrição");
-    });
-    const ordered: string[] = [];
-    const usedRaw = new Set<string>();
-    for (const canonical of CANONICAL_ORDER) {
-      const raw = Array.from(descs).find(d => displayName(d) === canonical);
-      if (raw) { ordered.push(raw); usedRaw.add(raw); }
-    }
-    for (const d of descs) {
-      if (!usedRaw.has(d)) ordered.push(d);
-    }
-    return ordered;
-  }, [records, isExternalRecord]);
+  // Fixed canonical order for all stacked charts and legends.
+  // Non-applicable categories simply stay at 0% and remain in their explicit positions.
+  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      // Include NPE but allow exclusion for comparison
-      if (npeExclude && isExternalRecord(r) && r.descricao === npeExclude) return;
+      if (npeExclude && isExternalRecord(r) && canonicalDescription(r.descricao || "Sem descrição") === npeExclude) return;
       const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[oName]) {
+        result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[oName][desc] = (result[oName][desc] || 0) + qty;
+      if (desc in result[oName]) {
+        result[oName][desc] = (result[oName][desc] || 0) + qty;
+      }
     });
     return Object.entries(result)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
+        for (const desc of CANONICAL_ORDER_FULL) {
+          const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
@@ -699,9 +671,9 @@ export default function Dashboard() {
   const npeDescList = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) descs.add(r.descricao || "");
+      if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
-    return Array.from(descs).filter(Boolean);
+    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && (desc === "Causas Naturais" || desc === "Vazamento / Interferência da Planta" || desc === "Aguardando Liberação de PT"));
   }, [records, isExternalRecord]);
 
 
@@ -713,17 +685,22 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!result[sName]) result[sName] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[sName]) {
+        result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[sName][desc] = (result[sName][desc] || 0) + qty;
+      if (desc in result[sName]) {
+        result[sName][desc] = (result[sName][desc] || 0) + qty;
+      }
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
+        for (const desc of CANONICAL_ORDER_FULL) {
+          const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
@@ -751,14 +728,17 @@ export default function Dashboard() {
         const d = new Date(r.data + "T12:00:00");
         key = MONTH_NAMES[d.getMonth()];
       }
-      if (!result[key]) result[key] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[key]) {
+        result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[key][desc] = (result[key][desc] || 0) + qty;
+      if (desc in result[key]) {
+        result[key][desc] = (result[key][desc] || 0) + qty;
+      }
     });
 
     const entries = Object.entries(result);
-    // Sort
     if (timeViewMode === "horario") {
       entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
     } else if (timeViewMode === "diasemana") {
@@ -770,7 +750,8 @@ export default function Dashboard() {
     return entries.map(([label, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
       const row: any = { time: label, total };
-      for (const [desc, qty] of Object.entries(descs)) {
+      for (const desc of CANONICAL_ORDER_FULL) {
+        const qty = descs[desc] || 0;
         row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
         row[`raw_${desc}`] = qty;
       }
