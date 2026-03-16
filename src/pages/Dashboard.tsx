@@ -64,31 +64,44 @@ const getSpecialtyColor = (name: string): string => {
   return color;
 };
 
-// ── Per-description unique colors (maximally distinct) ──────────
+// ── Canonical stacking order (bottom → top) — FIXED for all charts ──
+const CANONICAL_ORDER: string[] = [
+  "Trabalhando",
+  "Planejando",
+  "Aguardando Ferramenta ou Material",
+  "Transitando no local de trabalho - com ferramenta",
+  "Transitando no local de trabalho - sem ferramenta",
+  "Transitando fora do local de trabalho - com ferramenta",
+  "Transitando fora do local de trabalho - sem ferramenta",
+  "Assistindo",
+  "Aguardando Liberação de PT",
+  "Pessoal",
+  "Ocioso",
+];
+
+// ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
-  // Produtivo — tons de AZUL
-  "Trabalhando": "#2563EB",       // azul principal
-  "Planejando": "#60A5FA",        // azul claro
-  // Suplementar — tons de VERDE
-  "Aguardando Instruções": "#16A34A",           // verde
-  "Assistindo": "#15803D",                       // verde escuro
-  "Aguardando Movimentação de Carga": "#15803D", // alias → Assistindo
-  "Aguardando movimentação de carga": "#15803D", // alias → Assistindo
-  "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
-  "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
-  "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
-  "Transitando fora do local de trabalho - com ferramenta": "#22C55E", // verde médio
-  "Transitando fora do local de trabalho - sem ferramenta": "#A3E635", // verde lima
-  "Preparando, Organizando": "#65A30D",          // verde oliva
-  // Não Produtivo — tons de VERMELHO
-  "Pessoal": "#DC2626",           // vermelho
-  "Ocioso": "#F87171",            // vermelho claro
-  "Retrabalho": "#9F1239",        // bordô
-  "Deslocamento": "#B91C1C",      // vermelho escuro
-  // NPE (Não Produtivo Externo) — tons de ROXO
-  "Causas Naturais": "#A855F7",                  // violeta
-  "Vazamento / Interferência da Planta": "#7C3AED", // roxo
-  "Aguardando Liberação de PT": "#FFFFFF",        // branco
+  "Trabalhando": "#2563EB",
+  "Planejando": "#60A5FA",
+  "Aguardando Ferramenta ou Material": "#4ADE80",
+  "Transitando no local de trabalho - com ferramenta": "#22C55E",
+  "Transitando no local de trabalho - sem ferramenta": "#16A34A",
+  "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
+  "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo": "#15803D",
+  "Aguardando Movimentação de Carga": "#15803D",
+  "Aguardando movimentação de carga": "#15803D",
+  "Aguardando Liberação de PT": "#FFFFFF",
+  "Pessoal": "#EF4444",
+  "Ocioso": "#DC2626",
+  // NPE extras
+  "Causas Naturais": "#A855F7",
+  "Vazamento / Interferência da Planta": "#7C3AED",
+  // Legacy
+  "Aguardando Instruções": "#16A34A",
+  "Preparando, Organizando": "#65A30D",
+  "Retrabalho": "#9F1239",
+  "Deslocamento": "#B91C1C",
 };
 
 // Display name normalization — renames legacy names for UI
@@ -103,16 +116,40 @@ const getDescColor = (desc: string): string => {
   const normalized = displayName(desc);
   if (DESCRIPTION_COLORS[normalized]) return DESCRIPTION_COLORS[normalized];
   if (DESCRIPTION_COLORS[desc]) return DESCRIPTION_COLORS[desc];
-  // Fallback: try to find partial match
   for (const [key, color] of Object.entries(DESCRIPTION_COLORS)) {
     if (desc.toLowerCase().includes(key.toLowerCase())) return color;
   }
   return "#6B7280";
 };
+// Legend text color: use gray for white items so text is readable
+const getLegendTextColor = (desc: string): string => {
+  const c = getDescColor(desc);
+  return c === "#FFFFFF" ? "#9CA3AF" : c;
+};
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
   if (descricao) return getDescColor(descricao);
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
+
+// Helper: render Bar components from a description list with proper stroke for white bars
+const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boolean) =>
+  descriptions.map((desc, i) => {
+    const color = getDescColor(desc);
+    const isWhite = color === "#FFFFFF";
+    return (
+      <Bar
+        key={desc}
+        dataKey={desc}
+        name={displayName(desc)}
+        fill={color}
+        stackId="a"
+        className="cursor-pointer"
+        stroke={isWhite ? "#D1D5DB" : undefined}
+        strokeWidth={isWhite ? 1 : undefined}
+        radius={(isLast ? isLast(i) : i === descriptions.length - 1) ? [4, 4, 0, 0] : undefined}
+      />
+    );
+  });
 
 const tooltipStyle: React.CSSProperties = {
   background: "#111827", border: "1px solid #374151",
@@ -444,33 +481,22 @@ export default function Dashboard() {
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
-  const DESCRIPTION_CATEGORY_ORDER: Record<string, number> = {
-    // Produtivo
-    "Trabalhando": 0, "Planejando": 1,
-    // Suplementar
-    "Aguardando Instruções": 10, "Assistindo": 11,
-    "Aguardando Ferramenta ou Material": 12,
-    "Transitando no local de trabalho - com ferramenta": 14,
-    "Transitando no local de trabalho - sem ferramenta": 15,
-    "Transitando fora do local de trabalho - com ferramenta": 16,
-    "Transitando fora do local de trabalho - sem ferramenta": 17,
-    "Preparando, Organizando": 18,
-    // Não Produtivo
-    "Pessoal": 20, "Ocioso": 21, "Retrabalho": 22, "Deslocamento": 23,
-    // NPE
-    "Causas Naturais": 30, "Vazamento / Interferência da Planta": 31, "Aguardando Liberação de PT": 32,
+  // Sort descriptions using canonical order
+  const sortByCanonical = (a: string, b: string) => {
+    const dispA = displayName(a);
+    const dispB = displayName(b);
+    const idxA = CANONICAL_ORDER.indexOf(dispA);
+    const idxB = CANONICAL_ORDER.indexOf(dispB);
+    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
   };
+
   const allDescriptions = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
       const desc = r.descricao || "Sem descrição";
       descs.add(desc);
     });
-    return Array.from(descs).sort((a, b) => {
-      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
-      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
-      return orderA - orderB;
-    });
+    return Array.from(descs).sort(sortByCanonical);
   }, [records]);
 
   // Descriptions excluding NPE (for non-contrato charts)
@@ -481,11 +507,7 @@ export default function Dashboard() {
       const desc = r.descricao || "Sem descrição";
       descs.add(desc);
     });
-    return Array.from(descs).sort((a, b) => {
-      const orderA = DESCRIPTION_CATEGORY_ORDER[a] ?? 99;
-      const orderB = DESCRIPTION_CATEGORY_ORDER[b] ?? 99;
-      return orderA - orderB;
-    });
+    return Array.from(descs).sort(sortByCanonical);
   }, [records, isExternalRecord]);
 
   const byObra = useMemo(() => {
@@ -1280,11 +1302,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
-                  {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
-                      radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
-                    />
-                  ))}
+                  {renderStackedBars(allDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1296,7 +1314,7 @@ export default function Dashboard() {
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
                     style={{ backgroundColor: getDescColor(desc) }}
                   />
-                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1472,10 +1490,7 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  {nonNpeDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(nonNpeDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1483,7 +1498,7 @@ export default function Dashboard() {
               {nonNpeDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1636,10 +1651,7 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  {nonNpeDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(nonNpeDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1647,7 +1659,7 @@ export default function Dashboard() {
               {nonNpeDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1665,10 +1677,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
                   <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
-                  {allDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescColor(desc)} stackId="a" className="cursor-pointer"
-                      radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(allDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1676,7 +1685,7 @@ export default function Dashboard() {
               {allDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1782,10 +1791,7 @@ export default function Dashboard() {
                       </div>
                     );
                   }} />
-                  {nonNpeDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(nonNpeDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1793,7 +1799,7 @@ export default function Dashboard() {
               {nonNpeDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
@@ -1858,10 +1864,7 @@ export default function Dashboard() {
                       </div>
                     );
                   }} />
-                  {nonNpeDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(nonNpeDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1869,7 +1872,7 @@ export default function Dashboard() {
               {nonNpeDescriptions.map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
