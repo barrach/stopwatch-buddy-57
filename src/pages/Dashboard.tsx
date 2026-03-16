@@ -85,9 +85,9 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Causas Naturais",
   "Vazamento / Interferência da Planta",
 ];
-// Without NPE (used for Especialidade + Tempo charts)
+// Without NPE (used for Especialidade + Tempo charts) — excludes all 3 NPE categories
 const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta"
+  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta" && d !== "Aguardando Liberação de PT"
 );
 
 // ── Per-description unique colors (engessadas) ──────────
@@ -631,9 +631,8 @@ export default function Dashboard() {
   // Only include descriptions that exist in the data, but always in canonical order
   const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
-  // Fixed canonical order for all stacked charts and legends.
-  // Non-applicable categories simply stay at 0% and remain in their explicit positions.
-  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
+  // Without NPE categories — used for Especialidade + Tempo charts
+  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER, []);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
