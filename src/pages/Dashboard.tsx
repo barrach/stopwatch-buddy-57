@@ -73,7 +73,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Instruções": "#16A34A",           // verde
   "Assistindo": "#15803D",                       // verde escuro
   "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
-  "Aguardando Movimentação de Carga": "#059669",  // esmeralda
   "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
   "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
   "Transitando fora do local de trabalho - com ferramenta": "#22C55E", // verde médio
