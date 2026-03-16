@@ -680,16 +680,9 @@ export default function Records() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Especialidade</Label>
-              <Select value={editForm.especialidade_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, especialidade_id: v, funcao_id: "" }))}>
+              <Select value={editForm.especialidade_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, especialidade_id: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{especialidades.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Função</Label>
-              <Select value={editForm.funcao_id || ""} onValueChange={v => setEditForm((f: any) => ({ ...f, funcao_id: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>{editFilteredFuncoes.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
