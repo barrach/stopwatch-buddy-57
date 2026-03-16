@@ -65,9 +65,12 @@ const getSpecialtyColor = (name: string): string => {
 };
 
 // ── Canonical stacking order (bottom → top) — FIXED for all charts ──
-const CANONICAL_ORDER: string[] = [
+// Full order including NPE (used for Contrato chart)
+const CANONICAL_ORDER_FULL: string[] = [
+  // Produtivo
   "Trabalhando",
   "Planejando",
+  // Suplementar
   "Aguardando Ferramenta ou Material",
   "Transitando no local de trabalho - com ferramenta",
   "Transitando no local de trabalho - sem ferramenta",
@@ -75,9 +78,17 @@ const CANONICAL_ORDER: string[] = [
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
   "Aguardando Liberação de PT",
+  // Não Produtivo
   "Pessoal",
   "Ocioso",
+  // Não Produtivo Externo
+  "Causas Naturais",
+  "Vazamento / Interferência da Planta",
 ];
+// Without NPE (used for Especialidade + Tempo charts)
+const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
+  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta"
+);
 
 // ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
