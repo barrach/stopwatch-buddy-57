@@ -119,6 +119,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
+  "Aguardando Liberação de PT": "Aguardando Liberação",
+  "Vazamento / Interferência da Planta": "Aguardando Liberação",
 };
 const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
 const canonicalDescription = (desc: string): string => displayName(desc);
