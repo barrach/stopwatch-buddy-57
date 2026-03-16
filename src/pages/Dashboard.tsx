@@ -85,9 +85,9 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Causas Naturais",
   "Vazamento / Interferência da Planta",
 ];
-// Without NPE (used for Especialidade + Tempo charts)
+// Without NPE (used for Especialidade + Tempo charts) — excludes all 3 NPE categories
 const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta"
+  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta" && d !== "Aguardando Liberação de PT"
 );
 
 // ── Per-description unique colors (engessadas) ──────────
