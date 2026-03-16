@@ -63,17 +63,6 @@ export default function NewObservation() {
     ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
   );
 
-  const { data: funcoes = [] } = useOfflineQuery<{ id: string; nome: string; especialidade_id: string | null }>(
-    ["funcoes", "ativas"], "funcoes" as any, "id, nome, especialidade_id",
-    [{ column: "status", value: "Ativo" }], "nome"
-  );
-
-  const filteredFuncoes = useMemo(
-    () => especialidadeId
-      ? funcoes.filter((f) => f.especialidade_id === especialidadeId || !f.especialidade_id)
-      : funcoes,
-    [funcoes, especialidadeId]
-  );
 
   const parentCategorias = useMemo(
     () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
