@@ -127,6 +127,26 @@ const getDescriptionCategoryColor = (cat: string, descricao?: string): string =>
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
+// Helper: render Bar components from a description list with proper stroke for white bars
+const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boolean) =>
+  descriptions.map((desc, i) => {
+    const color = getDescColor(desc);
+    const isWhite = color === "#FFFFFF";
+    return (
+      <Bar
+        key={desc}
+        dataKey={desc}
+        name={displayName(desc)}
+        fill={color}
+        stackId="a"
+        className="cursor-pointer"
+        stroke={isWhite ? "#D1D5DB" : undefined}
+        strokeWidth={isWhite ? 1 : undefined}
+        radius={(isLast ? isLast(i) : i === descriptions.length - 1) ? [4, 4, 0, 0] : undefined}
+      />
+    );
+  });
+
 const tooltipStyle: React.CSSProperties = {
   background: "#111827", border: "1px solid #374151",
   borderRadius: "8px", color: "#F9FAFB", fontSize: "12px",
