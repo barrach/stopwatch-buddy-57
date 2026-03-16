@@ -1331,7 +1331,7 @@ export default function Dashboard() {
             </div>
             {/* Legenda lateral */}
             <div className="lg:w-48 flex flex-col gap-1.5">
-              {allDescriptions.map((desc) => (
+              {[...allDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span 
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
