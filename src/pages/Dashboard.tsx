@@ -1452,7 +1452,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
-            <div className="min-w-0 flex-[1.8]">
+            <div className="min-w-0 flex-[3]">
               <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
                 <BarChart data={byObra} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleContratoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1463,7 +1463,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="xl:w-60 xl:max-w-60 shrink-0">
+            <div className="xl:w-48 xl:max-w-48 shrink-0">
               {renderLegendList([...allDescriptions].reverse())}
             </div>
           </div>
