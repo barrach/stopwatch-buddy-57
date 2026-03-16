@@ -95,7 +95,7 @@ export default function NewObservation() {
       }
       // Save last observation for repeat
       setLastObs({
-        time, rotaId, obraId, especialidadeId, funcaoId, categoriaId, descricao, quantity, notes,
+        time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
       });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
