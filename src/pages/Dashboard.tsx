@@ -151,7 +151,7 @@ const isLightColor = (hex: string): boolean => {
   return (r * 299 + g * 587 + b * 114) / 1000 > 180;
 };
 
-const STACKED_CHART_HEIGHT = 500;
+const STACKED_CHART_HEIGHT = 480;
 const STACKED_CHART_MARGIN = { top: 36, right: 12, bottom: 20, left: 0 };
 const ZOOM_STACKED_CHART_MARGIN = { top: 44, right: 20, bottom: 30, left: 0 };
 
@@ -212,11 +212,11 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
 };
 
 const renderLegendList = (descriptions: string[]) => (
-  <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: STACKED_CHART_HEIGHT }}>
+  <div className="flex flex-col gap-[5px] overflow-y-auto pr-1" style={{ maxHeight: STACKED_CHART_HEIGHT }}>
     {descriptions.map((desc) => (
       <div key={desc} className="flex items-center gap-2">
         <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-        <span className="text-[13px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+        <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
       </div>
     ))}
   </div>
@@ -1464,7 +1464,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...allDescriptions].reverse())}
+              {renderLegendList(allDescriptions)}
             </div>
           </div>
         </div>
@@ -1656,7 +1656,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...nonNpeDescriptions].reverse())}
+              {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
         </div>
@@ -1800,7 +1800,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...nonNpeDescriptions].reverse())}
+              {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
         </div>
@@ -1821,7 +1821,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...allDescriptions].reverse())}
+              {renderLegendList(allDescriptions)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -1929,7 +1929,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...nonNpeDescriptions].reverse())}
+              {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -1995,7 +1995,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
-              {renderLegendList([...nonNpeDescriptions].reverse())}
+              {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
         </ChartZoomDialog>
