@@ -1584,10 +1584,10 @@ export default function Dashboard() {
             </div>
             <ZoomButton onClick={() => setZoomChart("especialidade")} />
           </div>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height={480}>
-                <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-4">
+            <div className="min-w-0 flex-[1.8]">
+              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
+                <BarChart data={bySpecialty} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
                   <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
@@ -1616,13 +1616,8 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="lg:w-48 flex flex-col gap-1.5">
-              {[...nonNpeDescriptions].reverse().map((desc) => (
-                <div key={desc} className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-                </div>
-              ))}
+            <div className="xl:w-60 xl:max-w-60 shrink-0">
+              {renderLegendBlocks([...nonNpeDescriptions].reverse())}
             </div>
           </div>
         </div>
