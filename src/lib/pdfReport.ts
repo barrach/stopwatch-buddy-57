@@ -174,25 +174,86 @@ function stripTags(text: string): string {
    AI ANALYSIS PARSING
    ═══════════════════════════════════════════════════════════ */
 
+function normalizeBlockText(text: string): string {
+  return text.replace(/\r\n/g, "\n").trim();
+}
+
+function getFirstMatchIndex(text: string, patterns: RegExp[]): number {
+  const indexes = patterns
+    .map((pattern) => text.search(pattern))
+    .filter((index) => index >= 0);
+
+  return indexes.length ? Math.min(...indexes) : -1;
+}
+
+function trimAtNestedMarker(text: string, patterns: RegExp[]): string {
+  const index = getFirstMatchIndex(text, patterns);
+  return index >= 0 ? text.slice(0, index).trim() : text.trim();
+}
+
+function extractInferredSection(text: string, startPattern: RegExp, endPatterns: RegExp[]): string {
+  const start = text.search(startPattern);
+  if (start < 0) return "";
+
+  const slice = text.slice(start);
+  const end = getFirstMatchIndex(slice, endPatterns);
+  return (end >= 0 ? slice.slice(0, end) : slice).trim();
+}
+
 function parseAnalysis(aiText: string): AnalysisSections {
+  const normalized = normalizeBlockText(aiText);
   const sections: AnalysisSections = {};
-  if (!aiText?.trim()) return sections;
-  const regex = /===\s*([A-Z_]+)\s*===\s*\n([\s\S]*?)(?=\n===\s*[A-Z_]+\s*===|$)/g;
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(aiText)) !== null) {
-    sections[match[1].trim()] = match[2].trim();
+  if (!normalized) return sections;
+
+  const topLevelRegex = /(?:^|\n)\s*===\s*(RESUMO|CONTRATO|CATEGORIA|PARETO(?:_ESPECIALIDADE|_FUNCAO)?|ESPECIALIDADE|FUNCAO|NAO_PRODUTIVO|EXTERNO|HORARIO|DIA_SEMANA|MES|RECOMENDACOES)\s*===\s*\n/gi;
+  const markers = [...normalized.matchAll(topLevelRegex)].map((match) => ({
+    key: match[1].trim().toUpperCase(),
+    start: match.index ?? 0,
+    contentStart: (match.index ?? 0) + match[0].length,
+  }));
+
+  for (let i = 0; i < markers.length; i++) {
+    const current = markers[i];
+    const next = markers[i + 1];
+    sections[current.key] = normalized.slice(current.contentStart, next?.start ?? normalized.length).trim();
   }
-  if (!Object.keys(sections).length) sections.GERAL = aiText.trim();
+
+  if (!sections.HORARIO) {
+    sections.HORARIO = extractInferredSection(normalized, /(?:^|\n)\s*===\s*HORA\s*:/i, [
+      /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
+      /(?:^|\n)\s*===\s*MES\s*===/i,
+      /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
+    ]);
+  }
+
+  if (!sections.DIA_SEMANA) {
+    sections.DIA_SEMANA = extractInferredSection(normalized, /(?:^|\n)\s*===\s*DIA\s*:/i, [
+      /(?:^|\n)\s*===\s*MES\s*===/i,
+      /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
+    ]);
+  }
+
+  sections.EXTERNO = trimAtNestedMarker(sections.EXTERNO || "", [
+    /(?:^|\n)\s*===\s*HORA\s*:/i,
+    /(?:^|\n)\s*===\s*DIA\s*:/i,
+    /(?:^|\n)\s*===\s*MES\s*:/i,
+  ]);
+
+  if (!Object.keys(sections).some((key) => sections[key]?.trim())) {
+    sections.GERAL = normalized;
+  }
+
   return sections;
 }
 
-function parseTimedBlocks(text: string, marker: "HORA" | "DIA"): TimedBlock[] {
-  const normalized = text.replace(/\r\n/g, "\n").trim();
+function parseTimedBlocks(text: string, marker: "HORA" | "DIA" | "MES"): TimedBlock[] {
+  const normalized = normalizeBlockText(text);
   if (!normalized) return [];
   const blocks: TimedBlock[] = [];
 
   const strictRegex = new RegExp(
-    `(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`, "gi"
+    `(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`,
+    "gi"
   );
   let match: RegExpExecArray | null;
   while ((match = strictRegex.exec(normalized)) !== null) {
@@ -209,6 +270,14 @@ function parseTimedBlocks(text: string, marker: "HORA" | "DIA"): TimedBlock[] {
   if (!blocks.length && marker === "DIA") {
     const dayPattern = WEEKDAY_ORDER.map((d) => d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
     const fb = new RegExp(`(?:^|\\n)\\s*(${dayPattern})\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:${dayPattern})\\s*\\n|$)`, "gi");
+    while ((match = fb.exec(normalized)) !== null) {
+      blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
+    }
+  }
+
+  if (!blocks.length && marker === "MES") {
+    const monthPattern = MONTH_ORDER.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const fb = new RegExp(`(?:^|\\n)\\s*(${monthPattern})\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:${monthPattern})\\s*\\n|$)`, "gi");
     while ((match = fb.exec(normalized)) !== null) {
       blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
     }
