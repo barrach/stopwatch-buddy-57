@@ -1711,7 +1711,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {timeLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
