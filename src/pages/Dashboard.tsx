@@ -64,31 +64,44 @@ const getSpecialtyColor = (name: string): string => {
   return color;
 };
 
-// ── Per-description unique colors (maximally distinct) ──────────
+// ── Canonical stacking order (bottom → top) — FIXED for all charts ──
+const CANONICAL_ORDER: string[] = [
+  "Trabalhando",
+  "Planejando",
+  "Aguardando Ferramenta ou Material",
+  "Transitando no local de trabalho - com ferramenta",
+  "Transitando no local de trabalho - sem ferramenta",
+  "Transitando fora do local de trabalho - com ferramenta",
+  "Transitando fora do local de trabalho - sem ferramenta",
+  "Assistindo",
+  "Aguardando Liberação de PT",
+  "Pessoal",
+  "Ocioso",
+];
+
+// ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
-  // Produtivo — tons de AZUL
-  "Trabalhando": "#2563EB",       // azul principal
-  "Planejando": "#60A5FA",        // azul claro
-  // Suplementar — tons de VERDE
-  "Aguardando Instruções": "#16A34A",           // verde
-  "Assistindo": "#15803D",                       // verde escuro
-  "Aguardando Movimentação de Carga": "#15803D", // alias → Assistindo
-  "Aguardando movimentação de carga": "#15803D", // alias → Assistindo
-  "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
-  "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
-  "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
-  "Transitando fora do local de trabalho - com ferramenta": "#22C55E", // verde médio
-  "Transitando fora do local de trabalho - sem ferramenta": "#A3E635", // verde lima
-  "Preparando, Organizando": "#65A30D",          // verde oliva
-  // Não Produtivo — tons de VERMELHO
-  "Pessoal": "#DC2626",           // vermelho
-  "Ocioso": "#F87171",            // vermelho claro
-  "Retrabalho": "#9F1239",        // bordô
-  "Deslocamento": "#B91C1C",      // vermelho escuro
-  // NPE (Não Produtivo Externo) — tons de ROXO
-  "Causas Naturais": "#A855F7",                  // violeta
-  "Vazamento / Interferência da Planta": "#7C3AED", // roxo
-  "Aguardando Liberação de PT": "#FFFFFF",        // branco
+  "Trabalhando": "#2563EB",
+  "Planejando": "#60A5FA",
+  "Aguardando Ferramenta ou Material": "#4ADE80",
+  "Transitando no local de trabalho - com ferramenta": "#22C55E",
+  "Transitando no local de trabalho - sem ferramenta": "#16A34A",
+  "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
+  "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo": "#15803D",
+  "Aguardando Movimentação de Carga": "#15803D",
+  "Aguardando movimentação de carga": "#15803D",
+  "Aguardando Liberação de PT": "#FFFFFF",
+  "Pessoal": "#EF4444",
+  "Ocioso": "#DC2626",
+  // NPE extras
+  "Causas Naturais": "#A855F7",
+  "Vazamento / Interferência da Planta": "#7C3AED",
+  // Legacy
+  "Aguardando Instruções": "#16A34A",
+  "Preparando, Organizando": "#65A30D",
+  "Retrabalho": "#9F1239",
+  "Deslocamento": "#B91C1C",
 };
 
 // Display name normalization — renames legacy names for UI
