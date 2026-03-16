@@ -79,7 +79,7 @@ export default function Records() {
   const parentCategorias = useMemo(() => allCategorias.filter(c => !c.categoria_pai_id && c.status === "Ativo"), [allCategorias]);
   const editSubcategorias = useMemo(() => {
     if (!editForm.categoria_id) return [];
-    return allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo");
+    return normalizeDescriptionOptions(allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo"));
   }, [allCategorias, editForm.categoria_id]);
 
   const { data: obras = [] } = useQuery({
