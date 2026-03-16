@@ -629,44 +629,11 @@ export default function Dashboard() {
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
   // Build ordered description lists strictly from canonical order
   // Only include descriptions that exist in the data, but always in canonical order
-  const allDescriptions = useMemo(() => {
-    const descs = new Set<string>();
-    records.forEach((r: any) => descs.add(r.descricao || "Sem descrição"));
-    // Map data descriptions to their canonical display names for matching
-    const normalizedDescs = new Set(Array.from(descs).map(d => displayName(d)));
-    // Start with canonical order, then append any unknown descriptions
-    const ordered: string[] = [];
-    const usedRaw = new Set<string>();
-    for (const canonical of CANONICAL_ORDER_FULL) {
-      // Find matching raw description in data
-      const raw = Array.from(descs).find(d => displayName(d) === canonical);
-      if (raw) { ordered.push(raw); usedRaw.add(raw); }
-    }
-    // Append any descriptions not in canonical order
-    for (const d of descs) {
-      if (!usedRaw.has(d)) ordered.push(d);
-    }
-    return ordered;
-  }, [records]);
+  const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
-  // Descriptions excluding NPE (for non-contrato charts) — same strict canonical order
-  const nonNpeDescriptions = useMemo(() => {
-    const descs = new Set<string>();
-    records.forEach((r: any) => {
-      if (isExternalRecord(r)) return;
-      descs.add(r.descricao || "Sem descrição");
-    });
-    const ordered: string[] = [];
-    const usedRaw = new Set<string>();
-    for (const canonical of CANONICAL_ORDER) {
-      const raw = Array.from(descs).find(d => displayName(d) === canonical);
-      if (raw) { ordered.push(raw); usedRaw.add(raw); }
-    }
-    for (const d of descs) {
-      if (!usedRaw.has(d)) ordered.push(d);
-    }
-    return ordered;
-  }, [records, isExternalRecord]);
+  // Fixed canonical order for all stacked charts and legends.
+  // Non-applicable categories simply stay at 0% and remain in their explicit positions.
+  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
