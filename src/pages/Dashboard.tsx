@@ -1189,11 +1189,6 @@ export default function Dashboard() {
                 Horário: {crossFilters.horario} <X className="w-3 h-3" />
               </Badge>
             )}
-            {crossFilters.funcao && (
-              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("funcao", crossFilters.funcao!)}>
-                Função: {crossFilters.funcao} <X className="w-3 h-3" />
-              </Badge>
-            )}
             {crossFilters.descricao && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("descricao", crossFilters.descricao!)}>
                 Descrição: {crossFilters.descricao} <X className="w-3 h-3" />
