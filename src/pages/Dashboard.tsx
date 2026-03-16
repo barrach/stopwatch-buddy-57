@@ -1779,7 +1779,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%' }}>
+            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
               {renderLegendList(nonNpeDescriptions)}
             </div>
           </div>
