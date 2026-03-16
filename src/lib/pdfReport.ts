@@ -175,14 +175,14 @@ function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
 function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
   const blocks: Array<{ hour: string; content: string }> = [];
   const normalized = text.replace(/\r\n/g, "\n");
-  
+
   // Try === HORA: XX:XX === format first
   const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
   let m;
   while ((m = regex.exec(normalized)) !== null) {
     blocks.push({ hour: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
   }
-  
+
   // Fallback: try **XX:00** or bold hour patterns
   if (blocks.length === 0) {
     const hourRegex = /(?:^|\n)\s*\*?\*?(\d{1,2}:\d{2})\*?\*?\s*\n([\s\S]*?)(?=\n\s*\*?\*?\d{1,2}:\d{2}\*?\*?\s*\n|$)/gi;
@@ -190,7 +190,7 @@ function parseHourBlocks(text: string): Array<{ hour: string; content: string }>
       blocks.push({ hour: m[1].trim(), content: stripInternalTags(m[2]) });
     }
   }
-  
+
   if (blocks.length === 0 && normalized.trim()) {
     blocks.push({ hour: "", content: stripInternalTags(normalized) });
   }
@@ -209,27 +209,24 @@ function computeLegendData(
   descriptions: string[]
 ): Array<{ name: string; color: string; percent: number }> {
   if (rows.length === 0) return [];
-  
-  // Sum raw values across all rows to get overall percentages
+
   const totals: Record<string, number> = {};
   let grandTotal = 0;
-  
+
   for (const desc of descriptions) {
     let sum = 0;
     for (const row of rows) {
-      // Use raw values if available, otherwise use percentage * total to reconstruct
       const rawKey = `raw_${desc}`;
       if (rawKey in row) {
         sum += row[rawKey] || 0;
       } else {
-        // Rows have percentage values and total
         sum += ((row[desc] || 0) / 100) * (row.total || 0);
       }
     }
     totals[desc] = sum;
     grandTotal += sum;
   }
-  
+
   return descriptions
     .map(name => ({
       name,
@@ -246,9 +243,9 @@ export function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210;
   const H = 297;
-  const margin = 20;
-  const contentW = W - margin * 2; // 170mm
-  const maxChartH = 100;
+  const margin = 14;
+  const contentW = W - margin * 2; // 182mm
+  const maxChartH = 110;
   let pageNum = 0;
   let curY = 0;
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
@@ -256,6 +253,10 @@ export function generatePDFReport(data: PDFReportData) {
   const images = data.chartImages || {};
   const dims = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
+
+  // ── Proportions: 65% chart, 35% legend ──
+  const CHART_RATIO = 0.65;
+  const LEGEND_RATIO = 0.35;
 
   // ── Layout helpers ──
   const addNewPage = () => {
@@ -266,35 +267,36 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const ensureSpace = (needed: number) => {
-    if (curY + needed > H - 15) {
+    if (curY + needed > H - 12) {
       addNewPage();
-      curY = 14;
+      curY = 12;
     }
   };
 
   const drawSectionHeader = (title: string) => {
-    ensureSpace(14);
-    curY += 4;
+    ensureSpace(12);
+    curY += 2;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin, curY, contentW, 10, 1, 1, "F");
     doc.setFontSize(12);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
     doc.text(title, margin + 4, curY + 7);
-    curY += 12;
+    curY += 11;
   };
 
   const drawSubHeader = (title: string) => {
     const cleanName = normalizeInternalTitle(title);
-    ensureSpace(14);
-    curY += 3;
+    if (!cleanName) return;
+    ensureSpace(12);
+    curY += 2;
     doc.setFillColor(...C.sectionBg);
     doc.roundedRect(margin + 2, curY, contentW - 4, 8, 1, 1, "F");
     doc.setFontSize(10);
     doc.setTextColor(...C.white);
     doc.setFont("helvetica", "bold");
     doc.text(cleanName, margin + 6, curY + 5.5);
-    curY += 10;
+    curY += 9;
   };
 
   const drawAnalysisBox = (text: string) => {
@@ -331,10 +333,10 @@ export function generatePDFReport(data: PDFReportData) {
 
     let lineIdx = 0;
     while (lineIdx < allLines.length) {
-      const availH = H - 15 - curY;
+      const availH = H - 12 - curY;
       if (availH < 16) {
         addNewPage();
-        curY = 14;
+        curY = 12;
       }
 
       const chunkStartY = curY;
@@ -343,7 +345,7 @@ export function generatePDFReport(data: PDFReportData) {
 
       while (lineIdx < allLines.length) {
         const needed = lineH + allLines[lineIdx].gapAfter;
-        if (chunkY + needed > H - 15) break;
+        if (chunkY + needed > H - 12) break;
         chunkLines.push({ text: allLines[lineIdx].text, y: chunkY });
         chunkY += needed;
         lineIdx++;
@@ -382,17 +384,17 @@ export function generatePDFReport(data: PDFReportData) {
         }
       }
 
-      curY = chunkStartY + chunkH + 2;
+      curY = chunkStartY + chunkH + 1;
       isFirstChunk = false;
     }
   };
 
-  /** Draw chart image preserving aspect ratio */
-  const drawChart = (chartImage: string | undefined, dimKey: string, legendW: number = 0): { chartW: number; chartH: number } => {
+  /** Draw chart image preserving aspect ratio — uses CHART_RATIO width */
+  const drawChart = (chartImage: string | undefined, dimKey: string, hasLegend: boolean): { chartW: number; chartH: number } => {
     if (!chartImage) return { chartW: 0, chartH: 0 };
     const dim = dims[dimKey];
-    const availableW = contentW - legendW;
-    let chartW = availableW;
+    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
+    let chartW = chartAreaW;
     let chartH: number;
 
     if (dim && dim.width > 0) {
@@ -403,65 +405,72 @@ export function generatePDFReport(data: PDFReportData) {
         chartW = chartH / aspectRatio;
       }
     } else {
-      chartH = availableW * 0.55;
+      chartH = chartAreaW * 0.55;
     }
 
     try {
-      const xOffset = margin;
-      doc.addImage(chartImage, "PNG", xOffset, curY, chartW, chartH);
+      doc.addImage(chartImage, "PNG", margin, curY, chartW, chartH);
     } catch (e) {
       console.warn("Failed to add chart image:", e);
     }
     return { chartW, chartH };
   };
 
-  /** Draw legend next to chart — readable size */
+  /** Draw legend next to chart — 35% width, readable fonts */
   const drawLegend = (
     legendItems: Array<{ name: string; color: string; percent: number }>,
-    chartX: number,
-    chartY: number,
+    legendX: number,
+    legendY: number,
     chartH: number,
     legendW: number
   ) => {
     if (legendItems.length === 0) return;
-    const x = chartX + 3;
+    const x = legendX + 3;
+    const availLegendW = legendW - 6;
     const maxItems = legendItems.length;
-    const itemH = Math.min(5.5, Math.max(3.5, (chartH - 6) / maxItems));
-    const fontSize = Math.min(7.5, Math.max(5.5, itemH * 0.8));
-    let y = chartY + 2;
+
+    // Font size: aim for ~4.2pt (≈12px at 72dpi), min 3.5pt
+    const itemH = Math.min(7, Math.max(4.5, (chartH - 4) / maxItems));
+    const fontSize = Math.min(4.2, Math.max(3.2, itemH * 0.65));
+    let y = legendY + 1;
 
     for (const item of legendItems) {
-      // Color swatch
+      if (y + itemH > legendY + chartH) break; // don't overflow chart area
+
       const rgb = hexToRgb(item.color);
       const isWhite = item.color.toUpperCase() === "#FFFFFF";
-      const swatchH = Math.min(3.5, itemH - 1);
-      const swatchW = 4;
-      
+      const swatchSize = Math.min(3, itemH - 1);
+
       doc.setFillColor(...rgb);
       if (isWhite) {
         doc.setDrawColor(200, 200, 200);
-        doc.roundedRect(x, y, swatchW, swatchH, 0.4, 0.4, "FD");
+        doc.roundedRect(x, y + 0.3, swatchSize, swatchSize, 0.3, 0.3, "FD");
       } else {
-        doc.roundedRect(x, y, swatchW, swatchH, 0.4, 0.4, "F");
+        doc.roundedRect(x, y + 0.3, swatchSize, swatchSize, 0.3, 0.3, "F");
       }
 
-      // Percentage right-aligned first to know space
+      // Percentage right-aligned
       const pctText = `${item.percent}%`;
       doc.setFontSize(fontSize);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...C.textDark);
       const pctW = doc.getTextWidth(pctText);
-      doc.text(pctText, chartX + legendW - pctW - 1, y + swatchH - 0.3);
+      const rightEdge = legendX + legendW - 2;
+      doc.text(pctText, rightEdge - pctW, y + swatchSize);
 
-      // Name text
+      // Name left-aligned after swatch
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...C.textDark);
-      const maxNameW = legendW - swatchW - pctW - 10;
+      if (isWhite) {
+        doc.setTextColor(156, 163, 175); // gray for white items
+      } else {
+        doc.setTextColor(...C.textDark);
+      }
+      const nameMaxW = availLegendW - swatchSize - pctW - 6;
       let displayText = item.name;
-      while (doc.getTextWidth(displayText) > maxNameW && displayText.length > 8) {
+      while (doc.getTextWidth(displayText) > nameMaxW && displayText.length > 6) {
         displayText = displayText.substring(0, displayText.length - 2) + "…";
       }
-      doc.text(displayText, x + swatchW + 1.5, y + swatchH - 0.3);
+      doc.text(displayText, x + swatchSize + 1.5, y + swatchSize);
 
       y += itemH;
     }
@@ -475,42 +484,43 @@ export function generatePDFReport(data: PDFReportData) {
     dimKey: string,
     legendItems: Array<{ name: string; color: string; percent: number }>
   ) => {
-    // Estimate chart height
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 70 : 0;
-    const chartAvailW = contentW - legendW;
-    let estChartH = chartAvailW * 0.55;
+    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
+    let estChartH = chartAreaW * 0.55;
     if (dim && dim.width > 0) {
       const ar = dim.height / dim.width;
-      estChartH = Math.min(chartAvailW * ar, maxChartH);
+      estChartH = Math.min(chartAreaW * ar, maxChartH);
     }
-    
-    const totalNeeded = 12 + estChartH + 4;
-    if (curY + totalNeeded > H - 15) {
+
+    // Only break page if we truly can't fit title + chart
+    const titleH = 12;
+    const totalNeeded = titleH + estChartH + 2;
+    if (curY + totalNeeded > H - 12) {
       addNewPage();
-      curY = 14;
+      curY = 12;
     }
 
     drawSectionHeader(title);
 
-    // Chart + Legend side by side
     const chartStartY = curY;
-    const { chartW, chartH } = drawChart(chartImage, dimKey, legendW);
+    const { chartW, chartH } = drawChart(chartImage, dimKey, hasLegend);
 
     if (hasLegend && chartH > 0) {
-      drawLegend(legendItems, margin + chartW, chartStartY, chartH, legendW);
+      const legendW = contentW * LEGEND_RATIO;
+      const legendX = margin + chartW;
+      drawLegend(legendItems, legendX, chartStartY, chartH, legendW);
     }
 
     if (chartH > 0) {
-      curY = chartStartY + chartH + 4;
+      curY = chartStartY + chartH + 2;
     }
 
-    // Analysis after chart
+    // Analysis AFTER chart
     if (analysisText) drawAnalysisBox(analysisText);
   };
 
-  /** Chart section with individual sub-blocks (hours/days) */
+  /** Chart section with individual sub-blocks (hours/days) — blocks AFTER chart */
   const drawChartWithBlocks = (
     title: string,
     chartImage: string | undefined,
@@ -520,38 +530,41 @@ export function generatePDFReport(data: PDFReportData) {
   ) => {
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 70 : 0;
-    const chartAvailW = contentW - legendW;
-    let estChartH = chartAvailW * 0.55;
+    const chartAreaW = hasLegend ? contentW * CHART_RATIO : contentW;
+    let estChartH = chartAreaW * 0.55;
     if (dim && dim.width > 0) {
       const ar = dim.height / dim.width;
-      estChartH = Math.min(chartAvailW * ar, maxChartH);
+      estChartH = Math.min(chartAreaW * ar, maxChartH);
     }
 
-    const totalNeeded = 12 + estChartH + 4;
-    if (curY + totalNeeded > H - 15) {
+    const titleH = 12;
+    const totalNeeded = titleH + estChartH + 2;
+    if (curY + totalNeeded > H - 12) {
       addNewPage();
-      curY = 14;
+      curY = 12;
     }
 
     drawSectionHeader(title);
 
+    // Chart + Legend
     const chartStartY = curY;
-    const { chartW, chartH } = drawChart(chartImage, dimKey, legendW);
+    const { chartW, chartH } = drawChart(chartImage, dimKey, hasLegend);
 
     if (hasLegend && chartH > 0) {
-      drawLegend(legendItems, margin + chartW, chartStartY, chartH, legendW);
+      const legendW = contentW * LEGEND_RATIO;
+      const legendX = margin + chartW;
+      drawLegend(legendItems, legendX, chartStartY, chartH, legendW);
     }
 
     if (chartH > 0) {
-      curY = chartStartY + chartH + 4;
+      curY = chartStartY + chartH + 2;
     }
 
     // Individual blocks AFTER chart
     for (const block of blocks) {
       if (block.label) drawSubHeader(block.label);
       drawAnalysisBox(block.content);
-      curY += 2;
+      curY += 1;
     }
   };
 
@@ -570,7 +583,7 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Contrato: ${data.obra || "Todos os Contratos"} | Período: ${data.periodo}`, margin, 22);
   doc.setFontSize(8);
   doc.text(`Gerado em: ${dateStr}`, margin, 28);
-  curY = 38;
+  curY = 36;
 
   // ═══════════════════════════════════════
   // 2. KPIs
@@ -602,7 +615,7 @@ export function generatePDFReport(data: PDFReportData) {
     doc.setFont("helvetica", "normal");
     doc.text(kpi.label, x + 4, curY + 18);
   });
-  curY += 26;
+  curY += 24;
 
   if (analysis["RESUMO"]) drawAnalysisBox(analysis["RESUMO"]);
 
@@ -615,7 +628,7 @@ export function generatePDFReport(data: PDFReportData) {
   const legendDiaSemana = data.byTimeDiaSemana ? computeLegendData(data.byTimeDiaSemana, CANONICAL_ORDER) : [];
   const legendMes = data.byTimeMes ? computeLegendData(data.byTimeMes, CANONICAL_ORDER) : [];
 
-  // Pareto legend: each category with its color and percent
+  // Pareto legend: each cause with its color and percent
   const legendPareto: Array<{ name: string; color: string; percent: number }> = data.nonprodCausas
     .filter(c => c.percent > 0)
     .map(c => ({
@@ -747,7 +760,6 @@ export function generatePDFReport(data: PDFReportData) {
   if (recText) {
     const recBlocks = parseRecommendationBlocks(recText);
     if (recBlocks.length > 0) {
-      // Estimate first block height to keep title + first block together
       const firstBlock = recBlocks[0];
       const firstFields = [
         { label: `PROBLEMA 1 — ${firstBlock.title}`, value: firstBlock.problema },
@@ -788,7 +800,7 @@ export function generatePDFReport(data: PDFReportData) {
         if (bi > 0) {
           doc.setDrawColor(...C.cardBorder);
           doc.line(margin + 4, curY, margin + contentW - 4, curY);
-          curY += 4;
+          curY += 3;
         }
 
         doc.setFillColor(...C.sectionBg);
@@ -814,7 +826,7 @@ export function generatePDFReport(data: PDFReportData) {
           doc.text(wrapped, margin + 10, curY + 3);
           curY += wrapped.length * 3.5 + 3;
         }
-        curY += 4;
+        curY += 3;
       }
     } else {
       drawSectionHeader("Conclusões e Recomendações");
