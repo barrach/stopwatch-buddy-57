@@ -638,19 +638,23 @@ export default function Dashboard() {
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      // Include NPE but allow exclusion for comparison
-      if (npeExclude && isExternalRecord(r) && r.descricao === npeExclude) return;
+      if (npeExclude && isExternalRecord(r) && canonicalDescription(r.descricao || "Sem descrição") === npeExclude) return;
       const oName = (r.obras as any)?.nome || "Sem contrato";
-      if (!result[oName]) result[oName] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[oName]) {
+        result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[oName][desc] = (result[oName][desc] || 0) + qty;
+      if (desc in result[oName]) {
+        result[oName][desc] = (result[oName][desc] || 0) + qty;
+      }
     });
     return Object.entries(result)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
+        for (const desc of CANONICAL_ORDER_FULL) {
+          const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
@@ -667,9 +671,9 @@ export default function Dashboard() {
   const npeDescList = useMemo(() => {
     const descs = new Set<string>();
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) descs.add(r.descricao || "");
+      if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
-    return Array.from(descs).filter(Boolean);
+    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && (desc === "Causas Naturais" || desc === "Vazamento / Interferência da Planta" || desc === "Aguardando Liberação de PT"));
   }, [records, isExternalRecord]);
 
 
@@ -681,17 +685,22 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!result[sName]) result[sName] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[sName]) {
+        result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[sName][desc] = (result[sName][desc] || 0) + qty;
+      if (desc in result[sName]) {
+        result[sName][desc] = (result[sName][desc] || 0) + qty;
+      }
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
+        for (const desc of CANONICAL_ORDER_FULL) {
+          const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
@@ -719,14 +728,17 @@ export default function Dashboard() {
         const d = new Date(r.data + "T12:00:00");
         key = MONTH_NAMES[d.getMonth()];
       }
-      if (!result[key]) result[key] = {};
-      const desc = r.descricao || "Sem descrição";
+      if (!result[key]) {
+        result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+      }
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
-      result[key][desc] = (result[key][desc] || 0) + qty;
+      if (desc in result[key]) {
+        result[key][desc] = (result[key][desc] || 0) + qty;
+      }
     });
 
     const entries = Object.entries(result);
-    // Sort
     if (timeViewMode === "horario") {
       entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
     } else if (timeViewMode === "diasemana") {
@@ -738,7 +750,8 @@ export default function Dashboard() {
     return entries.map(([label, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
       const row: any = { time: label, total };
-      for (const [desc, qty] of Object.entries(descs)) {
+      for (const desc of CANONICAL_ORDER_FULL) {
+        const qty = descs[desc] || 0;
         row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
         row[`raw_${desc}`] = qty;
       }
