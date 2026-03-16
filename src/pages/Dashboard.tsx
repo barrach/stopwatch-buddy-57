@@ -72,6 +72,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   // Suplementar — tons de VERDE
   "Aguardando Instruções": "#16A34A",           // verde
   "Assistindo": "#15803D",                       // verde escuro
+  "Aguardando Movimentação de Carga": "#15803D", // alias → Assistindo
+  "Aguardando movimentação de carga": "#15803D", // alias → Assistindo
   "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
   "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
   "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
@@ -89,8 +91,17 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Liberação de PT": "#FFFFFF",        // branco
 };
 
+// Display name normalization — renames legacy names for UI
+const DISPLAY_NAME_MAP: Record<string, string> = {
+  "Aguardando Movimentação de Carga": "Assistindo",
+  "Aguardando movimentação de carga": "Assistindo",
+};
+const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
+
 // Map description to its unique color — single source of truth for ALL charts
 const getDescColor = (desc: string): string => {
+  const normalized = displayName(desc);
+  if (DESCRIPTION_COLORS[normalized]) return DESCRIPTION_COLORS[normalized];
   if (DESCRIPTION_COLORS[desc]) return DESCRIPTION_COLORS[desc];
   // Fallback: try to find partial match
   for (const [key, color] of Object.entries(DESCRIPTION_COLORS)) {
