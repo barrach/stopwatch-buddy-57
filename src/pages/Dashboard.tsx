@@ -152,18 +152,20 @@ const isLightColor = (hex: string): boolean => {
   return (r * 299 + g * 587 + b * 114) / 1000 > 180;
 };
 
-// Custom label renderer for inside-bar percentages — always show
+// Custom label renderer for inside-bar percentages — always show all values
 const BarPercentLabel = (props: any) => {
   const { x, y, width, height, value, fill } = props;
-  if (value === undefined || value === null || value === 0 || !width || !height) return null;
-  const fitsInside = height >= 12 && width >= 20;
+  if (value === undefined || value === null || value === 0 || !width) return null;
+  const h = height || 0;
+  const fitsInside = h >= 13 && width >= 28;
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
+  // Always render — inside if fits, above if not
   return (
     <text
       x={x + width / 2}
-      y={fitsInside ? y + height / 2 : y - 3}
-      fill={fitsInside ? textColor : "#D1D5DB"}
-      fontSize={fitsInside ? 9 : 7}
+      y={fitsInside ? y + h / 2 : y - 2}
+      fill={fitsInside ? textColor : "#9CA3AF"}
+      fontSize={fitsInside ? 9 : 8}
       fontWeight={600}
       textAnchor="middle"
       dominantBaseline={fitsInside ? "middle" : "auto"}
