@@ -1608,13 +1608,6 @@ export default function Dashboard() {
                     );
                   }}
                 />
-                <Legend
-                  wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }}
-                  formatter={(value: string) => {
-                    const item = externalCausas.find((c: any) => c.name === value);
-                    return `${value} — ${item?.percent ?? 0}%`;
-                  }}
-                />
               </PieChart>
             </ResponsiveContainer>
           </div>
