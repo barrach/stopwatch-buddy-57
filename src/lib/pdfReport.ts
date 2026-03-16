@@ -509,7 +509,7 @@ export function generatePDFReport(data: PDFReportData) {
   ) => {
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 58 : 0;
+    const legendW = hasLegend ? 70 : 0;
     const chartAvailW = contentW - legendW;
     let estChartH = chartAvailW * 0.55;
     if (dim && dim.width > 0) {
@@ -536,7 +536,7 @@ export function generatePDFReport(data: PDFReportData) {
       curY = chartStartY + chartH + 4;
     }
 
-    // Individual blocks after chart
+    // Individual blocks AFTER chart
     for (const block of blocks) {
       if (block.label) drawSubHeader(block.label);
       drawAnalysisBox(block.content);
