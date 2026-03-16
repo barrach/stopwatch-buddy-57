@@ -282,10 +282,11 @@ const renderCategoryPieLabel = ({ cx, cy, midAngle, outerRadius, percent }: any)
   );
 };
 
-const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
-  // percent is already a value like 0.686, so multiply by 100 to get 68.6
-  const safePercent = Number((percent * 100).toFixed(1));
-  if (safePercent <= 0) return null;
+const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, name, value, payload }: any) => {
+  // Use the pre-calculated percent from our data (already in 0-100 range)
+  // Recharts' own `percent` prop gets overridden by our data's `percent` field
+  const dataPercent = payload?.percent;
+  if (!dataPercent || dataPercent <= 0) return null;
 
   const radius = (outerRadius || 0) + 22;
   const radians = Math.PI / 180;
@@ -306,7 +307,7 @@ const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }
       strokeWidth={3}
       paintOrder="stroke"
     >
-      {`${name} ${safePercent}%`}
+      {`${name} ${dataPercent}%`}
     </text>
   );
 };
