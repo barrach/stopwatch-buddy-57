@@ -679,7 +679,6 @@ export default function Dashboard() {
         externoPct: aiStats.externoPct,
         byObra,
         bySpecialty,
-        byFunction,
         nonprodCausas,
         externalCausas,
         categoryTotals,
