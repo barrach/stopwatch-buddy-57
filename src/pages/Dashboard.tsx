@@ -1296,7 +1296,7 @@ export default function Dashboard() {
                     className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
                     style={{ backgroundColor: getDescColor(desc) }}
                   />
-                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{desc}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
                 </div>
               ))}
             </div>
