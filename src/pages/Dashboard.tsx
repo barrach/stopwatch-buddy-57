@@ -438,7 +438,7 @@ export default function Dashboard() {
     "Trabalhando": 0, "Planejando": 1,
     // Suplementar
     "Aguardando Instruções": 10, "Assistindo": 11,
-    "Aguardando Ferramenta ou Material": 12, "Aguardando Movimentação de Carga": 13,
+    "Aguardando Ferramenta ou Material": 12,
     "Transitando no local de trabalho - com ferramenta": 14,
     "Transitando no local de trabalho - sem ferramenta": 15,
     "Transitando fora do local de trabalho - com ferramenta": 16,
