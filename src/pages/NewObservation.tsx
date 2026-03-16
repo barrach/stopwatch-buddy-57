@@ -36,7 +36,7 @@ export default function NewObservation() {
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
-  const [funcaoId, setFuncaoId] = useState("");
+  
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
