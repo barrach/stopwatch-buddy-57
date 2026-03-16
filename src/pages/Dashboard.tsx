@@ -191,61 +191,28 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
 
   const h = Math.max(Number(height) || 0, 1);
   const w = Math.max(Number(width) || 0, 1);
-  const fitsInside = h >= 16 && w >= 32;
-  const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
   const label = numVal.toFixed(1) + "%";
 
-  if (fitsInside) {
-    return (
-      <text
-        x={x + w / 2}
-        y={y + h / 2}
-        fill={textColor}
-        fontSize={Math.min(11, h * 0.55)}
-        fontWeight={700}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        paintOrder="stroke"
-        stroke={textColor === "#FFFFFF" ? "rgba(17,24,39,0.5)" : "rgba(255,255,255,0.7)"}
-        strokeWidth={2.5}
-        style={{ pointerEvents: "none" }}
-      >
-        {label}
-      </text>
-    );
-  }
-
-  // Outside label with background rect for readability
-  const fontSize = 8.5;
-  const textWidth = label.length * 5.2;
-  const textHeight = 12;
-  const labelX = x + w / 2;
-  const labelY = Math.max(y - 2, 14);
+  // Always place label centered inside the segment, regardless of size
+  const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
+  const fontSize = h >= 16 ? Math.min(11, h * 0.55) : 7.5;
 
   return (
-    <g style={{ pointerEvents: "none" }}>
-      <rect
-        x={labelX - textWidth / 2 - 2}
-        y={labelY - textHeight + 1}
-        width={textWidth + 4}
-        height={textHeight + 1}
-        rx={2}
-        fill="hsl(var(--background))"
-        fillOpacity={0.85}
-      />
-      <text
-        x={labelX}
-        y={labelY}
-        fill="hsl(var(--foreground))"
-        fontSize={fontSize}
-        fontWeight={700}
-        textAnchor="middle"
-        dominantBaseline="auto"
-        style={{ pointerEvents: "none" }}
-      >
-        {label}
-      </text>
-    </g>
+    <text
+      x={x + w / 2}
+      y={y + h / 2}
+      fill={textColor}
+      fontSize={fontSize}
+      fontWeight={700}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      paintOrder="stroke"
+      stroke={textColor === "#FFFFFF" ? "rgba(17,24,39,0.5)" : "rgba(255,255,255,0.7)"}
+      strokeWidth={h >= 16 ? 2.5 : 2}
+      style={{ pointerEvents: "none" }}
+    >
+      {label}
+    </text>
   );
 };
 
