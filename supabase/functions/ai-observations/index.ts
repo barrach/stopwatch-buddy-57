@@ -216,7 +216,24 @@ Diagnóstico e interpretação.
 NUNCA pule nenhum dia que tenha dados. NUNCA use números de amostras. Compare com a média geral da obra, SEM citar benchmarks numéricos.
 
 ===MES===
-Análise da produtividade % mensal. Identifique tendências de melhora ou piora ao longo do tempo.
+OBRIGATÓRIO: Análise INDIVIDUAL para CADA mês que tenha dados, SEPARADA POR MARCADOR DE MÊS.
+Use o formato EXATO abaixo — cada mês DEVE começar com ===MES:Nome=== para permitir renderização separada no PDF.
+
+===MES:Jan===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X% | NPE: X%
+Diagnóstico: [o que os dados mostram para este mês, comparando com a média geral].
+Interpretação: [tendência operacional do mês, evolução ou regressão das frentes].
+Ação recomendada: [ação específica para este mês].
+
+===MES:Fev===
+Produtividade: X% | Suplementar: X% | Não Produtivo: X% | NPE: X%
+Diagnóstico: [dados do mês].
+Interpretação: [contexto operacional].
+Ação recomendada: [ação específica].
+
+(continuar para CADA mês que possua dados)
+
+NUNCA pule nenhum mês que tenha dados. NUNCA use números de amostras. Compare com a média geral da obra, SEM citar benchmarks numéricos.
 
 ===RECOMENDACOES===
 5 recomendações concretas, cada uma como um BLOCO SEPARADO numerado.
