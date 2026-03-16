@@ -108,7 +108,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Ocioso": "#DC2626",
   // NPE extras
   "Causas Naturais": "#F97316",
-  "Vazamento / Interferência da Planta": "#EAB308",
+  "Vazamento / Interferência da Planta": "#FFFFFF",
   // Legacy
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",

@@ -173,7 +173,7 @@ export default function NewObservation() {
     setQuantity(lastObs.quantity);
     setNotes(lastObs.notes);
     // Set descricao after a tick so subcategorias recompute with the new categoriaId
-    setTimeout(() => setDescricao(lastObs.descricao), 50);
+    setTimeout(() => setDescricao(normalizeDescriptionName(lastObs.descricao)), 50);
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 

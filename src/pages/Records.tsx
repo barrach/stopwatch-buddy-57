@@ -152,7 +152,7 @@ export default function Records() {
     setEditRecord(r);
     setEditForm({
       data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
-      especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: r.descricao,
+      especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: normalizeDescriptionName(r.descricao),
       quantidade: r.quantidade, notas: r.notas || "",
     });
   };
