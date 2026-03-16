@@ -599,7 +599,7 @@ export default function Dashboard() {
         Contrato: (r.obras as any)?.nome || "",
         Rota: (r.rotas as any)?.nome || "",
         Especialidade: (r.especialidades as any)?.nome || "",
-        Função: (r as any).funcoes?.nome || "",
+        
         Categoria: getParentCatName(r),
         Descrição: r.descricao,
         Quantidade: r.quantidade,
