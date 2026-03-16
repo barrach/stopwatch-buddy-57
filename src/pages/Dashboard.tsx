@@ -309,12 +309,10 @@ export default function Dashboard() {
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
       if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
-      if (crossFilters.funcao && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.funcao) return false;
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
         if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
-        if (paretoMode === "funcao" && ((r as any).funcoes?.nome || "Sem função") !== crossFilters.pareto) return false;
       }
       return true;
     });
