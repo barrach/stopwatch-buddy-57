@@ -1733,12 +1733,8 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, payload, x, y, textAnchor }: any) => (
-                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
-                      {name} ({payload.percent.toFixed(1)}%)
-                    </text>
-                  )}
-                  labelLine={{ stroke: "#6B7280" }}
+                  label={renderExternalPieLabel}
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
                   {externalCausas.map((causa: any, i: number) => (
                     <Cell key={i} fill={getDescColor(causa.name)} />
