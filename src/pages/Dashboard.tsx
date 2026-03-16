@@ -530,7 +530,10 @@ export default function Dashboard() {
       if (crossFilters.rota && ((r.rotas as any)?.nome || "Sem rota") !== crossFilters.rota) return false;
       if (crossFilters.especialidade && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.especialidade) return false;
       if (crossFilters.contrato && ((r.obras as any)?.nome || "Sem contrato") !== crossFilters.contrato) return false;
-      if (crossFilters.horario && r.horario !== crossFilters.horario) return false;
+      if (crossFilters.tempo) {
+        const bucket = getTimeBucketLabel(r, crossFilters.tempoMode || "horario");
+        if (bucket !== crossFilters.tempo) return false;
+      }
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
