@@ -390,9 +390,10 @@ function buildModel(data: PDFReportData, analysis: AnalysisSections) {
   const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Causas Naturais", "Aguardando Liberações"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
+  const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);
   const recommendations = parseRecommendations(analysis.RECOMENDACOES || analysis.GERAL || "");
 
-  return { contractLegend, specialtyLegend, hourLegend, weekLegend, monthLegend, categoryLegend, npeLegend, hourBlocks, weekdayBlocks, recommendations };
+  return { contractLegend, specialtyLegend, hourLegend, weekLegend, monthLegend, categoryLegend, npeLegend, hourBlocks, weekdayBlocks, monthBlocks, recommendations };
 }
 
 /* ═══════════════════════════════════════════════════════════
