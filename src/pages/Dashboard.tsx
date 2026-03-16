@@ -77,17 +77,16 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberação de PT",
+  "Aguardando Liberação",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
   // Não Produtivo Externo
   "Causas Naturais",
-  "Vazamento / Interferência da Planta",
 ];
-// Without NPE (used for Especialidade + Tempo charts) — excludes all 3 NPE categories
+// Without NPE (used for Especialidade + Tempo charts) — excludes Causas Naturais only
 const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais" && d !== "Vazamento / Interferência da Planta" && d !== "Aguardando Liberação de PT"
+  d => d !== "Causas Naturais"
 );
 
 // ── Per-description unique colors (engessadas) ──────────
@@ -103,6 +102,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#FFFFFF",
+  "Aguardando Liberação": "#FFFFFF",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
@@ -119,6 +119,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
+  "Aguardando Liberação de PT": "Aguardando Liberação",
+  "Vazamento / Interferência da Planta": "Aguardando Liberação",
 };
 const displayName = (desc: string): string => DISPLAY_NAME_MAP[desc] || desc;
 const canonicalDescription = (desc: string): string => displayName(desc);
@@ -165,10 +167,10 @@ const DESCRIPTION_GROUPS = {
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
     "Assistindo",
-    "Aguardando Liberação de PT",
+    "Aguardando Liberação",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
-  "Não Produtivo Externo": ["Causas Naturais", "Vazamento / Interferência da Planta"],
+  "Não Produtivo Externo": ["Causas Naturais"],
 } as const;
 
 const DESCRIPTION_GROUP_ORDER = Object.keys(DESCRIPTION_GROUPS) as Array<keyof typeof DESCRIPTION_GROUPS>;
@@ -672,7 +674,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
-    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && (desc === "Causas Naturais" || desc === "Vazamento / Interferência da Planta" || desc === "Aguardando Liberação de PT"));
+    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Causas Naturais");
   }, [records, isExternalRecord]);
 
 
