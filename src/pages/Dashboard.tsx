@@ -275,11 +275,61 @@ const tooltipLabelStyle: React.CSSProperties = { color: "#F9FAFB" };
 const TICK_COLOR = "#9CA3AF";
 const GRID_COLOR = "#374151";
 
-const renderPieLabel = ({ percent, x, y, textAnchor }: any) => (
-  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
-    {(percent * 100).toFixed(1)}%
-  </text>
-);
+const renderCategoryPieLabel = ({ cx, cy, midAngle, outerRadius, percent }: any) => {
+  const safePercent = Number((percent * 100).toFixed(1));
+  if (safePercent <= 0) return null;
+
+  const radius = (outerRadius || 0) + 18;
+  const radians = Math.PI / 180;
+  const x = cx + radius * Math.cos(-midAngle * radians);
+  const y = cy + radius * Math.sin(-midAngle * radians);
+  const textAnchor = x > cx ? "start" : "end";
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline="central"
+      fill="hsl(var(--foreground))"
+      fontSize={11}
+      fontWeight={700}
+      stroke="hsl(var(--background))"
+      strokeWidth={3}
+      paintOrder="stroke"
+    >
+      {safePercent.toFixed(1)}%
+    </text>
+  );
+};
+
+const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+  const safePercent = Number((percent * 100).toFixed(1));
+  if (safePercent <= 0) return null;
+
+  const radius = (outerRadius || 0) + 22;
+  const radians = Math.PI / 180;
+  const x = cx + radius * Math.cos(-midAngle * radians);
+  const y = cy + radius * Math.sin(-midAngle * radians);
+  const textAnchor = x > cx ? "start" : "end";
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline="central"
+      fill="hsl(var(--foreground))"
+      fontSize={11}
+      fontWeight={700}
+      stroke="hsl(var(--background))"
+      strokeWidth={3}
+      paintOrder="stroke"
+    >
+      {`${name} ${safePercent.toFixed(1)}%`}
+    </text>
+  );
+};
 
 // ── Auto-highlight helpers (Power BI style) ──────────────────────
 const getHighlightBorder = (type: "best" | "worst" | "none") => {
@@ -1454,12 +1504,17 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
-                <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={110} paddingAngle={3} dataKey="value" labelLine={{ stroke: "#6B7280" }} onClick={handlePieClick}
-                  label={({ name, percent, x, y, textAnchor }: any) => (
-                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={11} fontWeight={500}>
-                      {name} ({(percent * 100).toFixed(1)}%)
-                    </text>
-                  )}
+                <Pie
+                  data={categoryTotals}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={110}
+                  paddingAngle={3}
+                  dataKey="value"
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                  onClick={handlePieClick}
+                  label={renderCategoryPieLabel}
                 >
                   {categoryTotals.map((entry) => (
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
@@ -1678,12 +1733,8 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, payload, x, y, textAnchor }: any) => (
-                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={12} fontWeight={500}>
-                      {name} ({payload.percent.toFixed(1)}%)
-                    </text>
-                  )}
-                  labelLine={{ stroke: "#6B7280" }}
+                  label={renderExternalPieLabel}
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
                   {externalCausas.map((causa: any, i: number) => (
                     <Cell key={i} fill={getDescColor(causa.name)} />
@@ -1791,7 +1842,7 @@ export default function Dashboard() {
         <ChartZoomDialog title="Distribuição por Categoria" subtitle="Clique em uma fatia para filtrar" open={zoomChart === "categoria"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={100} outerRadius={180} paddingAngle={3} dataKey="value" label={renderPieLabel} labelLine={false} onClick={handlePieClick}>
+              <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={100} outerRadius={180} paddingAngle={3} dataKey="value" label={renderCategoryPieLabel} labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }} onClick={handlePieClick}>
                 {categoryTotals.map((entry) => (
                   <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
                     opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1} />
@@ -1901,11 +1952,7 @@ export default function Dashboard() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={externalCausas} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={200}
-                label={({ name, payload, x, y, textAnchor }: any) => (
-                  <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={13} fontWeight={500}>
-                    {name} ({payload.percent.toFixed(1)}%)
-                  </text>
-                )} labelLine={{ stroke: "#6B7280" }}>
+                label={renderExternalPieLabel} labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}>
                 {externalCausas.map((causa: any, i: number) => (
                   <Cell key={i} fill={getDescColor(causa.name)} />
                 ))}
