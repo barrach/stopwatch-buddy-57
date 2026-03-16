@@ -148,41 +148,98 @@ const isLightColor = (hex: string): boolean => {
   const r = parseInt(c.substring(0, 2), 16);
   const g = parseInt(c.substring(2, 4), 16);
   const b = parseInt(c.substring(4, 6), 16);
-  // Relative luminance
   return (r * 299 + g * 587 + b * 114) / 1000 > 180;
 };
 
-// Custom label renderer for inside-bar percentages — always show all values
-const BarPercentLabel = (props: any) => {
-  const { x, y, width, height, value, fill } = props;
+const STACKED_CHART_HEIGHT = 500;
+const STACKED_CHART_MARGIN = { top: 36, right: 12, bottom: 20, left: 0 };
+const ZOOM_STACKED_CHART_MARGIN = { top: 44, right: 20, bottom: 30, left: 0 };
+
+const DESCRIPTION_GROUPS = {
+  Produtivo: ["Trabalhando", "Planejando"],
+  Suplementar: [
+    "Aguardando Ferramenta ou Material",
+    "Transitando no local de trabalho - com ferramenta",
+    "Transitando no local de trabalho - sem ferramenta",
+    "Transitando fora do local de trabalho - com ferramenta",
+    "Transitando fora do local de trabalho - sem ferramenta",
+    "Assistindo",
+    "Aguardando Liberação de PT",
+  ],
+  "Não Produtivo": ["Pessoal", "Ocioso"],
+  "Não Produtivo Externo": ["Causas Naturais", "Vazamento / Interferência da Planta"],
+} as const;
+
+const DESCRIPTION_GROUP_ORDER = Object.keys(DESCRIPTION_GROUPS) as Array<keyof typeof DESCRIPTION_GROUPS>;
+
+const getDescriptionGroup = (desc: string): keyof typeof DESCRIPTION_GROUPS => {
+  const normalized = displayName(desc);
+  for (const group of DESCRIPTION_GROUP_ORDER) {
+    if ((DESCRIPTION_GROUPS[group] as readonly string[]).includes(normalized)) return group;
+  }
+  return "Suplementar";
+};
+
+const BarPercentLabel = (props: any & { labelKey?: string }) => {
+  const { x, y, width, height, value, fill, labelKey } = props;
   if (value === undefined || value === null || Number(value) === 0 || !width) return null;
 
-  const h = height || 0;
-  const w = Math.max(width, 1);
-  const fitsInside = h >= 14 && w >= 30;
+  const h = Math.max(Number(height) || 0, 1);
+  const w = Math.max(Number(width) || 0, 1);
+  const fitsInside = h >= 16 && w >= 34;
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
+  const stackIndex = labelKey ? CANONICAL_ORDER_FULL.indexOf(labelKey) : -1;
+  const xNudge = !fitsInside && stackIndex >= 0 ? ((stackIndex % 2 === 0 ? -1 : 1) * Math.min(12, w * 0.14)) : 0;
+  const yOffset = !fitsInside && stackIndex >= 0 ? (stackIndex % 3) * 2 : 0;
 
-  if (fitsInside) {
-    return (
-      <text
-        x={x + w / 2} y={y + h / 2}
-        fill={textColor} fontSize={9} fontWeight={600}
-        textAnchor="middle" dominantBaseline="middle"
-        style={{ textShadow: textColor === "#FFFFFF" ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 1px rgba(255,255,255,0.3)" }}
-      >
-        {Number(value).toFixed(1)}%
-      </text>
-    );
-  }
-  // Small segment: show label above the segment
   return (
     <text
-      x={x + w / 2} y={y - 2}
-      fill="#9CA3AF" fontSize={7} fontWeight={600}
-      textAnchor="middle" dominantBaseline="auto"
+      x={x + w / 2 + xNudge}
+      y={fitsInside ? y + h / 2 : Math.max(y - 4 - yOffset, 12)}
+      fill={fitsInside ? textColor : "hsl(var(--foreground))"}
+      fontSize={fitsInside ? 9 : 8}
+      fontWeight={700}
+      textAnchor="middle"
+      dominantBaseline={fitsInside ? "middle" : "auto"}
+      paintOrder="stroke"
+      stroke={fitsInside ? (textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
+      strokeWidth={fitsInside ? 2 : 3}
+      style={{ pointerEvents: "none" }}
     >
       {Number(value).toFixed(1)}%
     </text>
+  );
+};
+
+const renderLegendBlocks = (descriptions: string[]) => {
+  const grouped = DESCRIPTION_GROUP_ORDER
+    .map((group) => ({
+      group,
+      items: descriptions.filter((desc) => getDescriptionGroup(desc) === group),
+    }))
+    .filter(({ items }) => items.length > 0);
+
+  return (
+    <div className="grid gap-2.5">
+      {grouped.map(({ group, items }) => (
+        <div key={group} className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{group}</p>
+          <div className="grid gap-1">
+            {items.map((desc) => (
+              <div key={desc} className="flex items-start gap-2 leading-none">
+                <span className="mt-0.5 h-3 w-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                <span
+                  className="min-w-0 text-[10px] leading-[1.2]"
+                  style={{ color: getLegendTextColor(desc), overflowWrap: "anywhere" }}
+                >
+                  {displayName(desc)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -203,7 +260,7 @@ const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boole
         strokeWidth={isWhite ? 1 : undefined}
         radius={(isLast ? isLast(i) : i === descriptions.length - 1) ? [4, 4, 0, 0] : undefined}
       >
-        <LabelList dataKey={desc} content={<BarPercentLabel />} />
+        <LabelList dataKey={desc} content={(props: any) => <BarPercentLabel {...props} labelKey={desc} />} />
       </Bar>
     );
   });
