@@ -606,10 +606,6 @@ export default function Dashboard() {
     if (!e?.activePayload?.[0]?.payload) return;
     toggleCrossFilter("pareto", e.activePayload[0].payload.name);
   };
-  const handleFunctionClick = (e: any) => {
-    if (!e?.activePayload?.[0]?.payload) return;
-    toggleCrossFilter("funcao", e.activePayload[0].payload.name);
-  };
   const handlePieClick = (_: any, index: number) => {
     const entry = categoryTotals[index];
     if (entry) toggleCrossFilter("categoria", entry.name);
