@@ -1562,11 +1562,10 @@ export default function Dashboard() {
             })()}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              {externalCausas.map((causa: any, i: number) => {
-                const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
+              {externalCausas.map((causa: any) => {
                 return (
                   <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
                       <p className="text-[10px] text-muted-foreground">{causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
@@ -1592,22 +1591,19 @@ export default function Dashboard() {
                   )}
                   labelLine={{ stroke: "#6B7280" }}
                 >
-                  {externalCausas.map((_: any, i: number) => {
-                    const PIE_COLORS = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
-                    return <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />;
-                  })}
+                  {externalCausas.map((causa: any, i: number) => (
+                    <Cell key={i} fill={getDescColor(causa.name)} />
+                  ))}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
                     const data = payload[0]?.payload;
                     if (!data) return null;
-                    const idx = externalCausas.findIndex((c: any) => c.name === data.name);
-                    const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return (
                       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[idx >= 0 ? idx % colors.length : 0], display: "inline-block", flexShrink: 0 }} />
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
                           <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
                         </div>
                       </div>
@@ -1840,10 +1836,9 @@ export default function Dashboard() {
                     {name} ({payload.percent.toFixed(1)}%)
                   </text>
                 )} labelLine={{ stroke: "#6B7280" }}>
-                {externalCausas.map((_: any, i: number) => {
-                  const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
-                  return <Cell key={i} fill={colors[i % colors.length]} />;
-                })}
+                {externalCausas.map((causa: any, i: number) => (
+                  <Cell key={i} fill={getDescColor(causa.name)} />
+                ))}
               </Pie>
               <Tooltip content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
