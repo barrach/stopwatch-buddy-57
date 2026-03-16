@@ -743,28 +743,20 @@ export default function Dashboard() {
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
-  const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
       // Allow "Aguardando Liberações" through, exclude other NPE
       if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
-      let key = "";
-      if (timeViewMode === "horario") {
-        key = r.horario || "";
-      } else if (timeViewMode === "diasemana") {
-        const d = new Date(r.data + "T12:00:00");
-        key = WEEKDAY_NAMES[d.getDay()];
-      } else {
-        const d = new Date(r.data + "T12:00:00");
-        key = MONTH_NAMES[d.getMonth()];
-      }
+
+      const key = getTimeBucketLabel(r, timeViewMode);
+      if (!key) return;
+
       if (!result[key]) {
         result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
       }
+
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
       if (desc in result[key]) {
