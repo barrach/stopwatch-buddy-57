@@ -103,7 +103,6 @@ export default function NewObservation() {
       setCategoriaId("");
       setDescricao("");
       setEspecialidadeId("");
-      setFuncaoId("");
       setRotaId("");
       setObraId("");
       setTime("");
