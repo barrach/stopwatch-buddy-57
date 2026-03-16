@@ -186,31 +186,51 @@ const getDescriptionGroup = (desc: string): keyof typeof DESCRIPTION_GROUPS => {
 
 const BarPercentLabel = (props: any & { labelKey?: string }) => {
   const { x, y, width, height, value, fill, labelKey } = props;
-  if (value === undefined || value === null || Number(value) === 0 || !width) return null;
+  const numVal = Number(value);
+  if (value === undefined || value === null || numVal === 0 || !width) return null;
 
   const h = Math.max(Number(height) || 0, 1);
   const w = Math.max(Number(width) || 0, 1);
-  const fitsInside = h >= 16 && w >= 34;
+  const fitsInside = h >= 14 && w >= 28;
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
-  const stackIndex = labelKey ? CANONICAL_ORDER_FULL.indexOf(labelKey) : -1;
-  const xNudge = !fitsInside && stackIndex >= 0 ? ((stackIndex % 2 === 0 ? -1 : 1) * Math.min(12, w * 0.14)) : 0;
-  const yOffset = !fitsInside && stackIndex >= 0 ? (stackIndex % 3) * 2 : 0;
 
+  if (fitsInside) {
+    return (
+      <text
+        x={x + w / 2}
+        y={y + h / 2}
+        fill={textColor}
+        fontSize={h >= 18 ? 9 : 7.5}
+        fontWeight={700}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        paintOrder="stroke"
+        stroke={textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)"}
+        strokeWidth={2}
+        style={{ pointerEvents: "none" }}
+      >
+        {numVal.toFixed(1)}%
+      </text>
+    );
+  }
+
+  // Outside label: place centered on top edge of the segment
+  const labelY = Math.max(y - 1, 8);
   return (
     <text
-      x={x + w / 2 + xNudge}
-      y={fitsInside ? y + h / 2 : Math.max(y - 4 - yOffset, 12)}
-      fill={fitsInside ? textColor : "hsl(var(--foreground))"}
-      fontSize={fitsInside ? 9 : 8}
+      x={x + w / 2}
+      y={labelY}
+      fill="hsl(var(--foreground))"
+      fontSize={7}
       fontWeight={700}
       textAnchor="middle"
-      dominantBaseline={fitsInside ? "middle" : "auto"}
+      dominantBaseline="auto"
       paintOrder="stroke"
-      stroke={fitsInside ? (textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
-      strokeWidth={fitsInside ? 2 : 3}
+      stroke="hsl(var(--background))"
+      strokeWidth={3}
       style={{ pointerEvents: "none" }}
     >
-      {Number(value).toFixed(1)}%
+      {numVal.toFixed(1)}%
     </text>
   );
 };
