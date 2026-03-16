@@ -517,31 +517,6 @@ export default function Dashboard() {
   }, [records, isExternalRecord]);
   
 
-  // By Function — description-level breakdown, sorted by "Trabalhando" desc
-  const byFunction = useMemo(() => {
-    const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
-      if (isExternalRecord(r)) return;
-      const fName = (r as any).funcoes?.nome || "Sem função";
-      if (!result[fName]) result[fName] = {};
-      const desc = r.descricao || "Sem descrição";
-      const qty = r.quantidade || 0;
-      result[fName][desc] = (result[fName][desc] || 0) + qty;
-    });
-    return Object.entries(result)
-      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
-      .map(([name, descs]) => {
-        const total = Object.values(descs).reduce((s, v) => s + v, 0);
-        const row: any = { name, total };
-        for (const [desc, qty] of Object.entries(descs)) {
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
-        }
-        return row;
-      })
-      .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
-
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
   const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
   const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
