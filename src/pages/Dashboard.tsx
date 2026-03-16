@@ -73,7 +73,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Instruções": "#16A34A",           // verde
   "Assistindo": "#15803D",                       // verde escuro
   "Aguardando Ferramenta ou Material": "#4ADE80", // verde claro
-  "Aguardando Movimentação de Carga": "#059669",  // esmeralda
   "Transitando no local de trabalho - com ferramenta": "#10B981",  // verde emerald
   "Transitando no local de trabalho - sem ferramenta": "#34D399",  // verde menta
   "Transitando fora do local de trabalho - com ferramenta": "#22C55E", // verde médio
@@ -439,7 +438,7 @@ export default function Dashboard() {
     "Trabalhando": 0, "Planejando": 1,
     // Suplementar
     "Aguardando Instruções": 10, "Assistindo": 11,
-    "Aguardando Ferramenta ou Material": 12, "Aguardando Movimentação de Carga": 13,
+    "Aguardando Ferramenta ou Material": 12,
     "Transitando no local de trabalho - com ferramenta": 14,
     "Transitando no local de trabalho - sem ferramenta": 15,
     "Transitando fora do local de trabalho - com ferramenta": 16,
@@ -1463,7 +1462,7 @@ export default function Dashboard() {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              {allDescriptions.map((desc, i) => (
+              {nonNpeDescriptions.map((desc, i) => (
                 <Bar
                   key={desc}
                   dataKey={desc}
@@ -1471,7 +1470,7 @@ export default function Dashboard() {
                   fill={getDescriptionCategoryColor("", desc)}
                   stackId="a"
                   className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                  radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
                 />
               ))}
             </BarChart>
@@ -1631,7 +1630,7 @@ export default function Dashboard() {
                  }}
                />
                <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-               {allDescriptions.map((desc, i) => (
+               {nonNpeDescriptions.map((desc, i) => (
                  <Bar
                    key={desc}
                    dataKey={desc}
@@ -1639,7 +1638,7 @@ export default function Dashboard() {
                    fill={getDescriptionCategoryColor("", desc)}
                    stackId="a"
                    className="cursor-pointer"
-                   radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
+                   radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
                  />
                ))}
             </BarChart>
@@ -1773,9 +1772,9 @@ export default function Dashboard() {
                 );
               }} />
               <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
-              {allDescriptions.map((desc, i) => (
+              {nonNpeDescriptions.map((desc, i) => (
                 <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+                  radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
               ))}
             </BarChart>
           </ResponsiveContainer>
@@ -1838,9 +1837,9 @@ export default function Dashboard() {
                 );
               }} />
               <Legend wrapperStyle={{ fontSize: "13px", color: "#F9FAFB" }} />
-              {allDescriptions.map((desc, i) => (
+              {nonNpeDescriptions.map((desc, i) => (
                 <Bar key={desc} dataKey={desc} name={desc} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                  radius={i === allDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+                  radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
               ))}
             </BarChart>
           </ResponsiveContainer>
