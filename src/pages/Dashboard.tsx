@@ -412,7 +412,6 @@ export default function Dashboard() {
       if (isExternalRecord(r)) return; // Exclude NPE from Pareto
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
-      else if (paretoMode === "funcao") key = (r as any).funcoes?.nome || "Sem função";
       else key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
