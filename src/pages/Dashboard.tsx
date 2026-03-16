@@ -211,12 +211,12 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendList = (descriptions: string[], maxHeight?: number) => (
-  <div className="flex flex-col gap-0.5 overflow-y-auto pr-1" style={{ maxHeight: maxHeight || STACKED_CHART_HEIGHT - 20 }}>
+const renderLegendList = (descriptions: string[]) => (
+  <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: STACKED_CHART_HEIGHT }}>
     {descriptions.map((desc) => (
-      <div key={desc} className="flex items-start gap-1.5 py-px">
-        <span className="w-2.5 h-2.5 rounded-sm shrink-0 border border-border/50 mt-[2px]" style={{ backgroundColor: getDescColor(desc) }} />
-        <span className="text-[10px] leading-snug break-words" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+      <div key={desc} className="flex items-center gap-2">
+        <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+        <span className="text-[13px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
       </div>
     ))}
   </div>
