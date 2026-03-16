@@ -481,7 +481,8 @@ export default function Dashboard() {
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from contract chart
+      // Include NPE but allow exclusion for comparison
+      if (npeExclude && isExternalRecord(r) && r.descricao === npeExclude) return;
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = {};
       const desc = r.descricao || "Sem descrição";
@@ -503,6 +504,15 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
+  }, [records, isExternalRecord, npeExclude]);
+
+  // NPE descriptions for comparison button
+  const npeDescList = useMemo(() => {
+    const descs = new Set<string>();
+    records.forEach((r: any) => {
+      if (isExternalRecord(r)) descs.add(r.descricao || "");
+    });
+    return Array.from(descs).filter(Boolean);
   }, [records, isExternalRecord]);
 
 
