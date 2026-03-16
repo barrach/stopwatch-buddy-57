@@ -685,7 +685,9 @@ export default function Dashboard() {
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return;
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      // Allow "Aguardando Liberações" through, exclude other NPE
+      if (isExternalRecord(r) && desc !== "Aguardando Liberações") return;
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
