@@ -87,7 +87,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   // NPE (Não Produtivo Externo) — tons de ROXO
   "Causas Naturais": "#A855F7",                  // violeta
   "Vazamento / Interferência da Planta": "#7C3AED", // roxo
-  "Aguardando Liberação de PT": "#C084FC",        // lilás
+  "Aguardando Liberação de PT": "#FFFFFF",        // branco
 };
 
 // Map description to its unique color — single source of truth for ALL charts
