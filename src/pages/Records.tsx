@@ -162,7 +162,7 @@ export default function Records() {
       const { error } = await supabase.from("observacoes").update({
         data: editForm.data, horario: editForm.horario, obra_id: editForm.obra_id,
         rota_id: editForm.rota_id, especialidade_id: editForm.especialidade_id,
-        funcao_id: editForm.funcao_id || null, categoria_id: editForm.categoria_id,
+        funcao_id: null, categoria_id: editForm.categoria_id,
         descricao: editForm.descricao, quantidade: parseInt(editForm.quantidade, 10),
         notas: editForm.notas || null,
       }).eq("id", editRecord.id);
