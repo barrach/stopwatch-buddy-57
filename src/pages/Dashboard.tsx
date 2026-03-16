@@ -155,23 +155,31 @@ const isLightColor = (hex: string): boolean => {
 // Custom label renderer for inside-bar percentages — always show all values
 const BarPercentLabel = (props: any) => {
   const { x, y, width, height, value, fill } = props;
-  if (value === undefined || value === null || Number(value) === 0 || !width || !height) return null;
+  if (value === undefined || value === null || Number(value) === 0 || !width) return null;
 
-  const h = Math.max(height, 1);
+  const h = height || 0;
   const w = Math.max(width, 1);
+  const fitsInside = h >= 14 && w >= 30;
   const textColor = fill && isLightColor(fill) ? "#1F2937" : "#FFFFFF";
-  const fontSize = h >= 16 ? 9 : h >= 10 ? 8 : 7;
 
+  if (fitsInside) {
+    return (
+      <text
+        x={x + w / 2} y={y + h / 2}
+        fill={textColor} fontSize={9} fontWeight={600}
+        textAnchor="middle" dominantBaseline="middle"
+        style={{ textShadow: textColor === "#FFFFFF" ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 1px rgba(255,255,255,0.3)" }}
+      >
+        {Number(value).toFixed(1)}%
+      </text>
+    );
+  }
+  // Small segment: show label above the segment
   return (
     <text
-      x={x + w / 2}
-      y={y + h / 2}
-      fill={textColor}
-      fontSize={fontSize}
-      fontWeight={600}
-      textAnchor="middle"
-      dominantBaseline="middle"
-      style={{ textShadow: textColor === "#FFFFFF" ? "0 1px 2px rgba(0,0,0,0.45)" : "0 1px 1px rgba(255,255,255,0.35)" }}
+      x={x + w / 2} y={y - 2}
+      fill="#9CA3AF" fontSize={7} fontWeight={600}
+      textAnchor="middle" dominantBaseline="auto"
     >
       {Number(value).toFixed(1)}%
     </text>
