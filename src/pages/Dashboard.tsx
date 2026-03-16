@@ -1651,7 +1651,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="xl:w-60 xl:max-w-60 shrink-0">
-              {renderLegendBlocks([...nonNpeDescriptions].reverse())}
+              {renderLegendList([...nonNpeDescriptions].reverse())}
             </div>
           </div>
         </div>
