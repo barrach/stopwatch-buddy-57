@@ -678,10 +678,6 @@ export default function Dashboard() {
     });
   }, [records, isExternalRecord, timeViewMode]);
 
-  // Legend percentages for each chart
-  const contratoLegendPcts = useMemo(() => computeLegendPercents(byObra, allDescriptions), [byObra, allDescriptions]);
-  const specialtyLegendPcts = useMemo(() => computeLegendPercents(bySpecialty, nonNpeDescriptions), [bySpecialty, nonNpeDescriptions]);
-  const timeLegendPcts = useMemo(() => computeLegendPercents(byTimeGrouped, nonNpeDescriptions), [byTimeGrouped, nonNpeDescriptions]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
