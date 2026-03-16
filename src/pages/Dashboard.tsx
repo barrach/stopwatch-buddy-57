@@ -1504,12 +1504,17 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
-                <Pie data={categoryTotals} cx="50%" cy="50%" innerRadius={60} outerRadius={110} paddingAngle={3} dataKey="value" labelLine={{ stroke: "#6B7280" }} onClick={handlePieClick}
-                  label={({ name, percent, x, y, textAnchor }: any) => (
-                    <text x={x} y={y} textAnchor={textAnchor} fill="#F9FAFB" fontSize={11} fontWeight={500}>
-                      {name} ({(percent * 100).toFixed(1)}%)
-                    </text>
-                  )}
+                <Pie
+                  data={categoryTotals}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={110}
+                  paddingAngle={3}
+                  dataKey="value"
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                  onClick={handlePieClick}
+                  label={renderCategoryPieLabel}
                 >
                   {categoryTotals.map((entry) => (
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
