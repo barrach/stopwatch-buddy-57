@@ -1499,14 +1499,13 @@ export default function Dashboard() {
                       if (!data || !item) return null;
                       const desc = item.dataKey as string;
                       const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
-                      const raw = data[`raw_${desc}`] || 0;
                       return (
                         <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                           <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
                           <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
                             <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
                             <span style={{ flex: 1 }}>{displayName(desc)}</span>
-                            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                            <span style={{ fontWeight: 600 }}>{pct}%</span>
                           </div>
                         </div>
                       );
