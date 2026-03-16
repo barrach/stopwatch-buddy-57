@@ -175,11 +175,22 @@ function parseDayBlocks(text: string): Array<{ day: string; content: string }> {
 function parseHourBlocks(text: string): Array<{ hour: string; content: string }> {
   const blocks: Array<{ hour: string; content: string }> = [];
   const normalized = text.replace(/\r\n/g, "\n");
+  
+  // Try === HORA: XX:XX === format first
   const regex = /(?:^|\n)\s*===\s*HORA\s*:\s*([^=\n]+?)\s*===\s*\n([\s\S]*?)(?=\n\s*===\s*HORA\s*:|$)/gi;
   let m;
   while ((m = regex.exec(normalized)) !== null) {
     blocks.push({ hour: normalizeInternalTitle(m[1]), content: stripInternalTags(m[2]) });
   }
+  
+  // Fallback: try **XX:00** or bold hour patterns
+  if (blocks.length === 0) {
+    const hourRegex = /(?:^|\n)\s*\*?\*?(\d{1,2}:\d{2})\*?\*?\s*\n([\s\S]*?)(?=\n\s*\*?\*?\d{1,2}:\d{2}\*?\*?\s*\n|$)/gi;
+    while ((m = hourRegex.exec(normalized)) !== null) {
+      blocks.push({ hour: m[1].trim(), content: stripInternalTags(m[2]) });
+    }
+  }
+  
   if (blocks.length === 0 && normalized.trim()) {
     blocks.push({ hour: "", content: stripInternalTags(normalized) });
   }
