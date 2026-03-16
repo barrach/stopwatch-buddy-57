@@ -1647,10 +1647,7 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  {nonNpeDescriptions.map((desc, i) => (
-                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
-                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
-                  ))}
+                  {renderStackedBars(nonNpeDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
