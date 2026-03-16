@@ -127,7 +127,7 @@ const getHighlightBorder = (type: "best" | "worst" | "none") => {
   return "";
 };
 
-type ParetoMode = "especialidade" | "categoria" | "funcao";
+type ParetoMode = "especialidade" | "categoria";
 
 interface CrossFilters {
   categoria?: string;
