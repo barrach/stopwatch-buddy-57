@@ -1443,49 +1443,51 @@ export default function Dashboard() {
             </div>
             <ZoomButton onClick={() => setZoomChart("especialidade")} />
           </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
-              <Tooltip
-                shared={false}
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
-                  const data = item?.payload;
-                  if (!data || !item) return null;
-
-                  const desc = item.dataKey as string;
-                  const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
-                  const raw = data[`raw_${desc}`] || 0;
-
-                  return (
-                    <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
-                      <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{desc}</span>
-                        <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: "12px", color: "#F9FAFB" }} />
-              {nonNpeDescriptions.map((desc, i) => (
-                <Bar
-                  key={desc}
-                  dataKey={desc}
-                  name={desc}
-                  fill={getDescriptionCategoryColor("", desc)}
-                  stackId="a"
-                  className="cursor-pointer"
-                  radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined}
-                />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={bySpecialty} margin={{ bottom: 20 }} onClick={handleSpecialtyClick}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip
+                    shared={false}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const item = payload.find((p: any) => p?.dataKey && p?.payload) || payload[0];
+                      const data = item?.payload;
+                      if (!data || !item) return null;
+                      const desc = item.dataKey as string;
+                      const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
+                      const raw = data[`raw_${desc}`] || 0;
+                      return (
+                        <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
+                          <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>{data.name}</strong>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: 1.8, fontSize: 11 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || getDescriptionCategoryColor("", desc), display: "inline-block", flexShrink: 0 }} />
+                            <span style={{ flex: 1 }}>{displayName(desc)}</span>
+                            <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  {nonNpeDescriptions.map((desc, i) => (
+                    <Bar key={desc} dataKey={desc} name={displayName(desc)} fill={getDescriptionCategoryColor("", desc)} stackId="a" className="cursor-pointer"
+                      radius={i === nonNpeDescriptions.length - 1 ? [4, 4, 0, 0] : undefined} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="lg:w-48 flex flex-col gap-1.5">
+              {nonNpeDescriptions.map((desc) => (
+                <div key={desc} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                  <span className="text-[11px] leading-tight" style={{ color: getDescColor(desc) }}>{displayName(desc)}</span>
+                </div>
               ))}
-            </BarChart>
-          </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
 
