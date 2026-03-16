@@ -142,6 +142,45 @@ const getDescriptionCategoryColor = (cat: string, descricao?: string): string =>
   return CATEGORY_COLORS[cat] || "#6B7280";
 };
 
+// Custom label renderer for inside-bar percentages
+const BarPercentLabel = (props: any) => {
+  const { x, y, width, height, value } = props;
+  if (!value || value < 5 || !width || width < 25 || !height || height < 14) return null;
+  return (
+    <text
+      x={x + width / 2}
+      y={y + height / 2}
+      fill="#FFFFFF"
+      fontSize={9}
+      fontWeight={600}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+    >
+      {value}%
+    </text>
+  );
+};
+
+// Helper: compute overall % per description from chart data
+const computeLegendPercents = (data: any[], descriptions: string[]): Record<string, number> => {
+  const totals: Record<string, number> = {};
+  let grandTotal = 0;
+  descriptions.forEach(d => { totals[d] = 0; });
+  data.forEach(row => {
+    descriptions.forEach(d => {
+      const raw = row[`raw_${d}`] || 0;
+      totals[d] += raw;
+      grandTotal += raw;
+    });
+  });
+  const pcts: Record<string, number> = {};
+  descriptions.forEach(d => {
+    pcts[d] = grandTotal > 0 ? +((totals[d] / grandTotal) * 100).toFixed(1) : 0;
+  });
+  return pcts;
+};
+
 // Helper: render Bar components from a description list with proper stroke for white bars
 const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boolean) =>
   descriptions.map((desc, i) => {
@@ -158,7 +197,9 @@ const renderStackedBars = (descriptions: string[], isLast?: (i: number) => boole
         stroke={isWhite ? "#D1D5DB" : undefined}
         strokeWidth={isWhite ? 1 : undefined}
         radius={(isLast ? isLast(i) : i === descriptions.length - 1) ? [4, 4, 0, 0] : undefined}
-      />
+      >
+        <LabelList dataKey={desc} content={<BarPercentLabel />} />
+      </Bar>
     );
   });
 
@@ -643,6 +684,11 @@ export default function Dashboard() {
       return row;
     });
   }, [records, isExternalRecord, timeViewMode]);
+
+  // Legend percentages for each chart
+  const contratoLegendPcts = useMemo(() => computeLegendPercents(byObra, allDescriptions), [byObra, allDescriptions]);
+  const specialtyLegendPcts = useMemo(() => computeLegendPercents(bySpecialty, nonNpeDescriptions), [bySpecialty, nonNpeDescriptions]);
+  const timeLegendPcts = useMemo(() => computeLegendPercents(byTimeGrouped, nonNpeDescriptions), [byTimeGrouped, nonNpeDescriptions]);
 
   // ── Click handlers ─────────────────────────────────────────────
   const handleContratoClick = (e: any) => {
@@ -1332,11 +1378,8 @@ export default function Dashboard() {
             <div className="lg:w-48 flex flex-col gap-1.5">
               {[...allDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
-                  <span 
-                    className="w-3 h-3 rounded-sm shrink-0 border border-border/50" 
-                    style={{ backgroundColor: getDescColor(desc) }}
-                  />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {contratoLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
@@ -1519,7 +1562,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {specialtyLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
@@ -1668,7 +1711,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-[11px] leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {timeLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
@@ -1694,7 +1737,7 @@ export default function Dashboard() {
               {[...allDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {contratoLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
@@ -1807,7 +1850,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {specialtyLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
@@ -1878,7 +1921,7 @@ export default function Dashboard() {
               {[...nonNpeDescriptions].reverse().map((desc) => (
                 <div key={desc} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  <span className="text-xs leading-tight" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)} — {timeLegendPcts[desc] || 0}%</span>
                 </div>
               ))}
             </div>
