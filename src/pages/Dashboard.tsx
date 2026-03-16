@@ -1600,12 +1600,10 @@ export default function Dashboard() {
                     if (!active || !payload?.length) return null;
                     const data = payload[0]?.payload;
                     if (!data) return null;
-                    const idx = externalCausas.findIndex((c: any) => c.name === data.name);
-                    const colors = ["#16A34A", "#2563EB", "#7C3AED", "#F59E0B", "#EC4899", "#059669"];
                     return (
                       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: colors[idx >= 0 ? idx % colors.length : 0], display: "inline-block", flexShrink: 0 }} />
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
                           <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
                         </div>
                       </div>
