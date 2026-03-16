@@ -1966,7 +1966,7 @@ export default function Dashboard() {
         {/* Tempo */}
         <ChartZoomDialog title={timeViewMode === "horario" ? "Produtividade por Horário" : timeViewMode === "diasemana" ? "Produtividade por Dia da Semana" : "Produtividade por Mês"} subtitle="% de produtividade — clique para filtrar" open={zoomChart === "tempo"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <div className="flex flex-col xl:flex-row gap-3 h-full">
-            <div className="min-w-0 min-h-0" style={{ flex: '3 1 0%' }}>
+            <div className="min-w-0 min-h-0" style={{ flex: '7 1 0%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byTimeGrouped} margin={ZOOM_STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
