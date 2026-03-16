@@ -1105,7 +1105,6 @@ export default function Dashboard() {
     if (!data || !item) return null;
 
     const desc = item.dataKey as string;
-    const raw = data[`raw_${desc}`] || 0;
     const pct = typeof item.value === "number" ? item.value : data[desc] || 0;
 
     return (
@@ -1114,7 +1113,7 @@ export default function Dashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: 1.8 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: item.fill || DESCRIPTION_COLORS[desc] || "#6B7280", flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{desc}</span>
-          <span style={{ fontWeight: 600 }}>{pct}% ({raw})</span>
+          <span style={{ fontWeight: 600 }}>{pct}%</span>
         </div>
       </div>
     );
