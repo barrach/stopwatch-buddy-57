@@ -206,7 +206,7 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
       textAnchor="middle"
       dominantBaseline={fitsInside ? "middle" : "auto"}
       paintOrder="stroke"
-      stroke={fitsInside ? (textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
+      stroke={fitsInside ? (isWhiteFill ? "rgba(17,24,39,0.15)" : textColor === "#FFFFFF" ? "rgba(17,24,39,0.45)" : "rgba(255,255,255,0.65)") : "hsl(var(--background))"}
       strokeWidth={fitsInside ? 2 : 3}
       style={{ pointerEvents: "none" }}
     >
