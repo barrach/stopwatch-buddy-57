@@ -25,7 +25,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Produtivo: "#2563EB",
   Suplementar: "#16A34A",
   "Não Produtivo": "#DC2626",
-  "Não Produtivo Externo": "#7C3AED",
+  "Não Produtivo Externo": "#F97316",
 };
 
 const PIE_COLORS = [
@@ -283,6 +283,7 @@ const renderCategoryPieLabel = ({ cx, cy, midAngle, outerRadius, percent }: any)
 };
 
 const renderExternalPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+  // percent is already a value like 0.686, so multiply by 100 to get 68.6
   const safePercent = Number((percent * 100).toFixed(1));
   if (safePercent <= 0) return null;
 
@@ -1495,13 +1496,16 @@ export default function Dashboard() {
                   onClick={handlePieClick}
                   label={renderCategoryPieLabel}
                 >
-                  {categoryTotals.map((entry) => (
-                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
-                      opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
-                      stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : "none"}
-                      strokeWidth={crossFilters.categoria === entry.name ? 3 : 0}
-                    />
-                  ))}
+                  {categoryTotals.map((entry) => {
+                    const isWhite = CATEGORY_COLORS[entry.name] === "#FFFFFF";
+                    return (
+                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "#666"} className="cursor-pointer"
+                        opacity={crossFilters.categoria && crossFilters.categoria !== entry.name ? 0.3 : 1}
+                        stroke={crossFilters.categoria === entry.name ? "#1E3A5F" : isWhite ? "#374151" : "none"}
+                        strokeWidth={crossFilters.categoria === entry.name ? 3 : isWhite ? 2 : 0}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
@@ -1715,9 +1719,13 @@ export default function Dashboard() {
                   label={renderExternalPieLabel}
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
-                  {externalCausas.map((causa: any, i: number) => (
-                    <Cell key={i} fill={getDescColor(causa.name)} />
-                  ))}
+                  {externalCausas.map((causa: any, i: number) => {
+                    const color = getDescColor(causa.name);
+                    const isWhite = color === "#FFFFFF";
+                    return (
+                      <Cell key={i} fill={color} stroke={isWhite ? "#374151" : undefined} strokeWidth={isWhite ? 2 : undefined} />
+                    );
+                  })}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
@@ -1932,9 +1940,13 @@ export default function Dashboard() {
             <PieChart>
               <Pie data={externalCausas} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={200}
                 label={renderExternalPieLabel} labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}>
-                {externalCausas.map((causa: any, i: number) => (
-                  <Cell key={i} fill={getDescColor(causa.name)} />
-                ))}
+                {externalCausas.map((causa: any, i: number) => {
+                  const color = getDescColor(causa.name);
+                  const isWhite = color === "#FFFFFF";
+                  return (
+                    <Cell key={i} fill={color} stroke={isWhite ? "#374151" : undefined} strokeWidth={isWhite ? 2 : undefined} />
+                  );
+                })}
               </Pie>
               <Tooltip content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
