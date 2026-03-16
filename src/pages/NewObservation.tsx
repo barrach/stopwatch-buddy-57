@@ -71,7 +71,9 @@ export default function NewObservation() {
   );
 
   const subcategorias = useMemo(
-    () => categoriaId ? categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo") : [],
+    () => categoriaId
+      ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
+      : [],
     [categorias, categoriaId]
   );
 
