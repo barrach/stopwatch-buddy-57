@@ -467,7 +467,7 @@ export function generatePDFReport(data: PDFReportData) {
     // Estimate chart height
     const dim = dims[dimKey];
     const hasLegend = legendItems.length > 0;
-    const legendW = hasLegend ? 58 : 0;
+    const legendW = hasLegend ? 70 : 0;
     const chartAvailW = contentW - legendW;
     let estChartH = chartAvailW * 0.55;
     if (dim && dim.width > 0) {
