@@ -1414,9 +1414,9 @@ export default function Dashboard() {
                 Especialidade: {crossFilters.especialidade} <X className="w-3 h-3" />
               </Badge>
             )}
-            {crossFilters.horario && (
-              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("horario", crossFilters.horario!)}>
-                Horário: {crossFilters.horario} <X className="w-3 h-3" />
+            {crossFilters.tempo && (
+              <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setCrossFilters((prev) => ({ ...prev, tempo: undefined, tempoMode: undefined }))}>
+                {crossFilters.tempoMode === "horario" ? "Horário" : crossFilters.tempoMode === "diasemana" ? "Dia" : "Mês"}: {crossFilters.tempo} <X className="w-3 h-3" />
               </Badge>
             )}
             {crossFilters.descricao && (
