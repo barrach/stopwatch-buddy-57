@@ -420,7 +420,7 @@ function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width:
    ═══════════════════════════════════════════════════════════ */
 
 function buildModel(data: PDFReportData, analysis: AnalysisSections) {
-  // Legend uses REVERSED order (top of stack first) to match visual
+  // Legend is reversed so top-to-bottom matches the visual top-to-bottom reading of the chart
   const contractLegend = computeLegendItems(data.byObra, LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const specialtyLegend = computeLegendItems(data.bySpecialty, LEGEND_ORDER, STACK_ORDER, true);
   const hourLegend = computeLegendItems(data.byTimeHorario || [], LEGEND_ORDER, STACK_ORDER, true);
