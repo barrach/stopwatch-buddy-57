@@ -487,23 +487,22 @@ export function generatePDFReport(data: PDFReportData) {
     curY += 10;
   };
 
+  const labelPrefixRe = /(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|a[çc][ãa]o\s+recomendada\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|causa\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|produtividade\s*:|suplementar\s*:|n[aã]o\s+produtivo\s*:|npe\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:)/gi;
+
+  const normalizeAnalysisText = (text: string): string => {
+    return stripTags(text)
+      .replace(/\s*\|\s*/g, "\n")
+      .replace(/([^\n])\s+(?=(?:\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|a[çc][ãa]o\s+recomendada\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|causa\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|produtividade\s*:|suplementar\s*:|n[aã]o\s+produtivo\s*:|npe\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:))/gi, "$1\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
   const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
-    const clean = stripTags(text);
+    const clean = normalizeAnalysisText(text);
     if (!clean) return { wrapped: [], boxH: 0 };
-    // Ensure consistent font for measurement
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    // Split paragraphs at newlines AND before "Ação:" mid-text to force paragraph break
-    const rawParagraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
-    const paragraphs: string[] = [];
-    for (const p of rawParagraphs) {
-      // Split before "Ação:" (case-insensitive) when it appears mid-paragraph
-      const parts = p.split(/(?=\bA[çc][ãa]o\s*:)/gi);
-      for (const part of parts) {
-        const trimmed = part.trim();
-        if (trimmed) paragraphs.push(trimmed);
-      }
-    }
+    const paragraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
     const bodyW = CONTENT_W - 14;
     const wrapped: string[] = [];
     paragraphs.forEach((p, i) => {
@@ -540,13 +539,16 @@ export function generatePDFReport(data: PDFReportData) {
 
     let ty = curY + 5;
     doc.setFontSize(9);
-    // Any line that starts with a label followed by ":" gets bold prefix
-    // Matches: numbered items (1. Melhor especialidade:), known labels (Ação:, Diagnóstico:), etc.
-    const boldPrefixRe = /^(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:]{0,60}:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|a[çc][ãa]o\s+recomendada\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[a-zà-úA-ZÀ-Ú]+){0,4}\s*:)/i;
     for (const line of wrapped) {
-      if (!line) { ty += 1.5; continue; }
+      if (!line) {
+        ty += 1.5;
+        continue;
+      }
+
       const ci = line.indexOf(":");
-      const hasBoldPrefix = ci > 0 && ci < 60 && boldPrefixRe.test(line);
+      const hasBoldPrefix = ci > 0 && ci < 80 && labelPrefixRe.test(line);
+      labelPrefixRe.lastIndex = 0;
+
       if (hasBoldPrefix) {
         const prefix = line.slice(0, ci + 1);
         const rest = line.slice(ci + 1).trimStart();
@@ -556,7 +558,7 @@ export function generatePDFReport(data: PDFReportData) {
         const pw = doc.getTextWidth(prefix);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...C.textDark);
-        doc.text(rest, MARGIN + 6 + pw + 1, ty);
+        if (rest) doc.text(rest, MARGIN + 6 + pw + 1, ty);
       } else {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...C.textDark);
