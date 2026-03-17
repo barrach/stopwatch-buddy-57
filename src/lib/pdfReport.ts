@@ -487,7 +487,17 @@ export function generatePDFReport(data: PDFReportData) {
   const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
     const clean = stripTags(text);
     if (!clean) return { wrapped: [], boxH: 0 };
-    const paragraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
+    // Split paragraphs at newlines AND before "Ação:" mid-text to force paragraph break
+    const rawParagraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
+    const paragraphs: string[] = [];
+    for (const p of rawParagraphs) {
+      // Split before "Ação:" (case-insensitive) when it appears mid-paragraph
+      const parts = p.split(/(?=\bA[çc][ãa]o\s*:)/gi);
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed) paragraphs.push(trimmed);
+      }
+    }
     const bodyW = CONTENT_W - 14;
     const wrapped: string[] = [];
     paragraphs.forEach((p, i) => {
