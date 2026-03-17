@@ -19,9 +19,8 @@ import {
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
-import SavedReportsList, { type SavedReport } from "@/components/SavedReportsList";
-import SavedReportView from "@/components/SavedReportView";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
