@@ -218,10 +218,13 @@ function parseAnalysis(aiText: string): AnalysisSections {
     sections[current.key] = normalized.slice(current.contentStart, next?.start ?? normalized.length).trim();
   }
 
+  // --- Infer missing sections from inline markers ---
   if (!sections.HORARIO) {
     sections.HORARIO = extractInferredSection(normalized, /(?:^|\n)\s*===\s*HORA\s*:/i, [
       /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
+      /(?:^|\n)\s*===\s*DIA\s*:/i,
       /(?:^|\n)\s*===\s*MES\s*===/i,
+      /(?:^|\n)\s*===\s*MES\s*:/i,
       /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
     ]);
   }
@@ -229,14 +232,47 @@ function parseAnalysis(aiText: string): AnalysisSections {
   if (!sections.DIA_SEMANA) {
     sections.DIA_SEMANA = extractInferredSection(normalized, /(?:^|\n)\s*===\s*DIA\s*:/i, [
       /(?:^|\n)\s*===\s*MES\s*===/i,
+      /(?:^|\n)\s*===\s*MES\s*:/i,
       /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
     ]);
   }
 
+  if (!sections.MES) {
+    sections.MES = extractInferredSection(normalized, /(?:^|\n)\s*===\s*MES\s*:/i, [
+      /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
+    ]);
+  }
+
+  // --- CRITICAL: Trim each section to prevent content leaking into the next ---
+  // EXTERNO must not contain HORA/DIA/MES blocks
   sections.EXTERNO = trimAtNestedMarker(sections.EXTERNO || "", [
     /(?:^|\n)\s*===\s*HORA\s*:/i,
     /(?:^|\n)\s*===\s*DIA\s*:/i,
     /(?:^|\n)\s*===\s*MES\s*:/i,
+    /(?:^|\n)\s*===\s*HORARIO\s*===/i,
+    /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
+    /(?:^|\n)\s*===\s*MES\s*===/i,
+  ]);
+
+  // HORARIO must not contain DIA or MES blocks
+  sections.HORARIO = trimAtNestedMarker(sections.HORARIO || "", [
+    /(?:^|\n)\s*===\s*DIA\s*:/i,
+    /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
+    /(?:^|\n)\s*===\s*MES\s*:/i,
+    /(?:^|\n)\s*===\s*MES\s*===/i,
+    /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
+  ]);
+
+  // DIA_SEMANA must not contain MES blocks
+  sections.DIA_SEMANA = trimAtNestedMarker(sections.DIA_SEMANA || "", [
+    /(?:^|\n)\s*===\s*MES\s*:/i,
+    /(?:^|\n)\s*===\s*MES\s*===/i,
+    /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
+  ]);
+
+  // MES must not contain RECOMENDACOES
+  sections.MES = trimAtNestedMarker(sections.MES || "", [
+    /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
   ]);
 
   if (!Object.keys(sections).some((key) => sections[key]?.trim())) {
