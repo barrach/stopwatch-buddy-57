@@ -487,6 +487,9 @@ export function generatePDFReport(data: PDFReportData) {
   const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
     const clean = stripTags(text);
     if (!clean) return { wrapped: [], boxH: 0 };
+    // Ensure consistent font for measurement
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
     // Split paragraphs at newlines AND before "Ação:" mid-text to force paragraph break
     const rawParagraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
     const paragraphs: string[] = [];
