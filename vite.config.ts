@@ -47,18 +47,26 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
+        // Disable precaching entirely — always fetch fresh from network
+        globPatterns: [],
+        navigateFallback: null,
         navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
+            // App pages — always network first, very short cache
             urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkOnly",
+          },
+          {
+            // JS/CSS assets — network first with short TTL
+            urlPattern: /\.(js|css)$/,
             handler: "NetworkFirst",
             options: {
-              cacheName: "app-pages",
+              cacheName: "assets-v1",
               networkTimeoutSeconds: 3,
               expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60,
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hour
               },
             },
           },
