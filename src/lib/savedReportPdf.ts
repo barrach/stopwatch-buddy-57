@@ -101,9 +101,12 @@ export function generateSavedReportPDF(report: SavedReport) {
   };
 
   const drawFormattedText = (text: string, x: number, y: number, maxW: number): number => {
-    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    const normalized = text
+      .replace(/\s*\|\s*/g, "\n")
+      .replace(/([^\n])\s+(?=(?:\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|[A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:))/g, "$1\n");
+    const lines = normalized.split("\n").map((l) => l.trim()).filter(Boolean);
     let drawY = y;
-    const boldPrefixRe = /^([A-ZÀ-Úa-zà-ú][^:]{0,50}:)/;
+    const boldPrefixRe = /^(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:]{0,60}:|[A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:)/;
     doc.setFontSize(9);
     for (const line of lines) {
       const match = line.match(boldPrefixRe);
@@ -111,16 +114,28 @@ export function generateSavedReportPDF(report: SavedReport) {
         const prefix = match[1];
         const rest = line.slice(prefix.length).trimStart();
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(37, 99, 235); // blue
+        doc.setTextColor(37, 99, 235);
         doc.text(prefix, x, drawY);
         const pw = doc.getTextWidth(prefix);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...C.textDark);
-        if (rest) doc.text(rest, x + pw + 1, drawY);
+        if (rest) {
+          const restLines = doc.splitTextToSize(rest, Math.max(maxW - pw - 1, 30)) as string[];
+          doc.text(restLines[0] || "", x + pw + 1, drawY);
+          for (let i = 1; i < restLines.length; i++) {
+            drawY += 4.5;
+            doc.text(restLines[i], x, drawY);
+          }
+        }
       } else {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...C.textDark);
-        doc.text(line, x, drawY);
+        const wrapped = doc.splitTextToSize(line, maxW) as string[];
+        for (const wrappedLine of wrapped) {
+          doc.text(wrappedLine, x, drawY);
+          drawY += 4.5;
+        }
+        continue;
       }
       drawY += 4.5;
     }
@@ -138,7 +153,7 @@ export function generateSavedReportPDF(report: SavedReport) {
       totals.set(desc, sum);
       grand += sum;
     }
-    return STACK_ORDER.map((desc) => ({
+    return [...STACK_ORDER].reverse().map((desc) => ({
       name: desc,
       percent: grand > 0 ? Number(((totals.get(desc) || 0) / grand * 100).toFixed(1)) : 0,
     }));
