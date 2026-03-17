@@ -102,12 +102,11 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#D4B896",
-  "Aguardando Liberações": "#D4B896",
+  "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
   "Causas Naturais": "#F97316",
-  "Vazamento / Interferência da Planta": "#D4B896",
   // Legacy
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
@@ -119,8 +118,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
-  "Aguardando Liberação de PT": "Aguardando Liberações",
-  "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
 const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
