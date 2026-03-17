@@ -600,7 +600,7 @@ export function generatePDFReport(data: PDFReportData) {
   };
 
   const measureLegendH = (items: LegendItem[]): number => {
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(LEGEND_FONT_PT);
     const tW = LEGEND_W - 10;
     let h = 0;
