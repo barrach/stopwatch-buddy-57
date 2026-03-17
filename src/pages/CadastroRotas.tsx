@@ -35,6 +35,7 @@ export default function CadastroRotas() {
       required: true,
       options: obras.map((o) => ({ value: o.id, label: o.nome })),
       placeholder: "Selecione o contrato...",
+      displayKey: "contrato_nome",
     },
   ], [obras]);
 
