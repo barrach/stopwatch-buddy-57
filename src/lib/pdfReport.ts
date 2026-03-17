@@ -140,7 +140,7 @@ function hexToRgb(hex: string): RGB {
 
 function isWhiteColor(hex: string): boolean {
   const h = hex.toUpperCase();
-  return h === "#FFFFFF" || h === "#F5E6D0";
+  return h === "#FFFFFF" || h === "#D4B896";
 }
 
 function toPercent(value: number): number {
