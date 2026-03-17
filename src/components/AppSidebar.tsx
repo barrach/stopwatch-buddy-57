@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download, FileBarChart } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
@@ -9,6 +9,7 @@ const navItems = [
   { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
   { to: "/registros", label: "Registros", icon: ClipboardList },
   { to: "/auditoria", label: "Auditoria", icon: ShieldAlert },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
 const cadastroItems = [

@@ -17,6 +17,7 @@ import CadastroObras from "./pages/CadastroObras";
 
 import AuditoriaPage from "./pages/AuditoriaPage";
 import RelatorioIA from "./pages/RelatorioIA";
+import RelatoriosPage from "./pages/RelatoriosPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/cadastro/obras" element={<CadastroObras />} />
       
       <Route path="/auditoria" element={<AuditoriaPage />} />
+      <Route path="/relatorios" element={<RelatoriosPage />} />
       <Route path="/relatorio-ia" element={<RelatorioIA />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
