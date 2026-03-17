@@ -45,9 +45,14 @@ export default function NewObservation() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [lastObs, setLastObs] = useState<LastObservation | null>(null);
 
-  const { data: rotas = [] } = useOfflineQuery<{ id: string; nome: string }>(
-    ["rotas", "ativas"], "rotas", "id, nome",
+  const { data: allRotas = [] } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
+    ["rotas", "ativas"], "rotas", "id, nome, obra_id",
     [{ column: "status", value: "Ativo" }], "nome"
+  );
+
+  const rotas = useMemo(
+    () => obraId ? allRotas.filter((r) => r.obra_id === obraId) : [],
+    [allRotas, obraId]
   );
 
   const { data: obras = [] } = useOfflineQuery<{ id: string; nome: string }>(
