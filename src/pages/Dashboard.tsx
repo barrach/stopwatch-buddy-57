@@ -1915,7 +1915,6 @@ export default function Dashboard() {
                     <strong style={{ fontSize: 14 }}>{data.name}</strong>
                     <div style={{ fontSize: 12, lineHeight: 1.8, marginTop: 6 }}>
                       <div>Percentual: <strong>{data.percent}%</strong></div>
-                      <div>Quantidade: <strong>{data.value}</strong></div>
                     </div>
                   </div>
                 );
