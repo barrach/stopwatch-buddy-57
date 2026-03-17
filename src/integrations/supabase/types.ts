@@ -366,6 +366,54 @@ export type Database = {
         }
         Relationships: []
       }
+      relatorios_salvos: {
+        Row: {
+          criado_em: string
+          criado_por: string
+          data_fim: string | null
+          data_inicio: string | null
+          data_unica: string | null
+          date_mode: string
+          especialidade_id: string | null
+          especialidade_nome: string | null
+          id: string
+          obra_id: string
+          obra_nome: string
+          snapshot: Json
+          titulo: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_unica?: string | null
+          date_mode?: string
+          especialidade_id?: string | null
+          especialidade_nome?: string | null
+          id?: string
+          obra_id: string
+          obra_nome: string
+          snapshot?: Json
+          titulo: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_unica?: string | null
+          date_mode?: string
+          especialidade_id?: string | null
+          especialidade_nome?: string | null
+          id?: string
+          obra_id?: string
+          obra_nome?: string
+          snapshot?: Json
+          titulo?: string
+        }
+        Relationships: []
+      }
       rotas: {
         Row: {
           alterado_em: string
