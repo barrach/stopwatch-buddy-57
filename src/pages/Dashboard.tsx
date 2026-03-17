@@ -629,7 +629,7 @@ export default function Dashboard() {
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      // In especialidade mode, exclude NPE; in categoria mode, include all (Causas Naturais + Aguardando Liberações)
+      // In especialidade mode, exclude NPE; in categoria mode, include all NPE descriptions
       if (paretoMode === "especialidade" && isExternalRecord(r)) return;
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
