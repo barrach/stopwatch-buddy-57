@@ -1771,7 +1771,7 @@ export default function Dashboard() {
                       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
-                          <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
+                          <span><strong>{data.name}</strong>: {data.percent}%</span>
                         </div>
                       </div>
                     );
