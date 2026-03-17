@@ -660,8 +660,8 @@ export default function Dashboard() {
   // Only include descriptions that exist in the data, but always in canonical order
   const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
-  // Without NPE categories — used for Especialidade + Tempo charts
-  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER, []);
+  // All charts now use the full description list including Causas Naturais
+  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
