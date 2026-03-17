@@ -17,6 +17,7 @@ import CadastroObras from "./pages/CadastroObras";
 
 import AuditoriaPage from "./pages/AuditoriaPage";
 import RelatorioIA from "./pages/RelatorioIA";
+import RelatoriosPage from "./pages/RelatoriosPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
