@@ -26,6 +26,7 @@ export default function RelatoriosPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<"single" | "period">("single");
   const [date, setDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -34,7 +35,6 @@ export default function RelatoriosPage() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
 
   // ── Data fetching ──
   const { data: obras = [] } = useQuery({
