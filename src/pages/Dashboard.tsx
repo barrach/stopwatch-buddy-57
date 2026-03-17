@@ -1728,24 +1728,6 @@ export default function Dashboard() {
             </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
-            {/* Summary: total lost hours */}
-            {(() => {
-              const totalHours = externalCausas.length > 0 ? externalCausas[0]._totalHours : 0;
-              return (
-                <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-semibold text-foreground">
-                      {totalHours} hora{totalHours !== 1 ? "s" : ""} perdida{totalHours !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    Baseado em <strong className="text-blue-500">{totalHours} horário{totalHours !== 1 ? "s" : ""}</strong> com registros de causas externas
-                  </span>
-                </div>
-              );
-            })()}
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {externalCausas.map((causa: any) => {
                 return (
@@ -1753,7 +1735,7 @@ export default function Dashboard() {
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
                     </div>
                   </div>
                 );
