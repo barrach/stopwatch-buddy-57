@@ -484,10 +484,9 @@ export function generatePDFReport(data: PDFReportData) {
     curY += 10;
   };
 
-  const drawAnalysisBox = (text: string) => {
+  const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
     const clean = stripTags(text);
-    if (!clean) return;
-
+    if (!clean) return { wrapped: [], boxH: 0 };
     const paragraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
     const bodyW = CONTENT_W - 14;
     const wrapped: string[] = [];
@@ -496,8 +495,26 @@ export function generatePDFReport(data: PDFReportData) {
       wrapped.push(...lines);
       if (i < paragraphs.length - 1) wrapped.push("");
     });
-
     const boxH = Math.max(12, wrapped.length * 4 + 6);
+    return { wrapped, boxH };
+  };
+
+  /** Measure how tall an analysis box would be (without drawing) */
+  const measureAnalysisBox = (text: string): number => {
+    const { boxH } = wrapAnalysisText(text);
+    return boxH > 0 ? boxH + 2 : 0;
+  };
+
+  /** Measure a sub-header height */
+  const measureSubHeader = (title: string): number => {
+    const clean = normalizeTitle(title);
+    return clean ? 10 : 0;
+  };
+
+  const drawAnalysisBox = (text: string) => {
+    const { wrapped, boxH } = wrapAnalysisText(text);
+    if (!wrapped.length) return;
+
     ensureSpace(boxH + 2);
 
     doc.setFillColor(...C.analysisBg);
