@@ -11,7 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save } from "lucide-react";
+import { FileText, Save, Archive } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
@@ -19,14 +20,14 @@ import {
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
-import SavedReportsList, { type SavedReport } from "@/components/SavedReportsList";
-import SavedReportView from "@/components/SavedReportView";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<"single" | "period">("single");
   const [date, setDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -35,7 +36,6 @@ export default function RelatoriosPage() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
 
   // ── Data fetching ──
   const { data: obras = [] } = useQuery({
@@ -364,27 +364,18 @@ export default function RelatoriosPage() {
   const specName = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
   const periodLabel = dateMode === "single" ? date : `${startDate} até ${endDate}`;
 
-  // ── If viewing a saved report ──
-  if (viewingReport) {
-    return (
-      <AppLayout>
-        <div className="max-w-5xl mx-auto">
-          <SavedReportView
-            report={viewingReport}
-            onBack={() => setViewingReport(null)}
-            onExportPDF={handleExportPDF}
-          />
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">Relatórios</h1>
+            <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade</p>
+          </div>
+          <Button onClick={() => navigate("/relatorios-salvos")} className="gap-2">
+            <Archive className="w-4 h-4" />
+            Relatórios Salvos
+          </Button>
         </div>
 
         {/* Filters */}
@@ -456,15 +447,6 @@ export default function RelatoriosPage() {
               </Button>
             )}
           </div>
-        </div>
-
-        {/* Saved Reports */}
-        <div className="mb-6">
-          <SavedReportsList
-            obras={obras}
-            onView={(report) => setViewingReport(report)}
-            onExportPDF={handleExportPDF}
-          />
         </div>
 
         {/* Empty state */}
