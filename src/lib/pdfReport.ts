@@ -63,9 +63,9 @@ const STACK_ORDER_FULL = [
 // All charts now include NPE descriptions
 const STACK_ORDER = [...STACK_ORDER_FULL];
 
-// Legend order = same as stack order (bottom→top = top→bottom in legend)
-const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL];
-const LEGEND_ORDER = [...STACK_ORDER];
+// Legend order = reverse of stack order so the top legend item matches the top visible stack segment
+const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL].reverse();
+const LEGEND_ORDER = [...STACK_ORDER].reverse();
 
 const DONUT_ORDER = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
 const HOUR_ORDER = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
