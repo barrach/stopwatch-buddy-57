@@ -1,38 +1,65 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import CrudPage from "@/components/CrudPage";
+import CrudPage, { CrudField } from "@/components/CrudPage";
+import { useMemo } from "react";
 
 export default function CadastroRotas() {
   const qc = useQueryClient();
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["rotas"],
+  const { data: obras = [] } = useQuery({
+    queryKey: ["obras", "ativas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("rotas").select("*").order("codigo");
+      const { data, error } = await supabase.from("obras").select("id, nome").eq("status", "Ativo").order("nome");
       if (error) throw error;
       return data;
     },
   });
 
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["rotas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("rotas").select("*, obras(nome)").order("nome");
+      if (error) throw error;
+      return data.map((r: any) => ({
+        ...r,
+        contrato_nome: r.obras?.nome || "—",
+      }));
+    },
+  });
+
+  const extraFields: CrudField[] = useMemo(() => [
+    {
+      key: "obra_id",
+      label: "Contrato",
+      type: "select" as const,
+      required: true,
+      options: obras.map((o) => ({ value: o.id, label: o.nome })),
+      placeholder: "Selecione o contrato...",
+      displayKey: "contrato_nome",
+    },
+  ], [obras]);
+
   const save = async (form: Record<string, string>) => {
+    if (!form.obra_id) throw new Error("Selecione um contrato para a rota");
     const { error } = await supabase.from("rotas").insert({
       codigo: form.nome.trim().toUpperCase().slice(0, 20),
       nome: form.nome,
+      obra_id: form.obra_id,
       descricao: form.descricao || null,
       status: form.status,
-      criado_por: null,
     });
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["rotas"] });
   };
 
   const update = async (id: string, form: Record<string, string>) => {
-    const { error } = await supabase.from("rotas").update({
+    const updateData: Record<string, any> = {
       nome: form.nome,
       descricao: form.descricao || null,
       status: form.status,
-      alterado_por: null,
-    }).eq("id", id);
+    };
+    if (form.obra_id) updateData.obra_id = form.obra_id;
+    const { error } = await supabase.from("rotas").update(updateData).eq("id", id);
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["rotas"] });
   };
@@ -49,6 +76,7 @@ export default function CadastroRotas() {
       subtitle="Gerencie as rotas de amostragem"
       items={items as any}
       loading={isLoading}
+      extraFields={extraFields}
       onSave={save}
       onUpdate={update}
       onDelete={remove}

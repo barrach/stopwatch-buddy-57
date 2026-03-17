@@ -27,6 +27,7 @@ export interface CrudField {
   required?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
+  displayKey?: string; // alternative key for table display (e.g. joined name)
 }
 
 interface CrudItem {
@@ -188,7 +189,7 @@ export default function CrudPage({ title, subtitle, items, loading, extraFields 
                     <TableCell className="text-xs font-medium">{item.nome}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{item.descricao || "—"}</TableCell>
                     {extraFields.map((f) => (
-                      <TableCell key={f.key} className="text-xs">{item[f.key] || "—"}</TableCell>
+                      <TableCell key={f.key} className="text-xs">{item[f.displayKey || f.key] || "—"}</TableCell>
                     ))}
                     <TableCell>
                       <button
