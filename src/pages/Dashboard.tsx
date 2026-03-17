@@ -628,11 +628,11 @@ export default function Dashboard() {
     });
   }, [records, getParentCatName]);
 
-  // Pareto data — excludes NPE
+  // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from Pareto
+      if (isExternalRecord(r)) return; // Exclude NPE items from Pareto list
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
       else key = r.descricao || "Sem descrição";
@@ -641,17 +641,17 @@ export default function Dashboard() {
     const sorted = Object.entries(totals)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-    const total = sorted.reduce((s, c) => s + c.value, 0);
+    // Use totalSamples (all records including NPE) as denominator
     let cumulative = 0;
     return sorted.slice(0, 10).map((item) => {
       cumulative += item.value;
       return {
         ...item,
-        percent: total > 0 ? Math.round((item.value / total) * 100) : 0,
-        cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
+        percent: totalSamples > 0 ? Math.round((item.value / totalSamples) * 100) : 0,
+        cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, paretoMode]);
+  }, [records, paretoMode, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
@@ -1728,24 +1728,6 @@ export default function Dashboard() {
             </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
-            {/* Summary: total lost hours */}
-            {(() => {
-              const totalHours = externalCausas.length > 0 ? externalCausas[0]._totalHours : 0;
-              return (
-                <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-semibold text-foreground">
-                      {totalHours} hora{totalHours !== 1 ? "s" : ""} perdida{totalHours !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    Baseado em <strong className="text-blue-500">{totalHours} horário{totalHours !== 1 ? "s" : ""}</strong> com registros de causas externas
-                  </span>
-                </div>
-              );
-            })()}
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {externalCausas.map((causa: any) => {
                 return (
@@ -1753,7 +1735,7 @@ export default function Dashboard() {
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.hours}h perdida{causa.hours !== 1 ? "s" : ""} · {causa.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
                     </div>
                   </div>
                 );
@@ -1789,7 +1771,7 @@ export default function Dashboard() {
                       <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 180 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: getDescColor(data.name), display: "inline-block", flexShrink: 0 }} />
-                          <span><strong>{data.name}</strong>: {data.hours}h ({data.percent}%)</span>
+                          <span><strong>{data.name}</strong>: {data.percent}%</span>
                         </div>
                       </div>
                     );
