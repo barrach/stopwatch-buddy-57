@@ -534,10 +534,13 @@ export function generatePDFReport(data: PDFReportData) {
 
     let ty = curY + 5;
     doc.setFontSize(9);
+    // Patterns that should trigger bold prefix (label: value)
+    const boldPrefixRe = /^(\d+[ªº°]?\s*causa\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|a[çc][ãa]o\s+recomendada\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:)/i;
     for (const line of wrapped) {
       if (!line) { ty += 1.5; continue; }
       const ci = line.indexOf(":");
-      if (ci > 0 && ci < 40) {
+      const hasBoldPrefix = ci > 0 && ci < 50 && boldPrefixRe.test(line);
+      if (hasBoldPrefix) {
         const prefix = line.slice(0, ci + 1);
         const rest = line.slice(ci + 1).trimStart();
         doc.setFont("helvetica", "bold");
