@@ -742,7 +742,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
+      // Allow all NPE descriptions through
 
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
