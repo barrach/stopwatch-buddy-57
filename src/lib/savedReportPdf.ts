@@ -100,6 +100,33 @@ export function generateSavedReportPDF(report: SavedReport) {
     return drawY - y;
   };
 
+  const drawFormattedText = (text: string, x: number, y: number, maxW: number): number => {
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    let drawY = y;
+    const boldPrefixRe = /^([A-ZÀ-Úa-zà-ú][^:]{0,50}:)/;
+    doc.setFontSize(9);
+    for (const line of lines) {
+      const match = line.match(boldPrefixRe);
+      if (match) {
+        const prefix = match[1];
+        const rest = line.slice(prefix.length).trimStart();
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(37, 99, 235); // blue
+        doc.text(prefix, x, drawY);
+        const pw = doc.getTextWidth(prefix);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...C.textDark);
+        if (rest) doc.text(rest, x + pw + 1, drawY);
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...C.textDark);
+        doc.text(line, x, drawY);
+      }
+      drawY += 4.5;
+    }
+    return drawY - y;
+  };
+
   const computeLegendFromRows = (rows: any[]): Array<{ name: string; percent: number }> => {
     const totals = new Map<string, number>();
     let grand = 0;
@@ -111,7 +138,7 @@ export function generateSavedReportPDF(report: SavedReport) {
       totals.set(desc, sum);
       grand += sum;
     }
-    return [...STACK_ORDER].reverse().map((desc) => ({
+    return STACK_ORDER.map((desc) => ({
       name: desc,
       percent: grand > 0 ? Number(((totals.get(desc) || 0) / grand * 100).toFixed(1)) : 0,
     }));
