@@ -9,6 +9,7 @@ const navItems = [
   { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
   { to: "/registros", label: "Registros", icon: ClipboardList },
   { to: "/auditoria", label: "Auditoria", icon: ShieldAlert },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
 const cadastroItems = [
