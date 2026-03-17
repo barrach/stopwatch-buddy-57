@@ -551,7 +551,7 @@ export function generatePDFReport(data: PDFReportData) {
         const prefix = line.slice(0, ci + 1);
         const rest = line.slice(ci + 1).trimStart();
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...C.sectionBg);
+        doc.setTextColor(...C.blue);
         doc.text(prefix, MARGIN + 6, ty);
         const pw = doc.getTextWidth(prefix);
         doc.setFont("helvetica", "normal");
