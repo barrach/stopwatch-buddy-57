@@ -53,18 +53,19 @@ const STACK_ORDER_FULL = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberações",
   "Pessoal",
   "Ocioso",
+  "Aguardando Liberação de PT",
+  "Vazamento / Interferência da Planta",
   "Causas Naturais",
 ] as const;
 
-// All charts now include Causas Naturais
+// All charts now include NPE descriptions
 const STACK_ORDER = [...STACK_ORDER_FULL];
 
-// Legend order = visual top→bottom = REVERSED stack order
-const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL].reverse();
-const LEGEND_ORDER = [...STACK_ORDER].reverse();
+// Legend order = same as stack order (bottom→top = top→bottom in legend)
+const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL];
+const LEGEND_ORDER = [...STACK_ORDER];
 
 const DONUT_ORDER = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
 const HOUR_ORDER = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
@@ -80,9 +81,10 @@ const DESC_COLORS: Record<string, string> = {
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
   Assistindo: "#15803D",
-  "Aguardando Liberações": "#D4B896",
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
+  "Aguardando Liberação de PT": "#D4B896",
+  "Vazamento / Interferência da Planta": "#C8A882",
   "Causas Naturais": "#F97316",
 };
 
