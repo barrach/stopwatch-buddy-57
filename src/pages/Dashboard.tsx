@@ -212,9 +212,9 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
 };
 
 const renderLegendList = (descriptions: string[]) => {
-  // Bars stack bottom→top. Legend reads top→bottom.
-  // Reverse so top-of-stack (last in array) = first legend item (top).
-  const legendOrder = [...descriptions].reverse();
+  // Legend order matches bar stacking: bottom-to-top = top-to-bottom in legend
+  // descriptions array is already in bottom→top order, so we use it as-is
+  const legendOrder = [...descriptions];
   return (
     <div
       className="flex flex-col justify-start gap-[5px] overflow-y-auto pr-1"
