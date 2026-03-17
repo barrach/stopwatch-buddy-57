@@ -427,7 +427,7 @@ function buildModel(data: PDFReportData, analysis: AnalysisSections) {
   const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER, STACK_ORDER, true);
   const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER, STACK_ORDER, true);
   const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
-  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Causas Naturais", "Aguardando Liberações"], DESC_COLORS, true);
+  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Causas Naturais", "Aguardando Liberação de PT", "Vazamento / Interferência da Planta"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);

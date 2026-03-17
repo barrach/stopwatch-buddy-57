@@ -892,7 +892,7 @@ export default function Dashboard() {
         const result: Record<string, Record<string, number>> = {};
         records.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-          if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+          if (isExternalRecord(r) && !["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"].includes(normalizedDesc)) return;
           let key = "";
           if (mode === "horario") {
             key = r.horario || "";
