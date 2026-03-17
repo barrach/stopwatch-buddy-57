@@ -424,6 +424,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          obra_id: string
           status: string
         }
         Insert: {
@@ -435,6 +436,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          obra_id: string
           status?: string
         }
         Update: {
@@ -446,9 +448,18 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          obra_id?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rotas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
