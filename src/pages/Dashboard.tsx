@@ -102,13 +102,13 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Assistindo": "#15803D",
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
-  "Aguardando Liberação de PT": "#F5E6D0",
-  "Aguardando Liberações": "#F5E6D0",
+  "Aguardando Liberação de PT": "#D4B896",
+  "Aguardando Liberações": "#D4B896",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
   "Causas Naturais": "#F97316",
-  "Vazamento / Interferência da Planta": "#F5E6D0",
+  "Vazamento / Interferência da Planta": "#D4B896",
   // Legacy
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
@@ -139,7 +139,7 @@ const getDescColor = (desc: string): string => {
 // Legend text color: use gray for white items so text is readable
 const getLegendTextColor = (desc: string): string => {
   const c = getDescColor(desc);
-  return c === "#FFFFFF" || c === "#F5E6D0" ? "#9CA3AF" : c;
+  return c === "#FFFFFF" || c === "#D4B896" ? "#9CA3AF" : c;
 };
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
   if (descricao) return getDescColor(descricao);
