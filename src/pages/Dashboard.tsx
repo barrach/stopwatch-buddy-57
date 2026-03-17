@@ -164,10 +164,9 @@ const DESCRIPTION_GROUPS = {
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
     "Assistindo",
-    "Aguardando Liberações",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
-  "Não Produtivo Externo": ["Causas Naturais"],
+  "Não Produtivo Externo": ["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"],
 } as const;
 
 const DESCRIPTION_GROUP_ORDER = Object.keys(DESCRIPTION_GROUPS) as Array<keyof typeof DESCRIPTION_GROUPS>;
