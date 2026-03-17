@@ -1,8 +1,6 @@
 export const LEGACY_DESCRIPTION_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
-  "Aguardando Liberação de PT": "Aguardando Liberações",
-  "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
 
 export const HIDDEN_LEGACY_DESCRIPTION_NAMES = new Set(Object.keys(LEGACY_DESCRIPTION_MAP));

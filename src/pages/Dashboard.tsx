@@ -78,14 +78,15 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberações",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
   // Não Produtivo Externo
+  "Aguardando Liberação de PT",
+  "Vazamento / Interferência da Planta",
   "Causas Naturais",
 ];
-// All charts now use the full order including Causas Naturais
+// All charts now use the full order including NPE descriptions
 const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
 
 // ── Per-description unique colors (engessadas) ──────────
@@ -101,12 +102,11 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#D4B896",
-  "Aguardando Liberações": "#D4B896",
+  "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
   "Causas Naturais": "#F97316",
-  "Vazamento / Interferência da Planta": "#D4B896",
   // Legacy
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
@@ -118,8 +118,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 const DISPLAY_NAME_MAP: Record<string, string> = {
   "Aguardando Movimentação de Carga": "Assistindo",
   "Aguardando movimentação de carga": "Assistindo",
-  "Aguardando Liberação de PT": "Aguardando Liberações",
-  "Vazamento / Interferência da Planta": "Aguardando Liberações",
 };
 const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
@@ -137,7 +135,7 @@ const getDescColor = (desc: string): string => {
 // Legend text color: use gray for white items so text is readable
 const getLegendTextColor = (desc: string): string => {
   const c = getDescColor(desc);
-  return c === "#FFFFFF" || c === "#D4B896" ? "#9CA3AF" : c;
+  return c === "#FFFFFF" || c === "#D4B896" || c === "#C8A882" ? "#9CA3AF" : c;
 };
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
   if (descricao) return getDescColor(descricao);
@@ -166,10 +164,9 @@ const DESCRIPTION_GROUPS = {
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
     "Assistindo",
-    "Aguardando Liberações",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
-  "Não Produtivo Externo": ["Causas Naturais"],
+  "Não Produtivo Externo": ["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"],
 } as const;
 
 const DESCRIPTION_GROUP_ORDER = Object.keys(DESCRIPTION_GROUPS) as Array<keyof typeof DESCRIPTION_GROUPS>;
@@ -215,9 +212,9 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
 };
 
 const renderLegendList = (descriptions: string[]) => {
-  // Bars stack bottom→top. Legend reads top→bottom.
-  // Reverse so top-of-stack (last in array) = first legend item (top).
-  const legendOrder = [...descriptions].reverse();
+  // Legend order matches bar stacking: bottom-to-top = top-to-bottom in legend
+  // descriptions array is already in bottom→top order, so we use it as-is
+  const legendOrder = [...descriptions];
   return (
     <div
       className="flex flex-col justify-start gap-[5px] overflow-y-auto pr-1"
@@ -632,7 +629,7 @@ export default function Dashboard() {
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      // In especialidade mode, exclude NPE; in categoria mode, include all (Causas Naturais + Aguardando Liberações)
+      // In especialidade mode, exclude NPE; in categoria mode, include all NPE descriptions
       if (paretoMode === "especialidade" && isExternalRecord(r)) return;
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
@@ -713,7 +710,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
+      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -745,7 +742,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
+      // Allow all NPE descriptions through
 
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
@@ -895,7 +892,7 @@ export default function Dashboard() {
         const result: Record<string, Record<string, number>> = {};
         records.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-          if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+          if (isExternalRecord(r) && !["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"].includes(normalizedDesc)) return;
           let key = "";
           if (mode === "horario") {
             key = r.horario || "";
