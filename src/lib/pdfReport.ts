@@ -783,8 +783,31 @@ export function generatePDFReport(data: PDFReportData) {
   renderBlockWithSubs("Produtividade por Mês", images.tempoMes, "tempoMes", model.monthLegend, model.monthBlocks);
 
   // ─── SECTION 12: Conclusões e Recomendações ───
-  sectionHeader("Conclusões e Recomendações");
   if (model.recommendations.length) {
+    // Measure first recommendation block to keep header with it
+    const measureRecBlock = (item: RecBlock): number => {
+      const fields = [
+        { label: "PROBLEMA", value: item.problema },
+        { label: "CAUSA PROVÁVEL", value: item.causa },
+        { label: "AÇÃO RECOMENDADA", value: item.acao },
+        { label: "RESPONSÁVEL", value: item.responsavel },
+        { label: "IMPACTO ESPERADO", value: item.impacto },
+      ].filter((f) => f.value?.trim());
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      let blockH = 12;
+      fields.forEach((f) => {
+        const lines = doc.splitTextToSize(f.value, CONTENT_W - 16) as string[];
+        blockH += 5 + lines.length * 3.6;
+      });
+      return blockH + 6;
+    };
+
+    // Ensure section header + first block stay together
+    const firstBlockH = measureRecBlock(model.recommendations[0]);
+    ensureSpace(12 + firstBlockH);
+    sectionHeader("Conclusões e Recomendações");
+
     model.recommendations.forEach((item, index) => {
       const fields = [
         { label: "PROBLEMA", value: item.problema },
@@ -794,6 +817,8 @@ export function generatePDFReport(data: PDFReportData) {
         { label: "IMPACTO ESPERADO", value: item.impacto },
       ].filter((f) => f.value?.trim());
 
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       let blockH = 12;
       fields.forEach((f) => {
         const lines = doc.splitTextToSize(f.value, CONTENT_W - 16) as string[];
@@ -825,6 +850,8 @@ export function generatePDFReport(data: PDFReportData) {
       curY += 2;
     });
   } else {
+    ensureSpace(12 + measureAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período."));
+    sectionHeader("Conclusões e Recomendações");
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
   }
 
