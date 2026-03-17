@@ -1641,10 +1641,9 @@ export default function Dashboard() {
                              <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: paretoMode === "especialidade" ? getSpecialtyColor(data.name) : (DESCRIPTION_COLORS[data.name] || PIE_COLORS[0]), display: "inline-block", flexShrink: 0 }} />
                              <strong style={{ fontSize: 13 }}>{data.name}</strong>
                            </div>
-                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                             <div>Percentual: <strong>{data.percent}%</strong></div>
-                             <div>Quantidade: <strong>{data.value}</strong></div>
-                           </div>
+                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                              <div>Percentual: <strong>{data.percent}%</strong></div>
+                            </div>
                          </div>
                        );
                      }}
