@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,24 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText } from "lucide-react";
+import { FileText, Save } from "lucide-react";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
-  DESCRIPTION_COLORS, PIE_COLORS, getSpecialtyColor,
 } from "@/lib/chartConstants";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
+import SavedReportsList, { type SavedReport } from "@/components/SavedReportsList";
+import SavedReportView from "@/components/SavedReportView";
+import { generateSavedReportPDF } from "@/lib/savedReportPdf";
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [dateMode, setDateMode] = useState<"single" | "period">("single");
   const [date, setDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -29,8 +34,10 @@ export default function RelatoriosPage() {
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
 
-  // ── Data fetching (same as Dashboard) ──
+  // ── Data fetching ──
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
     queryFn: async () => {
@@ -80,7 +87,7 @@ export default function RelatoriosPage() {
     },
   });
 
-  // ── Category helpers (same as Dashboard) ──
+  // ── Category helpers ──
   const parentCatMap = useMemo(() => {
     const map: Record<string, string> = {};
     parentCats.forEach((c: any) => { map[c.id] = c.nome; });
@@ -104,13 +111,6 @@ export default function RelatoriosPage() {
     return descs;
   }, [allCats, parentCats]);
 
-  const getParentCatName = useCallback((r: any) => {
-    const catData = r.categorias_observacao as any;
-    if (!catData) return "Sem categoria";
-    if (catData.categoria_pai_id) return parentCatMap[catData.categoria_pai_id] || catData.nome;
-    return catData.nome;
-  }, [parentCatMap]);
-
   const isExternalRecord = useCallback((r: any) => {
     const catData = r.categorias_observacao as any;
     if (!catData) return false;
@@ -124,15 +124,12 @@ export default function RelatoriosPage() {
   const records = useMemo(() => {
     if (!generated) return [];
     return allRecords.filter((r: any) => {
-      // Date filter
       if (dateMode === "single") {
         if (r.data !== date) return false;
       } else {
         if (r.data < startDate || r.data > endDate) return false;
       }
-      // Obra filter
       if (r.obra_id !== obraId) return false;
-      // Especialidade filter
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
       return true;
     });
@@ -159,10 +156,9 @@ export default function RelatoriosPage() {
     };
   }, [records]);
 
-  // ── Chart Data (exact same logic as Dashboard) ──
+  // ── Chart Data ──
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
 
-  // 1. By Contrato
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
@@ -174,14 +170,11 @@ export default function RelatoriosPage() {
     return Object.entries(result).map(([name, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
       const row: any = { name, total };
-      for (const desc of CANONICAL_ORDER_FULL) {
-        row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
-      }
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records]);
 
-  // 2. By Specialty
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
@@ -200,7 +193,6 @@ export default function RelatoriosPage() {
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records]);
 
-  // 3. By Time (Horário)
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
@@ -218,7 +210,6 @@ export default function RelatoriosPage() {
     });
   }, [records]);
 
-  // 4. By Day of Week
   const byDiaSemana = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
@@ -236,7 +227,6 @@ export default function RelatoriosPage() {
     });
   }, [records]);
 
-  // 5. By Month
   const byMes = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
@@ -254,7 +244,6 @@ export default function RelatoriosPage() {
     });
   }, [records]);
 
-  // 6. Pareto (by categoria — descriptions)
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
@@ -273,7 +262,6 @@ export default function RelatoriosPage() {
     });
   }, [records, totalSamples]);
 
-  // 7. External causes
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
@@ -312,9 +300,84 @@ export default function RelatoriosPage() {
     setGenerated(true);
   };
 
+  // ── Save report ──
+  const handleSave = async () => {
+    if (!user) {
+      toast({ title: "Erro", description: "Você precisa estar autenticado.", variant: "destructive" });
+      return;
+    }
+    if (records.length === 0) {
+      toast({ title: "Sem dados", description: "Gere o relatório antes de salvar.", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    const obraName = obras.find((o) => o.id === obraId)?.nome || "";
+    const specName = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
+    const periodLabel = dateMode === "single" ? date : `${startDate} até ${endDate}`;
+
+    const snapshot = {
+      summary,
+      byObra,
+      bySpecialty,
+      byHorario,
+      byDiaSemana,
+      byMes,
+      paretoData,
+      externalCausas,
+    };
+
+    const { error } = await supabase.from("relatorios_salvos").insert({
+      criado_por: user.id,
+      titulo: `${obraName} — ${periodLabel}`,
+      date_mode: dateMode,
+      data_unica: dateMode === "single" ? date : null,
+      data_inicio: dateMode === "period" ? startDate : null,
+      data_fim: dateMode === "period" ? endDate : null,
+      obra_id: obraId,
+      obra_nome: obraName,
+      especialidade_id: especialidadeId || null,
+      especialidade_nome: specName || null,
+      snapshot,
+    });
+
+    setSaving(false);
+    if (error) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Relatório salvo com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["relatorios_salvos"] });
+    }
+  };
+
+  // ── Export PDF from saved report ──
+  const handleExportPDF = (report: SavedReport) => {
+    try {
+      generateSavedReportPDF(report);
+      toast({ title: "PDF gerado com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar PDF", description: err.message, variant: "destructive" });
+    }
+  };
+
   const obraName = obras.find((o) => o.id === obraId)?.nome || "";
   const specName = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
   const periodLabel = dateMode === "single" ? date : `${startDate} até ${endDate}`;
+
+  // ── If viewing a saved report ──
+  if (viewingReport) {
+    return (
+      <AppLayout>
+        <div className="max-w-5xl mx-auto">
+          <SavedReportView
+            report={viewingReport}
+            onBack={() => setViewingReport(null)}
+            onExportPDF={handleExportPDF}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -328,7 +391,6 @@ export default function RelatoriosPage() {
         <div className="stat-card mb-6 animate-fade-in">
           <h3 className="text-sm font-semibold text-foreground mb-4">Filtros</h3>
 
-          {/* Date mode selector */}
           <div className="mb-4">
             <Label className="text-xs text-muted-foreground mb-2 block">Modo de seleção</Label>
             <RadioGroup value={dateMode} onValueChange={(v) => { setDateMode(v as any); setGenerated(false); }} className="flex gap-4">
@@ -380,13 +442,29 @@ export default function RelatoriosPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Button onClick={handleGenerate} className="w-full gap-2">
-                <FileText className="w-4 h-4" />
-                Gerar Relatório
-              </Button>
-            </div>
           </div>
+
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handleGenerate} className="gap-2">
+              <FileText className="w-4 h-4" />
+              Gerar Relatório
+            </Button>
+            {generated && records.length > 0 && (
+              <Button variant="outline" onClick={handleSave} disabled={saving} className="gap-2">
+                <Save className="w-4 h-4" />
+                {saving ? "Salvando..." : "Salvar Relatório"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Saved Reports */}
+        <div className="mb-6">
+          <SavedReportsList
+            obras={obras}
+            onView={(report) => setViewingReport(report)}
+            onExportPDF={handleExportPDF}
+          />
         </div>
 
         {/* Empty state */}
@@ -399,7 +477,6 @@ export default function RelatoriosPage() {
         {/* Report */}
         {generated && records.length > 0 && (
           <div className="space-y-6 animate-fade-in">
-            {/* Title */}
             <div className="stat-card">
               <h2 className="text-lg font-bold text-foreground">
                 Relatório — {periodLabel} — {obraName}
@@ -407,7 +484,6 @@ export default function RelatoriosPage() {
               </h2>
             </div>
 
-            {/* Summary */}
             <div className="stat-card">
               <h3 className="text-sm font-semibold text-foreground mb-3">Resumo do Período</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
@@ -432,60 +508,13 @@ export default function RelatoriosPage() {
               </div>
             </div>
 
-            {/* 1. Visão Geral por Contrato */}
-            <StackedBarChartSection
-              data={byObra}
-              dataKeyX="name"
-              descriptions={CANONICAL_ORDER_FULL}
-              title="Visão Geral por Contrato"
-              xAngle={-15}
-            />
-
-            {/* 2. Produtividade por Especialidade */}
-            <StackedBarChartSection
-              data={bySpecialty}
-              dataKeyX="name"
-              descriptions={CANONICAL_ORDER_FULL}
-              title="Produtividade por Especialidade"
-              xAngle={-25}
-            />
-
-            {/* 3. Produtividade por Horário */}
-            <StackedBarChartSection
-              data={byHorario}
-              dataKeyX="time"
-              descriptions={CANONICAL_ORDER_FULL}
-              title="Produtividade por Horário"
-            />
-
-            {/* 4. Produtividade por Dia da Semana */}
-            <StackedBarChartSection
-              data={byDiaSemana}
-              dataKeyX="time"
-              descriptions={CANONICAL_ORDER_FULL}
-              title="Produtividade por Dia da Semana"
-            />
-
-            {/* 5. Produtividade por Mês */}
-            <StackedBarChartSection
-              data={byMes}
-              dataKeyX="time"
-              descriptions={CANONICAL_ORDER_FULL}
-              title="Produtividade por Mês"
-            />
-
-            {/* 6. Pareto (Top Causas) */}
-            <ParetoChartSection
-              data={paretoData}
-              title="Top Causas (Pareto)"
-              mode="categoria"
-            />
-
-            {/* 7. Causas Externas (NPE) */}
-            <ExternalPieSection
-              data={externalCausas}
-              title="Causas Externas de Parada"
-            />
+            <StackedBarChartSection data={byObra} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
+            <StackedBarChartSection data={bySpecialty} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
+            <StackedBarChartSection data={byHorario} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
+            <StackedBarChartSection data={byDiaSemana} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
+            <StackedBarChartSection data={byMes} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
+            <ParetoChartSection data={paretoData} title="Top Causas (Pareto)" mode="categoria" />
+            <ExternalPieSection data={externalCausas} title="Causas Externas de Parada" />
           </div>
         )}
       </div>

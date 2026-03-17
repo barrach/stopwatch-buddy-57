@@ -1,0 +1,76 @@
+import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
+import {
+  StackedBarChartSection, ParetoChartSection, ExternalPieSection,
+} from "@/components/ReportCharts";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, FileDown } from "lucide-react";
+import type { SavedReport } from "@/components/SavedReportsList";
+
+interface Props {
+  report: SavedReport;
+  onBack: () => void;
+  onExportPDF: (report: SavedReport) => void;
+}
+
+export default function SavedReportView({ report, onBack, onExportPDF }: Props) {
+  const s = report.snapshot;
+  const periodLabel = report.date_mode === "single"
+    ? report.data_unica || ""
+    : `${report.data_inicio} até ${report.data_fim}`;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => onExportPDF(report)} className="gap-1.5 ml-auto">
+          <FileDown className="w-4 h-4" /> Exportar PDF
+        </Button>
+      </div>
+
+      {/* Title */}
+      <div className="stat-card">
+        <h2 className="text-lg font-bold text-foreground">
+          Relatório — {periodLabel} — {report.obra_nome}
+          {report.especialidade_nome && <span className="text-muted-foreground font-normal text-sm ml-2">({report.especialidade_nome})</span>}
+        </h2>
+      </div>
+
+      {/* Summary */}
+      <div className="stat-card">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Resumo do Período</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Período analisado</p>
+            <p className="text-sm font-medium text-foreground">{s.summary?.dateStart} até {s.summary?.dateEnd}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Total de dias analisados</p>
+            <p className="text-sm font-medium text-foreground">{s.summary?.totalDays}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Total de medições</p>
+            <p className="text-sm font-medium text-foreground">{s.summary?.totalMeasurements}</p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mb-2">Horários registrados:</p>
+        <div className="flex flex-wrap gap-2">
+          {(s.summary?.times || []).map((t: string) => (
+            <span key={t} className="px-2.5 py-1 rounded-md bg-muted text-xs font-mono font-medium text-foreground">{t}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Charts from snapshot */}
+      <StackedBarChartSection data={s.byObra || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
+      <StackedBarChartSection data={s.bySpecialty || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
+      <StackedBarChartSection data={s.byHorario || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
+      <StackedBarChartSection data={s.byDiaSemana || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
+      <StackedBarChartSection data={s.byMes || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
+      <ParetoChartSection data={s.paretoData || []} title="Top Causas (Pareto)" mode="categoria" />
+      <ExternalPieSection data={s.externalCausas || []} title="Causas Externas de Parada" />
+    </div>
+  );
+}
