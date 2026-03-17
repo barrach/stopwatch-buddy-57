@@ -85,10 +85,8 @@ const CANONICAL_ORDER_FULL: string[] = [
   // Não Produtivo Externo
   "Causas Naturais",
 ];
-// Without NPE (used for Especialidade + Tempo charts) — excludes Causas Naturais only
-const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais"
-);
+// All charts now use the full order including Causas Naturais
+const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
 
 // ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
