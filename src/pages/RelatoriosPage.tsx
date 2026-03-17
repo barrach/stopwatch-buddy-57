@@ -363,27 +363,18 @@ export default function RelatoriosPage() {
   const specName = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
   const periodLabel = dateMode === "single" ? date : `${startDate} até ${endDate}`;
 
-  // ── If viewing a saved report ──
-  if (viewingReport) {
-    return (
-      <AppLayout>
-        <div className="max-w-5xl mx-auto">
-          <SavedReportView
-            report={viewingReport}
-            onBack={() => setViewingReport(null)}
-            onExportPDF={handleExportPDF}
-          />
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">Relatórios</h1>
+            <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade</p>
+          </div>
+          <Button onClick={() => navigate("/relatorios-salvos")} className="gap-2">
+            <Archive className="w-4 h-4" />
+            Relatórios Salvos
+          </Button>
         </div>
 
         {/* Filters */}
