@@ -11,7 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save } from "lucide-react";
+import { FileText, Save, Archive } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
