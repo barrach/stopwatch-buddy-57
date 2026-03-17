@@ -85,10 +85,8 @@ const CANONICAL_ORDER_FULL: string[] = [
   // Não Produtivo Externo
   "Causas Naturais",
 ];
-// Without NPE (used for Especialidade + Tempo charts) — excludes Causas Naturais only
-const CANONICAL_ORDER: string[] = CANONICAL_ORDER_FULL.filter(
-  d => d !== "Causas Naturais"
-);
+// All charts now use the full order including Causas Naturais
+const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
 
 // ── Per-description unique colors (engessadas) ──────────
 const DESCRIPTION_COLORS: Record<string, string> = {
@@ -662,8 +660,8 @@ export default function Dashboard() {
   // Only include descriptions that exist in the data, but always in canonical order
   const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
-  // Without NPE categories — used for Especialidade + Tempo charts
-  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER, []);
+  // All charts now use the full description list including Causas Naturais
+  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
@@ -714,8 +712,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow "Aguardando Liberações" through, exclude other NPE
-      if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -747,8 +744,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow "Aguardando Liberações" through, exclude other NPE
-      if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
 
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;

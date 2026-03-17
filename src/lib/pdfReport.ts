@@ -59,7 +59,8 @@ const STACK_ORDER_FULL = [
   "Causas Naturais",
 ] as const;
 
-const STACK_ORDER = STACK_ORDER_FULL.filter((n) => n !== "Causas Naturais");
+// All charts now include Causas Naturais
+const STACK_ORDER = [...STACK_ORDER_FULL];
 
 // Legend order = visual top→bottom = REVERSED stack order
 const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL].reverse();
