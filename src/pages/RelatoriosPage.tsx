@@ -193,8 +193,13 @@ export default function RelatoriosPage() {
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records]);
 
+  const STANDARD_HOURS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
+  const STANDARD_WEEKDAYS = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"];
+
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
+    // Pre-fill all standard hours
+    for (const h of STANDARD_HOURS) result[h] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
     records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "horario");
       if (!key) return;
@@ -212,6 +217,8 @@ export default function RelatoriosPage() {
 
   const byDiaSemana = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
+    // Pre-fill all standard weekdays
+    for (const d of STANDARD_WEEKDAYS) result[d] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
     records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "diasemana");
       if (!key) return;
