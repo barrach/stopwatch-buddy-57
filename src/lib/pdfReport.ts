@@ -534,12 +534,13 @@ export function generatePDFReport(data: PDFReportData) {
 
     let ty = curY + 5;
     doc.setFontSize(9);
-    // Patterns that should trigger bold prefix (label: value)
-    const boldPrefixRe = /^(\d+[ªº°]?\s*causa\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|a[çc][ãa]o\s+recomendada\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:)/i;
+    // Any line that starts with a label followed by ":" gets bold prefix
+    // Matches: numbered items (1. Melhor especialidade:), known labels (Ação:, Diagnóstico:), etc.
+    const boldPrefixRe = /^(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:]{0,60}:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|a[çc][ãa]o\s+recomendada\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[a-zà-úA-ZÀ-Ú]+){0,4}\s*:)/i;
     for (const line of wrapped) {
       if (!line) { ty += 1.5; continue; }
       const ci = line.indexOf(":");
-      const hasBoldPrefix = ci > 0 && ci < 50 && boldPrefixRe.test(line);
+      const hasBoldPrefix = ci > 0 && ci < 60 && boldPrefixRe.test(line);
       if (hasBoldPrefix) {
         const prefix = line.slice(0, ci + 1);
         const rest = line.slice(ci + 1).trimStart();
