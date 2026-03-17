@@ -39,9 +39,6 @@ const STACK_ORDER = [
   "Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais",
 ];
 
-const STANDARD_HOURS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
-const STANDARD_WEEKDAYS = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"];
-
 const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN = 14;
@@ -55,26 +52,6 @@ function hexToRgb(hex: string): RGB {
 
 function fmtPct(p: number): string {
   return `${Number(p || 0).toFixed(1)}%`;
-}
-
-/** Ensure all standard time slots exist in the data, filling with zeros */
-function ensureAllSlots(rows: any[], slots: string[], key: string): any[] {
-  const existing = new Map(rows.map(r => [r[key], r]));
-  const result: any[] = [];
-  for (const slot of slots) {
-    if (existing.has(slot)) {
-      result.push(existing.get(slot));
-    } else {
-      const row: any = { [key]: slot, total: 0 };
-      for (const desc of STACK_ORDER) row[desc] = 0;
-      result.push(row);
-    }
-  }
-  // Also include any extra slots not in the standard list
-  for (const row of rows) {
-    if (!slots.includes(row[key])) result.push(row);
-  }
-  return result;
 }
 
 export function generateSavedReportPDF(report: SavedReport) {
@@ -146,12 +123,11 @@ export function generateSavedReportPDF(report: SavedReport) {
     const tableH = Math.min(rows.length * 6 + 10, 80);
     const legendH = legend.filter(l => l.percent > 0).length * 7.5;
     const blockH = 12 + Math.max(tableH, legendH) + 6;
-
-    // Rigid block: start new page if won't fit
     ensureSpace(blockH);
 
     sectionHeader(title);
 
+    // Simple table
     const chartW = CONTENT_W * 0.68;
     const startY = curY;
     doc.setFontSize(8);
@@ -166,13 +142,14 @@ export function generateSavedReportPDF(report: SavedReport) {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
-    for (const row of rows.slice(0, 15)) {
+    for (const row of rows.slice(0, 12)) {
       const name = String(row[nameKey] || "");
       const displayName = name.length > 35 ? name.substring(0, 35) + "…" : name;
       doc.setTextColor(...C.textDark);
       doc.text(displayName, MARGIN + 2, curY + 3);
       doc.text(String(row.total || 0), MARGIN + chartW - 15, curY + 3);
 
+      // Mini bar
       const trab = Number(row["Trabalhando"] || 0);
       if (trab > 0) {
         const barW = (trab / 100) * (chartW - 55);
@@ -182,6 +159,7 @@ export function generateSavedReportPDF(report: SavedReport) {
       curY += 5;
     }
 
+    // Legend on right side
     const legendX = MARGIN + CONTENT_W * 0.70;
     drawLegend(legend, legendX, startY);
 
@@ -284,29 +262,16 @@ export function generateSavedReportPDF(report: SavedReport) {
     curY += 8;
   }
 
-  // ═══ CHARTS — ensure completeness for hours/weekdays ═══
-  const completeHorario = ensureAllSlots(s.byHorario || [], STANDARD_HOURS, "time");
-  const completeDiaSemana = ensureAllSlots(s.byDiaSemana || [], STANDARD_WEEKDAYS, "time");
-
+  // ═══ CHARTS ═══
   renderDataTable("Visão Geral por Contrato", s.byObra, "name");
   renderDataTable("Produtividade por Especialidade", s.bySpecialty, "name");
-  renderDataTable("Produtividade por Horário", completeHorario, "time");
-  renderDataTable("Produtividade por Dia da Semana", completeDiaSemana, "time");
+  renderDataTable("Produtividade por Horário", s.byHorario, "time");
+  renderDataTable("Produtividade por Dia da Semana", s.byDiaSemana, "time");
   renderDataTable("Produtividade por Mês", s.byMes, "time");
   renderParetoTable("Top Causas (Pareto)", s.paretoData);
   renderExternalTable("Causas Externas de Parada (NPE)", s.externalCausas);
 
-  // ═══ FOOTER ═══
-  const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...C.textMuted);
-    doc.text(`ProdControl — Página ${p} de ${totalPages}`, MARGIN, PAGE_H - 8);
-    doc.text(dateStr, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
-  }
-
+  // Save
   const fileName = `relatorio-${report.obra_nome.replace(/\s+/g, "-")}-${periodLabel.replace(/\s+/g, "-")}.pdf`;
   doc.save(fileName);
 }
