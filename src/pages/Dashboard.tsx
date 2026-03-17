@@ -78,14 +78,15 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo",
-  "Aguardando Liberações",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
   // Não Produtivo Externo
+  "Aguardando Liberação de PT",
+  "Vazamento / Interferência da Planta",
   "Causas Naturais",
 ];
-// All charts now use the full order including Causas Naturais
+// All charts now use the full order including NPE descriptions
 const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
 
 // ── Per-description unique colors (engessadas) ──────────
