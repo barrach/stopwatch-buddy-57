@@ -54,6 +54,7 @@ function AppRoutes() {
       
       <Route path="/auditoria" element={<AuditoriaPage />} />
       <Route path="/relatorios" element={<RelatoriosPage />} />
+      <Route path="/relatorios-salvos" element={<RelatoriosSalvosPage />} />
       <Route path="/relatorio-ia" element={<RelatorioIA />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

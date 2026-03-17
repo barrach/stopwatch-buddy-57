@@ -448,15 +448,6 @@ export default function RelatoriosPage() {
           </div>
         </div>
 
-        {/* Saved Reports */}
-        <div className="mb-6">
-          <SavedReportsList
-            obras={obras}
-            onView={(report) => setViewingReport(report)}
-            onExportPDF={handleExportPDF}
-          />
-        </div>
-
         {/* Empty state */}
         {generated && records.length === 0 && (
           <div className="stat-card text-center py-12 animate-fade-in">
