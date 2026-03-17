@@ -484,10 +484,9 @@ export function generatePDFReport(data: PDFReportData) {
     curY += 10;
   };
 
-  const drawAnalysisBox = (text: string) => {
+  const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
     const clean = stripTags(text);
-    if (!clean) return;
-
+    if (!clean) return { wrapped: [], boxH: 0 };
     const paragraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
     const bodyW = CONTENT_W - 14;
     const wrapped: string[] = [];
@@ -496,8 +495,26 @@ export function generatePDFReport(data: PDFReportData) {
       wrapped.push(...lines);
       if (i < paragraphs.length - 1) wrapped.push("");
     });
-
     const boxH = Math.max(12, wrapped.length * 4 + 6);
+    return { wrapped, boxH };
+  };
+
+  /** Measure how tall an analysis box would be (without drawing) */
+  const measureAnalysisBox = (text: string): number => {
+    const { boxH } = wrapAnalysisText(text);
+    return boxH > 0 ? boxH + 2 : 0;
+  };
+
+  /** Measure a sub-header height */
+  const measureSubHeader = (title: string): number => {
+    const clean = normalizeTitle(title);
+    return clean ? 10 : 0;
+  };
+
+  const drawAnalysisBox = (text: string) => {
+    const { wrapped, boxH } = wrapAnalysisText(text);
+    if (!wrapped.length) return;
+
     ensureSpace(boxH + 2);
 
     doc.setFillColor(...C.analysisBg);
@@ -588,12 +605,16 @@ export function generatePDFReport(data: PDFReportData) {
      BLOCK RENDERERS — enforce TITLE → CHART → LEGEND → ANALYSIS
      ══════════════════════════════════════════════════════════ */
 
-  /** Standard section: title → chart(70%) + legend(30%) → analysis */
+  /** Standard section: title → chart(70%) + legend(30%) → analysis — UNBREAKABLE */
   const renderBlock = (title: string, img: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
     const chartH = estimateChartHeight(dims, dimKey, legend.length ? CHART_W : CONTENT_W);
     const legendH = legend.length ? measureLegendH(legend) : 0;
     const rowH = Math.max(chartH, legendH);
-    ensureSpace(12 + rowH + 12);
+    const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
+    const totalBlockH = 12 + rowH + 3 + analysisH;
+
+    // If the whole block doesn't fit, start a new page
+    ensureSpace(totalBlockH);
 
     // 1. TITLE
     sectionHeader(title);
@@ -608,12 +629,15 @@ export function generatePDFReport(data: PDFReportData) {
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  /** Section with per-item analysis blocks (hours, weekdays) */
+  /** Section with per-item analysis blocks (hours, weekdays, months) */
   const renderBlockWithSubs = (title: string, img: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
     const chartH = estimateChartHeight(dims, dimKey, legend.length ? CHART_W : CONTENT_W);
     const legendH = legend.length ? measureLegendH(legend) : 0;
     const rowH = Math.max(chartH, legendH);
-    ensureSpace(12 + rowH + 12);
+    const totalChartBlockH = 12 + rowH + 3;
+
+    // Ensure the title + chart + legend fit on one page
+    ensureSpace(totalChartBlockH);
 
     // 1. TITLE
     sectionHeader(title);
@@ -624,17 +648,25 @@ export function generatePDFReport(data: PDFReportData) {
     const lh = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
     curY = rowStart + Math.max(ch, lh) + 3;
 
-    // 4. ANALYSIS (per block, each with sub-header)
+    // 4. ANALYSIS — each sub-block (e.g. each hour/day/month) is UNBREAKABLE
     blocks.forEach((b) => {
+      const subHeaderH = measureSubHeader(b.label);
+      const subAnalysisH = b.content?.trim() ? measureAnalysisBox(b.content) : 0;
+      const subTotalH = subHeaderH + subAnalysisH;
+      // Keep sub-header + its analysis together on the same page
+      if (subTotalH > 0) ensureSpace(subTotalH);
       if (b.label) subHeader(b.label);
       if (b.content?.trim()) drawAnalysisBox(b.content);
     });
   };
 
-  /** Pareto section: title → chart(100%) → analysis — NO legend */
+  /** Pareto section: title → chart(100%) → analysis — NO legend, UNBREAKABLE */
   const renderPareto = (title: string, img: string | undefined, dimKey: string, analysisText?: string) => {
     const chartH = estimateChartHeight(dims, dimKey, CONTENT_W);
-    ensureSpace(12 + chartH + 12);
+    const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
+    const totalBlockH = 12 + chartH + 3 + analysisH;
+
+    ensureSpace(totalBlockH);
 
     // 1. TITLE
     sectionHeader(title);
