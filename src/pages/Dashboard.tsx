@@ -744,8 +744,7 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow "Aguardando Liberações" through, exclude other NPE
-      if (isExternalRecord(r) && normalizedDesc !== "Aguardando Liberações") return;
+      // Allow all NPE descriptions through (Causas Naturais + Aguardando Liberações)
 
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
