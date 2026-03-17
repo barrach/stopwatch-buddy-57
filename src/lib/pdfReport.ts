@@ -79,7 +79,7 @@ const DESC_COLORS: Record<string, string> = {
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
   Assistindo: "#15803D",
-  "Aguardando Liberações": "#F5E6D0",
+  "Aguardando Liberações": "#D4B896",
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
   "Causas Naturais": "#F97316",
