@@ -27,6 +27,7 @@ export interface CrudField {
   required?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
+  displayKey?: string; // alternative key for table display (e.g. joined name)
 }
 
 interface CrudItem {
