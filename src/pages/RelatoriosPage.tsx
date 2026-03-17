@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -7,30 +7,30 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Loader2 } from "lucide-react";
-import { normalizeDescriptionName } from "@/lib/categoryNormalization";
+import { FileText } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
-} from "recharts";
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Produtivo: "#2563EB",
-  Suplementar: "#16A34A",
-  "Não Produtivo": "#DC2626",
-  "Não Produtivo Externo": "#F97316",
-};
-
-const CATEGORY_ORDER = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"];
+  CANONICAL_ORDER_FULL, canonicalDescription,
+  WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
+  DESCRIPTION_COLORS, PIE_COLORS, getSpecialtyColor,
+} from "@/lib/chartConstants";
+import {
+  StackedBarChartSection, ParetoChartSection, ExternalPieSection,
+} from "@/components/ReportCharts";
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
+  const [dateMode, setDateMode] = useState<"single" | "period">("single");
   const [date, setDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
 
+  // ── Data fetching (same as Dashboard) ──
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
     queryFn: async () => {
@@ -80,128 +80,287 @@ export default function RelatoriosPage() {
     },
   });
 
-  // Build parent category name map
+  // ── Category helpers (same as Dashboard) ──
   const parentCatMap = useMemo(() => {
     const map: Record<string, string> = {};
     parentCats.forEach((c: any) => { map[c.id] = c.nome; });
     return map;
   }, [parentCats]);
 
-  // Map subcategory to parent name
-  const getCategoryName = (record: any): string => {
-    const catInfo = record.categorias_observacao;
-    if (!catInfo) return "Sem categoria";
-    if (!catInfo.categoria_pai_id) return catInfo.nome;
-    return parentCatMap[catInfo.categoria_pai_id] || catInfo.nome;
-  };
+  const parentCatImpactMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    parentCats.forEach((c: any) => { map[c.id] = c.impacta_produtividade !== false; });
+    return map;
+  }, [parentCats]);
 
-  // Filtered records
+  const npeDescriptions = useMemo(() => {
+    const npeParentIds = new Set(parentCats.filter((c: any) => c.impacta_produtividade === false).map((c: any) => c.id));
+    const descs = new Set<string>();
+    allCats.forEach((c: any) => {
+      if (c.impacta_produtividade === false || (c.categoria_pai_id && npeParentIds.has(c.categoria_pai_id))) {
+        descs.add(c.nome);
+      }
+    });
+    return descs;
+  }, [allCats, parentCats]);
+
+  const getParentCatName = useCallback((r: any) => {
+    const catData = r.categorias_observacao as any;
+    if (!catData) return "Sem categoria";
+    if (catData.categoria_pai_id) return parentCatMap[catData.categoria_pai_id] || catData.nome;
+    return catData.nome;
+  }, [parentCatMap]);
+
+  const isExternalRecord = useCallback((r: any) => {
+    const catData = r.categorias_observacao as any;
+    if (!catData) return false;
+    if (catData.impacta_produtividade === false) return true;
+    if (catData.categoria_pai_id && parentCatImpactMap[catData.categoria_pai_id] === false) return true;
+    if (r.descricao && npeDescriptions.has(r.descricao)) return true;
+    return false;
+  }, [parentCatImpactMap, npeDescriptions]);
+
+  // ── Filtered records ──
   const records = useMemo(() => {
-    if (!generated || !date || !obraId) return [];
+    if (!generated) return [];
     return allRecords.filter((r: any) => {
-      if (r.data !== date) return false;
+      // Date filter
+      if (dateMode === "single") {
+        if (r.data !== date) return false;
+      } else {
+        if (r.data < startDate || r.data > endDate) return false;
+      }
+      // Obra filter
       if (r.obra_id !== obraId) return false;
+      // Especialidade filter
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
       return true;
     });
-  }, [generated, date, obraId, especialidadeId, allRecords]);
+  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
 
-  // 1. Resumo do dia — unique measured times
-  const measuredTimes = useMemo(() => {
-    const set = new Set<string>();
-    records.forEach((r: any) => set.add(r.horario));
-    return Array.from(set).sort((a, b) => {
-      const [ah, am] = a.split(":").map(Number);
-      const [bh, bm] = b.split(":").map(Number);
-      return ah * 60 + am - (bh * 60 + bm);
+  // ── Summary ──
+  const summary = useMemo(() => {
+    const dates = new Set<string>();
+    const times = new Set<string>();
+    let totalMeasurements = 0;
+    records.forEach((r: any) => {
+      dates.add(r.data);
+      times.add(r.horario);
+      totalMeasurements += r.quantidade || 0;
+    });
+    const sortedTimes = Array.from(times).sort((a, b) => timeIndex(a) - timeIndex(b));
+    const sortedDates = Array.from(dates).sort();
+    return {
+      totalDays: dates.size,
+      totalMeasurements,
+      times: sortedTimes,
+      dateStart: sortedDates[0] || "",
+      dateEnd: sortedDates[sortedDates.length - 1] || "",
+    };
+  }, [records]);
+
+  // ── Chart Data (exact same logic as Dashboard) ──
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+
+  // 1. By Contrato
+  const byObra = useMemo(() => {
+    const result: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const oName = (r.obras as any)?.nome || "Sem contrato";
+      if (!result[oName]) result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (desc in result[oName]) result[oName][desc] += r.quantidade || 0;
+    });
+    return Object.entries(result).map(([name, descs]) => {
+      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+      const row: any = { name, total };
+      for (const desc of CANONICAL_ORDER_FULL) {
+        row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      }
+      return row;
+    }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
+  }, [records]);
+
+  // 2. By Specialty
+  const bySpecialty = useMemo(() => {
+    const result: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const sName = (r.especialidades as any)?.nome || "Sem especialidade";
+      if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (desc in result[sName]) result[sName][desc] += r.quantidade || 0;
+    });
+    return Object.entries(result)
+      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
+      .map(([name, descs]) => {
+        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const row: any = { name, total };
+        for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+        return row;
+      }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
+  }, [records]);
+
+  // 3. By Time (Horário)
+  const byHorario = useMemo(() => {
+    const result: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const key = getTimeBucketLabel(r, "horario");
+      if (!key) return;
+      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+    });
+    return Object.entries(result).sort(([a], [b]) => timeIndex(a) - timeIndex(b)).map(([label, descs]) => {
+      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+      const row: any = { time: label, total };
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      return row;
     });
   }, [records]);
 
-  // 2. Distribuição por categoria (%)
-  const categoryDist = useMemo(() => {
+  // 4. By Day of Week
+  const byDiaSemana = useMemo(() => {
+    const result: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const key = getTimeBucketLabel(r, "diasemana");
+      if (!key) return;
+      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+    });
+    return Object.entries(result).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, descs]) => {
+      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+      const row: any = { time: label, total };
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      return row;
+    });
+  }, [records]);
+
+  // 5. By Month
+  const byMes = useMemo(() => {
+    const result: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const key = getTimeBucketLabel(r, "mes");
+      if (!key) return;
+      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+    });
+    return Object.entries(result).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, descs]) => {
+      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+      const row: any = { time: label, total };
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      return row;
+    });
+  }, [records]);
+
+  // 6. Pareto (by categoria — descriptions)
+  const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    let total = 0;
     records.forEach((r: any) => {
-      const cat = getCategoryName(r);
-      totals[cat] = (totals[cat] || 0) + (r.quantidade || 0);
-      total += r.quantidade || 0;
+      const key = r.descricao || "Sem descrição";
+      totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
-    if (total === 0) return [];
-    return CATEGORY_ORDER
-      .filter((c) => totals[c])
-      .map((c) => ({ name: c, percent: parseFloat(((totals[c] / total) * 100).toFixed(1)) }));
-  }, [records, parentCatMap]);
+    const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    let cumulative = 0;
+    return sorted.slice(0, 10).map((item) => {
+      cumulative += item.value;
+      return {
+        ...item,
+        percent: totalSamples > 0 ? Math.round((item.value / totalSamples) * 100) : 0,
+        cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
+      };
+    });
+  }, [records, totalSamples]);
 
-  // 3. Distribuição por descrição por especialidade
-  const specialtyBreakdown = useMemo(() => {
-    const map: Record<string, Record<string, number>> = {};
-    const specTotals: Record<string, number> = {};
+  // 7. External causes
+  const externalCausas = useMemo(() => {
+    const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      const spec = (r.especialidades as any)?.nome || "Sem especialidade";
-      const desc = normalizeDescriptionName(r.descricao || "");
-      if (!map[spec]) map[spec] = {};
-      map[spec][desc] = (map[spec][desc] || 0) + (r.quantidade || 0);
-      specTotals[spec] = (specTotals[spec] || 0) + (r.quantidade || 0);
+      if (!isExternalRecord(r)) return;
+      const desc = r.descricao || "Sem descrição";
+      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
     });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([spec, descs]) => ({
-        specialty: spec,
-        total: specTotals[spec],
-        descriptions: Object.entries(descs)
-          .map(([name, qty]) => ({ name, percent: parseFloat(((qty / specTotals[spec]) * 100).toFixed(1)) }))
-          .sort((a, b) => b.percent - a.percent),
-      }));
-  }, [records]);
+    const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    const total = sorted.reduce((s, c) => s + c.value, 0);
+    return sorted.map(item => ({
+      ...item,
+      percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
+    }));
+  }, [records, isExternalRecord]);
 
-  // 4. Timeline — category distribution per time slot
-  const timeline = useMemo(() => {
-    const slotData: Record<string, Record<string, number>> = {};
-    const slotTotals: Record<string, number> = {};
-    records.forEach((r: any) => {
-      const slot = r.horario;
-      if (!slotData[slot]) slotData[slot] = {};
-      const cat = getCategoryName(r);
-      slotData[slot][cat] = (slotData[slot][cat] || 0) + (r.quantidade || 0);
-      slotTotals[slot] = (slotTotals[slot] || 0) + (r.quantidade || 0);
-    });
-    return measuredTimes.map((t) => {
-      const total = slotTotals[t] || 0;
-      const entry: any = { time: t };
-      CATEGORY_ORDER.forEach((cat) => {
-        entry[cat] = total > 0 ? parseFloat((((slotData[t]?.[cat] || 0) / total) * 100).toFixed(1)) : 0;
-      });
-      return entry;
-    });
-  }, [records, measuredTimes, parentCatMap]);
-
+  // ── Validation & generation ──
   const handleGenerate = () => {
-    if (!date || !obraId) {
-      toast({ title: "Campos obrigatórios", description: "Selecione data e contrato.", variant: "destructive" });
+    if (!obraId) {
+      toast({ title: "Campo obrigatório", description: "Selecione um contrato.", variant: "destructive" });
       return;
+    }
+    if (dateMode === "single" && !date) {
+      toast({ title: "Campo obrigatório", description: "Selecione uma data.", variant: "destructive" });
+      return;
+    }
+    if (dateMode === "period") {
+      if (!startDate || !endDate) {
+        toast({ title: "Campos obrigatórios", description: "Selecione data inicial e final.", variant: "destructive" });
+        return;
+      }
+      if (startDate > endDate) {
+        toast({ title: "Período inválido", description: "Data inicial deve ser menor ou igual à data final.", variant: "destructive" });
+        return;
+      }
     }
     setGenerated(true);
   };
 
   const obraName = obras.find((o) => o.id === obraId)?.nome || "";
   const specName = especialidades.find((e) => e.id === especialidadeId)?.nome || "";
+  const periodLabel = dateMode === "single" ? date : `${startDate} até ${endDate}`;
 
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <h1 className="text-xl md:text-2xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade por dia</p>
+          <p className="text-sm text-muted-foreground mt-1">Gere relatórios detalhados de produtividade</p>
         </div>
 
         {/* Filters */}
         <div className="stat-card mb-6 animate-fade-in">
           <h3 className="text-sm font-semibold text-foreground mb-4">Filtros</h3>
+
+          {/* Date mode selector */}
+          <div className="mb-4">
+            <Label className="text-xs text-muted-foreground mb-2 block">Modo de seleção</Label>
+            <RadioGroup value={dateMode} onValueChange={(v) => { setDateMode(v as any); setGenerated(false); }} className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="single" id="mode-single" />
+                <Label htmlFor="mode-single" className="text-sm cursor-pointer">Data única</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="period" id="mode-period" />
+                <Label htmlFor="mode-period" className="text-sm cursor-pointer">Período</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-            <div>
-              <Label className="text-xs text-muted-foreground">Data *</Label>
-              <Input type="date" value={date} onChange={(e) => { setDate(e.target.value); setGenerated(false); }} className="mt-1" />
-            </div>
+            {dateMode === "single" ? (
+              <div>
+                <Label className="text-xs text-muted-foreground">Data *</Label>
+                <Input type="date" value={date} onChange={(e) => { setDate(e.target.value); setGenerated(false); }} className="mt-1" />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Data Inicial *</Label>
+                  <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setGenerated(false); }} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Data Final *</Label>
+                  <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setGenerated(false); }} className="mt-1" />
+                </div>
+              </>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground">Contrato *</Label>
               <Select value={obraId} onValueChange={(v) => { setObraId(v); setGenerated(false); }}>
@@ -230,117 +389,103 @@ export default function RelatoriosPage() {
           </div>
         </div>
 
-        {/* Report */}
+        {/* Empty state */}
         {generated && records.length === 0 && (
           <div className="stat-card text-center py-12 animate-fade-in">
-            <p className="text-muted-foreground">Nenhum registro encontrado para o filtro selecionado.</p>
+            <p className="text-muted-foreground">Nenhum dado encontrado para o período selecionado.</p>
           </div>
         )}
 
+        {/* Report */}
         {generated && records.length > 0 && (
           <div className="space-y-6 animate-fade-in">
-            {/* Header */}
+            {/* Title */}
             <div className="stat-card">
               <h2 className="text-lg font-bold text-foreground">
-                Relatório — {date} — {obraName}
+                Relatório — {periodLabel} — {obraName}
                 {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
               </h2>
             </div>
 
-            {/* 1. Resumo do Dia */}
+            {/* Summary */}
             <div className="stat-card">
-              <h3 className="text-sm font-semibold text-foreground mb-3">Resumo do Dia</h3>
-              <p className="text-sm text-muted-foreground mb-2">Horários medidos:</p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {measuredTimes.map((t) => (
+              <h3 className="text-sm font-semibold text-foreground mb-3">Resumo do Período</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Período analisado</p>
+                  <p className="text-sm font-medium text-foreground">{summary.dateStart} até {summary.dateEnd}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total de dias analisados</p>
+                  <p className="text-sm font-medium text-foreground">{summary.totalDays}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total de medições</p>
+                  <p className="text-sm font-medium text-foreground">{summary.totalMeasurements}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">Horários registrados:</p>
+              <div className="flex flex-wrap gap-2">
+                {summary.times.map((t) => (
                   <span key={t} className="px-2.5 py-1 rounded-md bg-muted text-xs font-mono font-medium text-foreground">{t}</span>
                 ))}
               </div>
-              <p className="text-sm font-medium text-foreground">Total: {measuredTimes.length} medições</p>
             </div>
 
-            {/* 2. Distribuição por Categoria */}
-            <div className="stat-card">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Distribuição por Categoria</h3>
-              <div className="space-y-3">
-                {categoryDist.map((c) => (
-                  <div key={c.name} className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: CATEGORY_COLORS[c.name] || "#6B7280" }} />
-                    <span className="text-sm text-foreground flex-1">{c.name}</span>
-                    <div className="flex-1 max-w-[200px]">
-                      <div className="h-5 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${c.percent}%`, backgroundColor: CATEGORY_COLORS[c.name] || "#6B7280" }}
-                        />
-                      </div>
-                    </div>
-                    <span className="text-sm font-semibold text-foreground w-14 text-right">{c.percent}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* 1. Visão Geral por Contrato */}
+            <StackedBarChartSection
+              data={byObra}
+              dataKeyX="name"
+              descriptions={CANONICAL_ORDER_FULL}
+              title="Visão Geral por Contrato"
+              xAngle={-15}
+            />
 
-            {/* 3. Detalhamento por Especialidade */}
-            <div className="stat-card">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Distribuição por Descrição (por Especialidade)</h3>
-              <div className="space-y-5">
-                {specialtyBreakdown.map((spec) => (
-                  <div key={spec.specialty}>
-                    <h4 className="text-sm font-semibold text-primary mb-2">{spec.specialty}</h4>
-                    <div className="space-y-1.5 pl-3">
-                      {spec.descriptions.map((d) => (
-                        <div key={d.name} className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground flex-1">{d.name}</span>
-                          <div className="flex-1 max-w-[150px]">
-                            <div className="h-3 rounded-full bg-muted overflow-hidden">
-                              <div className="h-full rounded-full bg-primary/60 transition-all" style={{ width: `${d.percent}%` }} />
-                            </div>
-                          </div>
-                          <span className="text-xs font-semibold text-foreground w-12 text-right">{d.percent}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* 2. Produtividade por Especialidade */}
+            <StackedBarChartSection
+              data={bySpecialty}
+              dataKeyX="name"
+              descriptions={CANONICAL_ORDER_FULL}
+              title="Produtividade por Especialidade"
+              xAngle={-25}
+            />
 
-            {/* 4. Linha do Tempo */}
-            <div className="stat-card">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Linha do Tempo</h3>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={timeline} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="time" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        color: "hsl(var(--popover-foreground))",
-                        fontSize: "12px",
-                      }}
-                      formatter={(value: any, name: string) => [`${value}%`, name]}
-                    />
-                    {CATEGORY_ORDER.map((cat) => (
-                      <Bar key={cat} dataKey={cat} stackId="a" fill={CATEGORY_COLORS[cat]} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Legend */}
-              <div className="flex flex-wrap gap-4 mt-3 justify-center">
-                {CATEGORY_ORDER.map((cat) => (
-                  <div key={cat} className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: CATEGORY_COLORS[cat] }} />
-                    <span className="text-xs text-muted-foreground">{cat}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* 3. Produtividade por Horário */}
+            <StackedBarChartSection
+              data={byHorario}
+              dataKeyX="time"
+              descriptions={CANONICAL_ORDER_FULL}
+              title="Produtividade por Horário"
+            />
+
+            {/* 4. Produtividade por Dia da Semana */}
+            <StackedBarChartSection
+              data={byDiaSemana}
+              dataKeyX="time"
+              descriptions={CANONICAL_ORDER_FULL}
+              title="Produtividade por Dia da Semana"
+            />
+
+            {/* 5. Produtividade por Mês */}
+            <StackedBarChartSection
+              data={byMes}
+              dataKeyX="time"
+              descriptions={CANONICAL_ORDER_FULL}
+              title="Produtividade por Mês"
+            />
+
+            {/* 6. Pareto (Top Causas) */}
+            <ParetoChartSection
+              data={paretoData}
+              title="Top Causas (Pareto)"
+              mode="categoria"
+            />
+
+            {/* 7. Causas Externas (NPE) */}
+            <ExternalPieSection
+              data={externalCausas}
+              title="Causas Externas de Parada"
+            />
           </div>
         )}
       </div>
