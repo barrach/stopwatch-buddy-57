@@ -1571,7 +1571,7 @@ export default function Dashboard() {
                       <div style={{ ...tooltipStyle, padding: "10px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
                           <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[entry.name] || "#666", display: "inline-block", flexShrink: 0 }} />
-                          <span><strong>{entry.name}</strong>: {entry.value} ({pct}%)</span>
+                          <span><strong>{entry.name}</strong>: {pct}%</span>
                         </div>
                       </div>
                     );
