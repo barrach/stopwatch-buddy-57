@@ -1571,7 +1571,7 @@ export default function Dashboard() {
                       <div style={{ ...tooltipStyle, padding: "10px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
                           <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[entry.name] || "#666", display: "inline-block", flexShrink: 0 }} />
-                          <span><strong>{entry.name}</strong>: {entry.value} ({pct}%)</span>
+                          <span><strong>{entry.name}</strong>: {pct}%</span>
                         </div>
                       </div>
                     );
@@ -1641,10 +1641,9 @@ export default function Dashboard() {
                              <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: paretoMode === "especialidade" ? getSpecialtyColor(data.name) : (DESCRIPTION_COLORS[data.name] || PIE_COLORS[0]), display: "inline-block", flexShrink: 0 }} />
                              <strong style={{ fontSize: 13 }}>{data.name}</strong>
                            </div>
-                           <div style={{ fontSize: 11, lineHeight: 1.8 }}>
-                             <div>Percentual: <strong>{data.percent}%</strong></div>
-                             <div>Quantidade: <strong>{data.value}</strong></div>
-                           </div>
+                            <div style={{ fontSize: 11, lineHeight: 1.8 }}>
+                              <div>Percentual: <strong>{data.percent}%</strong></div>
+                            </div>
                          </div>
                        );
                      }}
@@ -1880,7 +1879,7 @@ export default function Dashboard() {
                   <div style={{ ...tooltipStyle, padding: "10px 14px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
                       <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: CATEGORY_COLORS[entry.name] || "#666", display: "inline-block" }} />
-                      <span><strong>{entry.name}</strong>: {entry.value} ({pct}%)</span>
+                      <span><strong>{entry.name}</strong>: {pct}%</span>
                     </div>
                   </div>
                 );
@@ -1916,7 +1915,6 @@ export default function Dashboard() {
                     <strong style={{ fontSize: 14 }}>{data.name}</strong>
                     <div style={{ fontSize: 12, lineHeight: 1.8, marginTop: 6 }}>
                       <div>Percentual: <strong>{data.percent}%</strong></div>
-                      <div>Quantidade: <strong>{data.value}</strong></div>
                     </div>
                   </div>
                 );
