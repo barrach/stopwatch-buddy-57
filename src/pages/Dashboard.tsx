@@ -628,11 +628,11 @@ export default function Dashboard() {
     });
   }, [records, getParentCatName]);
 
-  // Pareto data — excludes NPE
+  // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      if (isExternalRecord(r)) return; // Exclude NPE from Pareto
+      if (isExternalRecord(r)) return; // Exclude NPE items from Pareto list
       let key: string;
       if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
       else key = r.descricao || "Sem descrição";
@@ -641,17 +641,17 @@ export default function Dashboard() {
     const sorted = Object.entries(totals)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-    const total = sorted.reduce((s, c) => s + c.value, 0);
+    // Use totalSamples (all records including NPE) as denominator
     let cumulative = 0;
     return sorted.slice(0, 10).map((item) => {
       cumulative += item.value;
       return {
         ...item,
-        percent: total > 0 ? Math.round((item.value / total) * 100) : 0,
-        cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
+        percent: totalSamples > 0 ? Math.round((item.value / totalSamples) * 100) : 0,
+        cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, paretoMode]);
+  }, [records, paretoMode, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
