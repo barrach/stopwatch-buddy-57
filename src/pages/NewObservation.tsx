@@ -326,7 +326,7 @@ export default function NewObservation() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Contrato *</Label>
-                <Select value={obraId} onValueChange={setObraId}>
+                <Select value={obraId} onValueChange={(v) => { setObraId(v); setRotaId(""); }}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
@@ -335,12 +335,15 @@ export default function NewObservation() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Rota *</Label>
-                <Select value={rotaId} onValueChange={setRotaId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <Select value={rotaId} onValueChange={setRotaId} disabled={!obraId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={!obraId ? "Selecione o contrato primeiro" : rotas.length === 0 ? "Nenhuma rota para este contrato" : "Selecione..."} /></SelectTrigger>
                   <SelectContent>
                     {rotas.map((r) => <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {obraId && rotas.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">Nenhuma rota cadastrada para este contrato</p>
+                )}
               </div>
             </div>
           </div>
