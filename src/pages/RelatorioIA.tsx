@@ -260,22 +260,26 @@ export default function RelatorioIA() {
 
           {/* Stats preview */}
           {filteredRecords.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Total</p>
                 <p className="text-xl font-bold text-foreground">{stats.totalAmostras}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Produtivo</p>
-              <p className="text-xl font-bold text-chart-2">{stats.produtivoPct}%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Suplementar</p>
-              <p className="text-xl font-bold text-chart-3">{stats.suplementarPct}%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Não Produtivo</p>
-              <p className="text-xl font-bold text-destructive">{stats.naoProdutivoPct}%</p>
+                <p className="text-xl font-bold text-chart-2">{stats.produtivoPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Suplementar</p>
+                <p className="text-xl font-bold text-chart-3">{stats.suplementarPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Não Produtivo</p>
+                <p className="text-xl font-bold text-destructive">{stats.naoProdutivoPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">NPE (Externo)</p>
+                <p className="text-xl font-bold text-orange-500">{stats.npePct}%</p>
               </div>
             </div>
           )}
