@@ -297,7 +297,7 @@ export default function SettingsPage() {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="coordenador">Coordenador</SelectItem>
-                  <SelectItem value="cobrador">Cobrador</SelectItem>
+                  <SelectItem value="cobrador">Usuário</SelectItem>
                 </SelectContent>
               </Select>
             </div>
