@@ -409,7 +409,7 @@ export function generatePDFReport(data: PDFReportData) {
   const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
-  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Fatores Climáticos e Consequências", "Aguardando Liberação de PT", "Interferências Operacionais"], DESC_COLORS, true);
+  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Fatores Climáticos e Consequências", "Interferências Operacionais"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);
