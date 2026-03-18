@@ -39,7 +39,7 @@ const STACK_ORDER = [
   "Transitando no local de trabalho - com ferramenta", "Transitando no local de trabalho - sem ferramenta",
   "Transitando fora do local de trabalho - com ferramenta", "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo", "Pessoal", "Ocioso",
-  "Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais",
+  "Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências",
 ];
 
 const PAGE_W = 210;
