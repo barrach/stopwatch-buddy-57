@@ -1822,22 +1822,22 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 flex-wrap">
               <ZoomButton onClick={() => setZoomChart("tempo")} />
-              {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
-                <Button key={key} variant={timeViewMode === key ? "default" : "outline"} size="sm" className="text-[10px] h-6 px-2" onClick={() => setTimeViewMode(key)}>
+              {([["horario", "Horário"], ["diasemana", "Dia"], ["mes", "Mês"]] as const).map(([key, label]) => (
+                <Button key={key} variant={timeViewMode === key ? "default" : "outline"} size="sm" className="text-[9px] md:text-[10px] h-5 md:h-6 px-1.5 md:px-2" onClick={() => setTimeViewMode(key)}>
                   {label}
                 </Button>
               ))}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
-              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
-                <BarChart data={byTimeGrouped} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height={isMobileView ? 350 : STACKED_CHART_HEIGHT}>
+                <BarChart data={byTimeGrouped} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                  <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
+                  <XAxis dataKey="time" tick={{ fontSize: isMobileView ? 8 : 11, fill: TICK_COLOR }} />
+                  <YAxis tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow width={35} />
                   <Tooltip
                     shared={false}
                     content={({ active, payload }) => {
@@ -1863,8 +1863,10 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+            <div className="shrink-0 lg:max-w-[28%]">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
+                {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+              </div>
             </div>
           </div>
         </div>
