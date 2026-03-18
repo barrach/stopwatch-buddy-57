@@ -38,7 +38,7 @@ const categoryBadgeVariant: Record<string, string> = {
 };
 
 export default function Records() {
-  
+  const { isAdmin } = useIsAdmin();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
