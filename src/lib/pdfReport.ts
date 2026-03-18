@@ -44,7 +44,7 @@ const STACK_ORDER_FULL = [
   "Transitando no local de trabalho - sem ferramenta",
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
-  "Assistindo",
+  "Assistindo / Stand By",
   "Pessoal",
   "Ocioso",
   "Aguardando Liberação de PT",
