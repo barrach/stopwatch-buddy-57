@@ -48,8 +48,8 @@ const STACK_ORDER_FULL = [
   "Pessoal",
   "Ocioso",
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ] as const;
 
 const STACK_ORDER = [...STACK_ORDER_FULL];
