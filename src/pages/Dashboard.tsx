@@ -706,13 +706,14 @@ export default function Dashboard() {
   }, [records]);
 
   // NPE descriptions for comparison button
+  // Compute available NPE options from pre-filter data so they remain visible
   const npeDescList = useMemo(() => {
     const descs = new Set<string>();
-    records.forEach((r: any) => {
+    preNpeRecords.forEach((r: any) => {
       if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
     return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Fatores Climáticos e Consequências");
-  }, [records, isExternalRecord]);
+  }, [preNpeRecords, isExternalRecord]);
 
 
 
