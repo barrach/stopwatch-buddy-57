@@ -65,16 +65,16 @@ TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de co
 | Produtivo (total)      | 68% (Trabalhando 63% + Planejando 5%) |
 |   - Trabalhando        | 63%             |
 |   - Planejando         | 5% (máximo)     |
-| Suplementar (total)    | 30% (≈4,28% por subcategoria) |
-|   - Aguardando Instruções | ≤4,28%       |
-|   - Assistindo / Stand By | ≤4,28%       |
-|   - Aguardando Ferramenta ou Material | ≤4,28% |
-|   - Transitando com/sem ferramenta | ≤4,28% cada |
+| Suplementar (total)    | 30% (≈3,75% por subcategoria) |
+|   - Aguardando Instruções | ≤3,75%       |
+|   - Assistindo / Stand By | ≤3,75%       |
+|   - Aguardando Ferramenta ou Material | ≤3,75% |
+|   - Aguardando Liberação de PT | ≤3,75% |
+|   - Transitando com/sem ferramenta | ≤3,75% cada |
 | Não Produtivo          | 2% (máximo)     |
 |   - Pessoal            | mínimo          |
 |   - Ocioso             | mínimo          |
 | NPE (Externo)          | 0% (ideal)      |
-|   - Aguardando Liberação de PT | 0%      |
 |   - Fatores Climáticos e Consequências | 0% |
 |   - Interferências Operacionais | 0%     |
 NOTA: A soma ideal é 68% + 30% + 2% + 0% = 100%.
