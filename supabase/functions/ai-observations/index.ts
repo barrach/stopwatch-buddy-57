@@ -298,9 +298,9 @@ IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor.
 IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
 
 ## Diagnóstico Comparativo (Real vs Ideal)
-- **Produtivo**: X% (Ideal: 68% = Trabalhando 63% + Planejando 5%) → classificação
-- **Suplementar**: X% (Ideal: ≤30%) → classificação
-- **Não Produtivo**: X% (Ideal: ≤2%) → classificação
+- **Produtivo**: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) → classificação
+- **Suplementar**: X% (Ideal: ≤32%) → classificação
+- **Não Produtivo**: X% (Ideal: ≤3%) → classificação
 - **NPE (Externo)**: X% (Ideal: 0%) → classificação
 
 Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
