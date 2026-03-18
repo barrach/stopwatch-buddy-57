@@ -1651,12 +1651,12 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Sem dados para o Pareto</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
+              <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
+                <ComposedChart data={paretoData} layout="vertical" margin={{ left: isMobileView ? 0 : 10, right: isMobileView ? 40 : 60 }} onClick={handleParetoClick}>
                    <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: TICK_COLOR }} />
-                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
-                     tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
+                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} />
+                   <YAxis dataKey="name" type="category" width={isMobileView ? 100 : 160} tick={{ fontSize: isMobileView ? 8 : 10, fill: TICK_COLOR }}
+                     tickFormatter={(v: string) => v.length > (isMobileView ? 14 : 22) ? v.substring(0, isMobileView ? 14 : 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
                    <Tooltip
                      content={({ active, payload }) => {
