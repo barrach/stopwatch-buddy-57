@@ -153,7 +153,7 @@ export function generateSavedReportPDF(report: SavedReport) {
       totals.set(desc, sum);
       grand += sum;
     }
-    return STACK_ORDER.map((desc) => ({
+    return [...STACK_ORDER].reverse().map((desc) => ({
       name: desc,
       percent: grand > 0 ? Number((((totals.get(desc) || 0) / grand) * 100).toFixed(1)) : 0,
     }));
