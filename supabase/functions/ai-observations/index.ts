@@ -312,7 +312,7 @@ TOTAIS:
 - Produtivo: ${c.produtivoPct}% do total
 - Suplementar: ${c.suplementarPct}% do total
 - Não Produtivo: ${c.naoProdutivoPct}% do total
-- Não Produtivo Externo (NPE): ${c.externoPct}% do total
+- Não Produtivo Externo (NPE): ${c.externoPct ?? c.npePct ?? 0}% do total
 
 PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
 ${c.porEspecialidade || "Não disponível"}
