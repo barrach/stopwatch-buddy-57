@@ -1,0 +1,1 @@
+UPDATE categorias_observacao SET impacta_produtividade = true WHERE id = 'd4cab50b-ac0c-430b-a550-951de2e5b131';
