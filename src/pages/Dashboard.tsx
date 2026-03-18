@@ -1772,7 +1772,7 @@ export default function Dashboard() {
               })}
             </div>
 
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
               <PieChart>
                 <Pie
                   data={externalCausas}
@@ -1780,7 +1780,7 @@ export default function Dashboard() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={isMobileView ? 70 : 100}
                   label={renderExternalPieLabel}
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
