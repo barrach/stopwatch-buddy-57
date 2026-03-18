@@ -126,7 +126,7 @@ function hexToRgb(hex: string): RGB {
 
 function isWhiteColor(hex: string): boolean {
   const normalized = hex.toUpperCase();
-  return normalized === "#FFFFFF" || normalized === "#D4B896" || normalized === "#C8A882";
+  return normalized === "#FFFFFF" || normalized === "#C8A882";
 }
 
 function toPercent(value: number): number {
