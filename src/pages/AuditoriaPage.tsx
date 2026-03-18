@@ -26,18 +26,6 @@ export default function AuditoriaPage() {
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
 
-  if (adminLoading) {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground text-sm">Carregando...</div>
-      </AppLayout>
-    );
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
@@ -45,6 +33,7 @@ export default function AuditoriaPage() {
       if (error) throw error;
       return data;
     },
+    enabled: isAdmin,
   });
   const profileMap = new Map(profiles.map((p) => [p.user_id, p.nome || p.email || p.user_id.substring(0, 8)]));
 
@@ -59,6 +48,7 @@ export default function AuditoriaPage() {
       if (error) throw error;
       return data;
     },
+    enabled: isAdmin,
   });
 
   const { mutate: restoreRecord } = useMutation({
