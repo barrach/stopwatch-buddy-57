@@ -512,7 +512,8 @@ export default function Dashboard() {
   }, [parentCatImpactMap, npeDescriptions]);
 
   // ── Filtering ──────────────────────────────────────────────────
-  const baseRecords = useMemo(() => {
+  // Pre-NPE filter: used to compute available NPE options
+  const preNpeRecords = useMemo(() => {
     let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
@@ -521,6 +522,15 @@ export default function Dashboard() {
     }
     return filtered;
   }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
+
+  // Apply global NPE exclusion filter
+  const baseRecords = useMemo(() => {
+    if (!npeExclude) return preNpeRecords;
+    return preNpeRecords.filter((r: any) => {
+      if (!isExternalRecord(r)) return true;
+      return canonicalDescription(r.descricao || "Sem descrição") !== npeExclude;
+    });
+  }, [preNpeRecords, npeExclude, isExternalRecord]);
 
   const records = useMemo(() => {
     return baseRecords.filter((r: any) => {
