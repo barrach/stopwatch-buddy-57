@@ -702,7 +702,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
-    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Causas Naturais");
+    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Fatores Climáticos e Consequências");
   }, [records, isExternalRecord]);
 
 
