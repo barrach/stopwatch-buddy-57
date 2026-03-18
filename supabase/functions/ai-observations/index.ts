@@ -40,7 +40,7 @@ Categorias e critérios detalhados:
   • Pessoal: No bebedouro ou sanitário, exclusivamente.
   • Ocioso: No café, cantina, copa, banco, área médica, bate-papo entre funcionários.
 - Não Produtivo Externo:
-  • Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT (quando causada pelo cliente/operação).
+  • Fatores Climáticos e Consequências, Interferências Operacionais.
 
 Responda APENAS em JSON válido com este formato exato:
 {"categoria": "nome da categoria pai", "descricao": "nome da subcategoria", "justificativa": "breve justificativa em português"}`;
