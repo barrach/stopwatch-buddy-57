@@ -558,14 +558,16 @@ export default function Records() {
                     key={r.id}
                     className={`cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
                   >
-                    <TableCell className="pl-4">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelect(r.id)}
-                        aria-label="Selecionar registro"
-                        className="translate-y-[2px]"
-                      />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="pl-4">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(r.id)}
+                          aria-label="Selecionar registro"
+                          className="translate-y-[2px]"
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="text-xs">{r.data}</TableCell>
                     <TableCell className="text-xs">{r.horario}</TableCell>
                     <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
