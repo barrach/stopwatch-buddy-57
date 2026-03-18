@@ -604,14 +604,17 @@ export default function Dashboard() {
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
 
-  // External causes chart data
+  // External causes chart data — includes NPE + "Aguardando Liberação de PT" (Suplementar, shown for operational visibility)
   const externalCausas = useMemo(() => {
+    const AG_PT = "Aguardando Liberação de PT";
     const totals: Record<string, number> = {};
     const hoursSet: Record<string, Set<string>> = {};
     const totalHoursSet = new Set<string>();
     records.forEach((r: any) => {
-      if (!isExternalRecord(r)) return;
       const desc = canonicalDescription(r.descricao || "Sem descrição");
+      const isNPE = isExternalRecord(r);
+      const isAgPT = desc === AG_PT;
+      if (!isNPE && !isAgPT) return;
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
       if (!hoursSet[desc]) hoursSet[desc] = new Set();
       const key = `${r.data}_${r.horario}`;
