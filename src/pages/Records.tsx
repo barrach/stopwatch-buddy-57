@@ -381,11 +381,15 @@ export default function Records() {
             <Button variant="outline" className="gap-2" onClick={handleExport}>
               <Download className="w-4 h-4" /> Exportar
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              Importar
-            </Button>
-            <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+            {isAdmin && (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                  {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  Importar
+                </Button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+              </>
+            )}
           </div>
         </div>
 
