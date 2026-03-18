@@ -552,7 +552,7 @@ export default function Dashboard() {
       }
       return true;
     });
-  }, [baseRecords, crossFilters, getParentCatName, paretoMode]);
+  }, [baseRecords, crossFilters, getParentCatName]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
