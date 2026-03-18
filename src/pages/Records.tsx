@@ -462,7 +462,7 @@ export default function Records() {
         </div>
 
         {/* Bulk action bar */}
-        {someSelected && (
+        {isAdmin && someSelected && (
           <div className="mb-4 flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
             <span className="text-sm font-medium text-foreground">
               {selectedInCurrentFilter} registro(s) selecionado(s)
