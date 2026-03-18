@@ -54,8 +54,8 @@ export const CANONICAL_ORDER_FULL: string[] = [
   "Pessoal",
   "Ocioso",
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ];
 
 export const DESCRIPTION_COLORS: Record<string, string> = {
