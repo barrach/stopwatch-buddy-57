@@ -75,15 +75,19 @@ export default function RelatorioIA() {
       return catData.nome;
     };
 
-    let prod = 0, supl = 0, naoProd = 0;
+    let prod = 0, supl = 0, naoProd = 0, npe = 0;
     const byEsp: Record<string, { prod: number; total: number }> = {};
     const byCat: Record<string, number> = {};
+
+    const NPE_CATS = ["Não Produtivo Externo"];
+    const isNpe = (cat: string) => NPE_CATS.includes(cat);
 
     filteredRecords.forEach((r: any) => {
       const qty = r.quantidade || 0;
       const cat = getParentCat(r);
       if (cat === "Produtivo") prod += qty;
       else if (cat === "Suplementar") supl += qty;
+      else if (isNpe(cat)) npe += qty;
       else naoProd += qty;
 
       const espName = (r.especialidades as any)?.nome || "Sem especialidade";
