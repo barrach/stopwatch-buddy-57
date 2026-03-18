@@ -132,6 +132,9 @@ export default function SettingsPage() {
     }
   };
 
+  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!isAdminRole) return <Navigate to="/" replace />;
+
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto">
