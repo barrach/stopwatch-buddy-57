@@ -80,11 +80,11 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo / Stand By",
+  "Aguardando Liberação de PT",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
   // Não Produtivo Externo
-  "Aguardando Liberação de PT",
   "Interferências Operacionais",
   "Fatores Climáticos e Consequências",
 ];
