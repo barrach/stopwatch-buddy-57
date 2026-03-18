@@ -545,7 +545,7 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
                 <TableHead className="text-xs font-semibold">Registrado por</TableHead>
-                <TableHead className="text-xs font-semibold">Ações</TableHead>
+                {isAdmin && <TableHead className="text-xs font-semibold">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
