@@ -645,7 +645,7 @@ export default function Dashboard() {
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      const key = r.descricao || "Sem descrição";
+      const key = canonicalDescription(r.descricao || "Sem descrição");
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
