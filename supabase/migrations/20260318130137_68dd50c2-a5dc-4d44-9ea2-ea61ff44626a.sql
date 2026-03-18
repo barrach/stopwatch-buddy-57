@@ -1,0 +1,1 @@
+UPDATE categorias_observacao SET nome = 'Assistindo / Stand By' WHERE nome = 'Assistindo';

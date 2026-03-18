@@ -77,7 +77,7 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando no local de trabalho - sem ferramenta",
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
-  "Assistindo",
+  "Assistindo / Stand By",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
@@ -98,6 +98,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Transitando no local de trabalho - sem ferramenta": "#16A34A",
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo / Stand By": "#15803D",
   "Assistindo": "#15803D",
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
@@ -118,8 +119,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 
 // Display name normalization — renames legacy names for UI
 const DISPLAY_NAME_MAP: Record<string, string> = {
-  "Aguardando Movimentação de Carga": "Assistindo",
-  "Aguardando movimentação de carga": "Assistindo",
+  "Aguardando Movimentação de Carga": "Assistindo / Stand By",
+  "Aguardando movimentação de carga": "Assistindo / Stand By",
 };
 const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
@@ -165,7 +166,7 @@ const DESCRIPTION_GROUPS = {
     "Transitando no local de trabalho - sem ferramenta",
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
-    "Assistindo",
+    "Assistindo / Stand By",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
   "Não Produtivo Externo": ["Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências"],

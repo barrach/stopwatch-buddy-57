@@ -24,6 +24,7 @@ const DESC_COLORS: Record<string, string> = {
   "Transitando no local de trabalho - sem ferramenta": "#16A34A",
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo / Stand By": "#15803D",
   Assistindo: "#15803D",
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
@@ -38,7 +39,7 @@ const STACK_ORDER = [
   "Trabalhando", "Planejando", "Aguardando Ferramenta ou Material",
   "Transitando no local de trabalho - com ferramenta", "Transitando no local de trabalho - sem ferramenta",
   "Transitando fora do local de trabalho - com ferramenta", "Transitando fora do local de trabalho - sem ferramenta",
-  "Assistindo", "Pessoal", "Ocioso",
+  "Assistindo / Stand By", "Pessoal", "Ocioso",
   "Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências",
 ];
 
