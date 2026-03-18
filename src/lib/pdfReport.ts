@@ -684,7 +684,7 @@ export function generatePDFReport(data: PDFReportData) {
   renderStandardBlock("Visão Geral por Contrato", images.contrato, "contrato", contractLegend, analysis.CONTRATO);
   renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
   renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
-  renderParetoBlock("Top Causas — Pareto por Especialidades", images.paretoEspecialidade, "paretoEspecialidade", analysis.PARETO_ESPECIALIDADE);
+  
   renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
   renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
   renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
