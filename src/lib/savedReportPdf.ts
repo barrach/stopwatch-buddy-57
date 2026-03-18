@@ -39,7 +39,7 @@ const STACK_ORDER = [
   "Trabalhando", "Planejando", "Aguardando Ferramenta ou Material",
   "Transitando no local de trabalho - com ferramenta", "Transitando no local de trabalho - sem ferramenta",
   "Transitando fora do local de trabalho - com ferramenta", "Transitando fora do local de trabalho - sem ferramenta",
-  "Assistindo", "Pessoal", "Ocioso",
+  "Assistindo / Stand By", "Pessoal", "Ocioso",
   "Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências",
 ];
 

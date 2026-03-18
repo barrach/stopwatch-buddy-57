@@ -1,6 +1,7 @@
 export const LEGACY_DESCRIPTION_MAP: Record<string, string> = {
-  "Aguardando Movimentação de Carga": "Assistindo",
-  "Aguardando movimentação de carga": "Assistindo",
+  "Aguardando Movimentação de Carga": "Assistindo / Stand By",
+  "Aguardando movimentação de carga": "Assistindo / Stand By",
+  "Assistindo": "Assistindo / Stand By",
   "Causas Naturais": "Fatores Climáticos e Consequências",
   "Vazamento / Interferência da Planta": "Interferências Operacionais",
 };
