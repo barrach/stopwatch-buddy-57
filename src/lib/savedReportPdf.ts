@@ -24,6 +24,7 @@ const DESC_COLORS: Record<string, string> = {
   "Transitando no local de trabalho - sem ferramenta": "#16A34A",
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo / Stand By": "#15803D",
   Assistindo: "#15803D",
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
