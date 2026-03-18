@@ -77,6 +77,9 @@ export default function CadastroFuncoes() {
     qc.invalidateQueries({ queryKey: ["funcoes"] });
   };
 
+  if (adminLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
+
   return (
     <CrudPage
       title="Funções"
