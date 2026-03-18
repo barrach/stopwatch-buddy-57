@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react"; // refreshed
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -369,6 +370,7 @@ const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
 };
 
 export default function Dashboard() {
+  const isMobileView = useIsMobile();
   const { toast } = useToast();
   const { user } = useAuth();
   const [obraFilter, setObraFilter] = useState("all");
@@ -1336,30 +1338,30 @@ export default function Dashboard() {
     <AppLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header + Filters */}
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
-            <p className="text-sm text-muted-foreground mt-1">Painel analítico de produtividade industrial — MEGASTEAM</p>
+        <div className="mb-6 md:mb-8">
+          <div className="mb-4">
+            <h1 className="text-lg md:text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">Painel analítico — MEGASTEAM</p>
           </div>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex gap-2 items-end flex-wrap">
+          <div className="flex flex-wrap gap-2 md:gap-3 items-end">
+            <div className="flex gap-1 items-end flex-wrap">
               <div>
-                <Label className="text-xs text-muted-foreground">Atalhos</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Atalhos</Label>
                 <div className="flex gap-1 mt-1">
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("today")}>Hoje</Button>
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("week")}>Semana</Button>
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("month")}>Mês</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("today")}>Hoje</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("week")}>Semana</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("month")}>Mês</Button>
                   {dateMode !== "all" && (
-                    <Button variant="ghost" size="sm" className="h-10 px-2 text-xs text-muted-foreground" onClick={() => setDateMode("all")}>
+                    <Button variant="ghost" size="sm" className="h-8 md:h-10 px-2 text-xs text-muted-foreground" onClick={() => setDateMode("all")}>
                       <X className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Período</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Período</Label>
                 <Select value={dateMode} onValueChange={(v) => setDateMode(v as any)}>
-                  <SelectTrigger className="w-32 mt-1"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-24 md:w-32 mt-1 h-8 md:h-10 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="day">Dia</SelectItem>
@@ -1369,27 +1371,27 @@ export default function Dashboard() {
               </div>
               {dateMode === "day" && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Data</Label>
-                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-40 mt-1" />
+                  <Label className="text-[10px] md:text-xs text-muted-foreground">Data</Label>
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                 </div>
               )}
               {dateMode === "period" && (
                 <>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Início</Label>
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40 mt-1" />
+                    <Label className="text-[10px] md:text-xs text-muted-foreground">Início</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Fim</Label>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40 mt-1" />
+                    <Label className="text-[10px] md:text-xs text-muted-foreground">Fim</Label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                   </div>
                 </>
               )}
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Contrato</Label>
+              <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
               <Select value={obraFilter} onValueChange={setObraFilter}>
-                <SelectTrigger className="w-48 mt-1"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
+                <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Contratos</SelectItem>
                   {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
@@ -1398,9 +1400,9 @@ export default function Dashboard() {
             </div>
             {npeDescList.length > 0 && (
               <div>
-                <Label className="text-xs text-muted-foreground">Fatores</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Fatores</Label>
                 <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
-                  <SelectTrigger className="w-64 mt-1"><SelectValue placeholder="Fatores" /></SelectTrigger>
+                  <SelectTrigger className="w-48 md:w-64 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Fatores" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Com todos os fatores</SelectItem>
                     {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
@@ -1409,15 +1411,15 @@ export default function Dashboard() {
               </div>
             )}
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
-                <Download className="w-3.5 h-3.5" /> Excel
+              <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                <Download className="w-3 h-3 md:w-3.5 md:h-3.5" /> Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
-                {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
+              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                {isGeneratingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3 md:w-3.5 md:h-3.5" />} PDF
               </Button>
               {canExportPPTX && (
-                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1.5">
-                  {isGeneratingPPTX ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Presentation className="w-3.5 h-3.5" />} PPTX
+                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                  {isGeneratingPPTX ? <Loader2 className="w-3 h-3 animate-spin" /> : <Presentation className="w-3 h-3 md:w-3.5 md:h-3.5" />} PPTX
                 </Button>
               )}
             </div>
@@ -1470,7 +1472,7 @@ export default function Dashboard() {
         )}
 
         {/* 7) Strategic KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-6 md:mb-8">
           <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
           <StatCard title="Suplementar" value={`${supplementaryPercent}%`} icon={Clock} variant="warning" />
@@ -1531,26 +1533,35 @@ export default function Dashboard() {
               <ZoomButton onClick={() => setZoomChart("contrato")} />
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
-              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
-                <BarChart data={byObra} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleContratoClick}>
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height={isMobileView ? 350 : STACKED_CHART_HEIGHT}>
+                <BarChart data={byObra} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%" onClick={handleContratoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <XAxis dataKey="name" tick={{ fontSize: isMobileView ? 8 : 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
+                  <YAxis tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
                   {renderStackedBars(allDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions, descriptionTooltipMap)}
+            <div className="shrink-0 lg:max-w-[28%]">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
+                {[...allDescriptions].reverse().map((desc) => (
+                  <LegendTooltip key={desc} name={displayName(desc)} description={descriptionTooltipMap?.[desc] || descriptionTooltipMap?.[displayName(desc)]}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                      <span className="text-[11px] lg:text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                    </div>
+                  </LegendTooltip>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Row: Pie + Pareto */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Distribution Pie */}
           <div id="chart-categoria" className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
             <div className="flex items-center justify-between mb-4">
@@ -1563,14 +1574,14 @@ export default function Dashboard() {
               </div>
               <ZoomButton onClick={() => setZoomChart("categoria")} />
             </div>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={isMobileView ? 250 : 320}>
               <PieChart>
                 <Pie
                   data={categoryTotals}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={110}
+                  innerRadius={isMobileView ? 40 : 60}
+                  outerRadius={isMobileView ? 80 : 110}
                   paddingAngle={3}
                   dataKey="value"
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
@@ -1640,12 +1651,12 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Sem dados para o Pareto</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={paretoData} layout="vertical" margin={{ left: 10, right: 60 }} onClick={handleParetoClick}>
+              <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
+                <ComposedChart data={paretoData} layout="vertical" margin={{ left: isMobileView ? 0 : 10, right: isMobileView ? 40 : 60 }} onClick={handleParetoClick}>
                    <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: TICK_COLOR }} />
-                   <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: TICK_COLOR }}
-                     tickFormatter={(v: string) => v.length > 22 ? v.substring(0, 22) + "…" : v} />
+                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} />
+                   <YAxis dataKey="name" type="category" width={isMobileView ? 100 : 160} tick={{ fontSize: isMobileView ? 8 : 10, fill: TICK_COLOR }}
+                     tickFormatter={(v: string) => v.length > (isMobileView ? 14 : 22) ? v.substring(0, isMobileView ? 14 : 22) + "…" : v} />
                    <YAxis yAxisId="right" hide />
                    <Tooltip
                      content={({ active, payload }) => {
@@ -1692,13 +1703,13 @@ export default function Dashboard() {
             </div>
             <ZoomButton onClick={() => setZoomChart("especialidade")} />
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
-              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
-                <BarChart data={bySpecialty} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleSpecialtyClick}>
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height={isMobileView ? 350 : STACKED_CHART_HEIGHT}>
+                <BarChart data={bySpecialty} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%" onClick={handleSpecialtyClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <XAxis dataKey="name" tick={{ fontSize: isMobileView ? 8 : 10, fill: TICK_COLOR }} angle={-25} textAnchor="end" />
+                  <YAxis tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
                   <Tooltip
                     shared={false}
                     content={({ active, payload }) => {
@@ -1724,8 +1735,10 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+            <div className="shrink-0 lg:max-w-[28%]">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
+                {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+              </div>
             </div>
           </div>
         </div>
@@ -1759,7 +1772,7 @@ export default function Dashboard() {
               })}
             </div>
 
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
               <PieChart>
                 <Pie
                   data={externalCausas}
@@ -1767,7 +1780,7 @@ export default function Dashboard() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={isMobileView ? 70 : 100}
                   label={renderExternalPieLabel}
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
                 >
@@ -1809,22 +1822,22 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">% de produtividade — clique para filtrar</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 flex-wrap">
               <ZoomButton onClick={() => setZoomChart("tempo")} />
-              {([["horario", "Horário"], ["diasemana", "Dia da Semana"], ["mes", "Mês"]] as const).map(([key, label]) => (
-                <Button key={key} variant={timeViewMode === key ? "default" : "outline"} size="sm" className="text-[10px] h-6 px-2" onClick={() => setTimeViewMode(key)}>
+              {([["horario", "Horário"], ["diasemana", "Dia"], ["mes", "Mês"]] as const).map(([key, label]) => (
+                <Button key={key} variant={timeViewMode === key ? "default" : "outline"} size="sm" className="text-[9px] md:text-[10px] h-5 md:h-6 px-1.5 md:px-2" onClick={() => setTimeViewMode(key)}>
                   {label}
                 </Button>
               ))}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
-              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
-                <BarChart data={byTimeGrouped} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleTimeClick}>
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height={isMobileView ? 350 : STACKED_CHART_HEIGHT}>
+                <BarChart data={byTimeGrouped} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%" onClick={handleTimeClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                  <XAxis dataKey="time" tick={{ fontSize: 11, fill: TICK_COLOR }} />
-                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow />
+                  <XAxis dataKey="time" tick={{ fontSize: isMobileView ? 8 : 11, fill: TICK_COLOR }} />
+                  <YAxis tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v) => `${v}%`} allowDataOverflow width={35} />
                   <Tooltip
                     shared={false}
                     content={({ active, payload }) => {
@@ -1850,8 +1863,10 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+            <div className="shrink-0 lg:max-w-[28%]">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
+                {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
+              </div>
             </div>
           </div>
         </div>

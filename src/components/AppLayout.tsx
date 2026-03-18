@@ -58,7 +58,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-sm font-semibold text-foreground">ProdControl</span>
           </header>
         )}
-        <div className="p-4 md:p-6 lg:p-8">
+        <div className="p-3 md:p-6 lg:p-8">
           <OfflineIndicator />
           {children}
         </div>
