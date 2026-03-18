@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react"; // refreshed
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import {
