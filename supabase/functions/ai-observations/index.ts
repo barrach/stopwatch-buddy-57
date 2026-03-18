@@ -62,22 +62,27 @@ Analise os dados de observações fornecidos e gere um relatório executivo em p
 TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de comparação):
 | Categoria              | % Ideal         |
 |------------------------|-----------------|
-| Produtivo (total)      | 68% (Trabalhando 63% + Planejando 5%) |
-|   - Trabalhando        | 63%             |
-|   - Planejando         | 5% (máximo)     |
-| Suplementar (total)    | 30% (≈3,75% por subcategoria) |
-|   - Aguardando Instruções | ≤3,75%       |
-|   - Assistindo / Stand By | ≤3,75%       |
-|   - Aguardando Ferramenta ou Material | ≤3,75% |
-|   - Aguardando Liberação de PT | ≤3,75% |
-|   - Transitando com/sem ferramenta | ≤3,75% cada |
-| Não Produtivo          | 2% (máximo)     |
+| Produtivo (total)      | 65% (Trabalhando 60% + Planejando 5%) |
+|   - Trabalhando        | 60%             |
+|   - Planejando         | 5%              |
+| Suplementar (total)    | 32% (≈4% por subcategoria) |
+|   - Aguardando Instruções | ≤4%          |
+|   - Assistindo / Stand By | ≤4%          |
+|   - Aguardando Ferramenta ou Material | ≤4% |
+|   - Aguardando Liberação de PT | ≤4%    |
+|   - Transitando com/sem ferramenta | ≤4% cada |
+| Não Produtivo          | 3% (máximo)     |
 |   - Pessoal            | mínimo          |
 |   - Ocioso             | mínimo          |
 | NPE (Externo)          | 0% (ideal)      |
 |   - Fatores Climáticos e Consequências | 0% |
 |   - Interferências Operacionais | 0%     |
-NOTA: A soma ideal é 68% + 30% + 2% + 0% = 100%.
+NOTA: A soma ideal é 65% + 32% + 3% + 0% = 100%.
+
+CONCEITO OPERACIONAL ATUALIZADO:
+- Produtivo = Trabalhando + Planejando. Planejamento FAZ PARTE da produtividade ideal.
+- Suplementar é o principal indicador operacional. Foque em: fluxo operacional, liberação de frentes, planejamento e logística.
+- NPE deve ser praticamente ZERO. Qualquer valor de NPE é anormal e indica falha grave.
 
 REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
 🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
@@ -293,9 +298,9 @@ IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor.
 IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
 
 ## Diagnóstico Comparativo (Real vs Ideal)
-- **Produtivo**: X% (Ideal: 68% = Trabalhando 63% + Planejando 5%) → classificação
-- **Suplementar**: X% (Ideal: ≤30%) → classificação
-- **Não Produtivo**: X% (Ideal: ≤2%) → classificação
+- **Produtivo**: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) → classificação
+- **Suplementar**: X% (Ideal: ≤32%) → classificação
+- **Não Produtivo**: X% (Ideal: ≤3%) → classificação
 - **NPE (Externo)**: X% (Ideal: 0%) → classificação
 
 Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
