@@ -25,6 +25,7 @@ import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLef
 import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
