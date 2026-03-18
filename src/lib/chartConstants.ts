@@ -51,9 +51,9 @@ export const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo / Stand By",
+  "Aguardando Liberação de PT",
   "Pessoal",
   "Ocioso",
-  "Aguardando Liberação de PT",
   "Interferências Operacionais",
   "Fatores Climáticos e Consequências",
 ];
@@ -70,7 +70,7 @@ export const DESCRIPTION_COLORS: Record<string, string> = {
   "Assistindo": "#15803D",
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
-  "Aguardando Liberação de PT": "#D4B896",
+  "Aguardando Liberação de PT": "#34D399",
   "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
@@ -98,7 +98,7 @@ export const getDescColor = (desc: string): string => {
 
 export const getLegendTextColor = (desc: string): string => {
   const c = getDescColor(desc);
-  return c === "#FFFFFF" || c === "#D4B896" || c === "#C8A882" ? "#9CA3AF" : c;
+  return c === "#FFFFFF" || c === "#C8A882" ? "#9CA3AF" : c;
 };
 
 export const isLightColor = (hex: string): boolean => {

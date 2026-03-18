@@ -45,9 +45,9 @@ const STACK_ORDER_FULL = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo / Stand By",
+  "Aguardando Liberação de PT",
   "Pessoal",
   "Ocioso",
-  "Aguardando Liberação de PT",
   "Interferências Operacionais",
   "Fatores Climáticos e Consequências",
 ] as const;
@@ -72,7 +72,7 @@ const DESC_COLORS: Record<string, string> = {
   Assistindo: "#15803D",
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
-  "Aguardando Liberação de PT": "#D4B896",
+  "Aguardando Liberação de PT": "#34D399",
   "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Fatores Climáticos e Consequências": "#F97316",
@@ -126,7 +126,7 @@ function hexToRgb(hex: string): RGB {
 
 function isWhiteColor(hex: string): boolean {
   const normalized = hex.toUpperCase();
-  return normalized === "#FFFFFF" || normalized === "#D4B896" || normalized === "#C8A882";
+  return normalized === "#FFFFFF" || normalized === "#C8A882";
 }
 
 function toPercent(value: number): number {
@@ -409,7 +409,7 @@ export function generatePDFReport(data: PDFReportData) {
   const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
-  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Fatores Climáticos e Consequências", "Aguardando Liberação de PT", "Interferências Operacionais"], DESC_COLORS, true);
+  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Fatores Climáticos e Consequências", "Interferências Operacionais"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);

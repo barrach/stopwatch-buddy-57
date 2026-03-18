@@ -1,0 +1,1 @@
+UPDATE categorias_observacao SET categoria_pai_id = '183e17f8-5a31-4e53-b203-7c168aab091b' WHERE id = 'd4cab50b-ac0c-430b-a550-951de2e5b131';

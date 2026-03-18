@@ -40,7 +40,7 @@ Categorias e critérios detalhados:
   • Pessoal: No bebedouro ou sanitário, exclusivamente.
   • Ocioso: No café, cantina, copa, banco, área médica, bate-papo entre funcionários.
 - Não Produtivo Externo:
-  • Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT (quando causada pelo cliente/operação).
+  • Fatores Climáticos e Consequências, Interferências Operacionais.
 
 Responda APENAS em JSON válido com este formato exato:
 {"categoria": "nome da categoria pai", "descricao": "nome da subcategoria", "justificativa": "breve justificativa em português"}`;
@@ -65,16 +65,16 @@ TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de co
 | Produtivo (total)      | 68% (Trabalhando 63% + Planejando 5%) |
 |   - Trabalhando        | 63%             |
 |   - Planejando         | 5% (máximo)     |
-| Suplementar (total)    | 30% (≈4,28% por subcategoria) |
-|   - Aguardando Instruções | ≤4,28%       |
-|   - Assistindo / Stand By | ≤4,28%       |
-|   - Aguardando Ferramenta ou Material | ≤4,28% |
-|   - Transitando com/sem ferramenta | ≤4,28% cada |
+| Suplementar (total)    | 30% (≈3,75% por subcategoria) |
+|   - Aguardando Instruções | ≤3,75%       |
+|   - Assistindo / Stand By | ≤3,75%       |
+|   - Aguardando Ferramenta ou Material | ≤3,75% |
+|   - Aguardando Liberação de PT | ≤3,75% |
+|   - Transitando com/sem ferramenta | ≤3,75% cada |
 | Não Produtivo          | 2% (máximo)     |
 |   - Pessoal            | mínimo          |
 |   - Ocioso             | mínimo          |
 | NPE (Externo)          | 0% (ideal)      |
-|   - Aguardando Liberação de PT | 0%      |
 |   - Fatores Climáticos e Consequências | 0% |
 |   - Interferências Operacionais | 0%     |
 NOTA: A soma ideal é 68% + 30% + 2% + 0% = 100%.
@@ -102,7 +102,7 @@ CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 - Produtivo: Trabalhando (esforço físico, posicionando peças, limpando superfícies) e Planejando (medições, análise de desenhos, levantamento de materiais, instruções, DDS, APR).
 - Suplementar: Aguardando Instruções, Aguardando Movimentação de Carga, Aguardando Ferramenta ou Material, Aguardando Liberação de PT, Transitando com/sem ferramenta dentro/fora do local de trabalho.
 - Não Produtivo: Pessoal (bebedouro/sanitário) e Ocioso (café, cantina, bate-papo).
-- NPE (Não Produtivo Externo): Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT pelo cliente/operação.
+- NPE (Não Produtivo Externo): Fatores Climáticos e Consequências, Interferências Operacionais.
 
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
@@ -112,7 +112,7 @@ REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 
 FÓRMULAS DE CÁLCULO:
 - Existem 4 categorias: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
-- NPE são eventos fora do controle da equipe (Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT).
+- NPE são eventos fora do controle da equipe (Fatores Climáticos e Consequências, Interferências Operacionais).
 - IMPORTANTE: O NPE ENTRA na conta da produtividade global. O denominador é o TOTAL BRUTO (incluindo NPE).
 - Produtividade = Produtivo / Total × 100
 - Suplementar% = Suplementar / Total × 100
