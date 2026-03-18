@@ -21,9 +21,22 @@ import { useToast } from "@/hooks/use-toast";
 export default function AuditoriaPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [search, setSearch] = useState("");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
+
+  if (adminLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground text-sm">Carregando...</div>
+      </AppLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles"],
