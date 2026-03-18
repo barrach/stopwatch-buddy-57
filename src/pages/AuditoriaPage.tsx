@@ -101,6 +101,18 @@ export default function AuditoriaPage() {
     return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
+  if (adminLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground text-sm">Carregando...</div>
+      </AppLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
