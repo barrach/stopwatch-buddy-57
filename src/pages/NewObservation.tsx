@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,7 @@ interface LastObservation {
 }
 
 export default function NewObservation() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -261,6 +264,9 @@ export default function NewObservation() {
       setIsSuggesting(false);
     }
   };
+
+  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   return (
     <AppLayout>

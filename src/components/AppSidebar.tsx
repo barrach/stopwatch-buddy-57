@@ -6,10 +6,10 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: BarChart3 },
-  { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
-  { to: "/registros", label: "Registros", icon: ClipboardList },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
+  { to: "/", label: "Dashboard", icon: BarChart3, adminOnly: false },
+  { to: "/nova-observacao", label: "Nova Observação", icon: Plus, adminOnly: true },
+  { to: "/registros", label: "Registros", icon: ClipboardList, adminOnly: false },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, adminOnly: false },
 ];
 
 const cadastroItems = [
@@ -57,7 +57,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink key={item.to} to={item.to} onClick={handleClick} className={`sidebar-item ${isActive ? "sidebar-item-active" : ""}`}>
@@ -74,26 +74,34 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           </NavLink>
         )}
 
-        <div className="pt-4 pb-1 px-2">
-          <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Cadastros</p>
-        </div>
-        {cadastroItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <NavLink key={item.to} to={item.to} onClick={handleClick} className={`sidebar-item ${isActive ? "sidebar-item-active" : ""}`}>
-              <item.icon className="w-[18px] h-[18px]" />
-              <span className="text-sm">{item.label}</span>
-            </NavLink>
-          );
-        })}
+        {isAdmin && (
+          <>
+            <div className="pt-4 pb-1 px-2">
+              <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Cadastros</p>
+            </div>
+            {cadastroItems.map((item) => {
+              const isActive = location.pathname === item.to;
+              return (
+                <NavLink key={item.to} to={item.to} onClick={handleClick} className={`sidebar-item ${isActive ? "sidebar-item-active" : ""}`}>
+                  <item.icon className="w-[18px] h-[18px]" />
+                  <span className="text-sm">{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </>
+        )}
 
-        <div className="pt-4 pb-1 px-2">
-          <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Sistema</p>
-        </div>
-        <NavLink to="/configuracoes" onClick={handleClick} className={`sidebar-item ${location.pathname === "/configuracoes" ? "sidebar-item-active" : ""}`}>
-          <Settings className="w-[18px] h-[18px]" />
-          <span className="text-sm">Configurações</span>
-        </NavLink>
+        {isAdmin && (
+          <>
+            <div className="pt-4 pb-1 px-2">
+              <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Sistema</p>
+            </div>
+            <NavLink to="/configuracoes" onClick={handleClick} className={`sidebar-item ${location.pathname === "/configuracoes" ? "sidebar-item-active" : ""}`}>
+              <Settings className="w-[18px] h-[18px]" />
+              <span className="text-sm">Configurações</span>
+            </NavLink>
+          </>
+        )}
 
         {canInstall && (
           <button

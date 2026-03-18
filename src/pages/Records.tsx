@@ -25,6 +25,7 @@ import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLef
 import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
@@ -37,7 +38,7 @@ const categoryBadgeVariant: Record<string, string> = {
 };
 
 export default function Records() {
-  
+  const { isAdmin } = useIsAdmin();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -380,11 +381,15 @@ export default function Records() {
             <Button variant="outline" className="gap-2" onClick={handleExport}>
               <Download className="w-4 h-4" /> Exportar
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              Importar
-            </Button>
-            <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+            {isAdmin && (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                  {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  Importar
+                </Button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+              </>
+            )}
           </div>
         </div>
 
@@ -457,7 +462,7 @@ export default function Records() {
         </div>
 
         {/* Bulk action bar */}
-        {someSelected && (
+        {isAdmin && someSelected && (
           <div className="mb-4 flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
             <span className="text-sm font-medium text-foreground">
               {selectedInCurrentFilter} registro(s) selecionado(s)
@@ -521,14 +526,16 @@ export default function Records() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-4">
-                  <Checkbox
-                    checked={allFilteredSelected}
-                    onCheckedChange={toggleSelectAll}
-                    aria-label="Selecionar todos"
-                    className="translate-y-[2px]"
-                  />
-                </TableHead>
+                {isAdmin && (
+                  <TableHead className="w-10 pl-4">
+                    <Checkbox
+                      checked={allFilteredSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                      className="translate-y-[2px]"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="text-xs font-semibold">Data</TableHead>
                 <TableHead className="text-xs font-semibold">Hora</TableHead>
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
@@ -538,7 +545,7 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
                 <TableHead className="text-xs font-semibold">Registrado por</TableHead>
-                <TableHead className="text-xs font-semibold">Ações</TableHead>
+                {isAdmin && <TableHead className="text-xs font-semibold">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -551,14 +558,16 @@ export default function Records() {
                     key={r.id}
                     className={`cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
                   >
-                    <TableCell className="pl-4">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelect(r.id)}
-                        aria-label="Selecionar registro"
-                        className="translate-y-[2px]"
-                      />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="pl-4">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(r.id)}
+                          aria-label="Selecionar registro"
+                          className="translate-y-[2px]"
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="text-xs">{r.data}</TableCell>
                     <TableCell className="text-xs">{r.horario}</TableCell>
                     <TableCell className="text-xs">{(r.obras as any)?.nome}</TableCell>
@@ -574,30 +583,32 @@ export default function Records() {
                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
                       {userName}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => openEdit(r)}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
-                              <AlertDialogDescription>Esta ação é auditável — o registro ficará marcado como excluído com data e responsável.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteRecord(r.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => openEdit(r)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+                                <AlertDialogDescription>Esta ação é auditável — o registro ficará marcado como excluído com data e responsável.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteRecord(r.id)}>Excluir</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}

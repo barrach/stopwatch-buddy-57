@@ -1,9 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import CrudPage, { CrudField } from "@/components/CrudPage";
 import { useMemo } from "react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export default function CadastroRotas() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const qc = useQueryClient();
 
   const { data: obras = [] } = useQuery({
@@ -69,6 +72,9 @@ export default function CadastroRotas() {
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["rotas"] });
   };
+
+  if (adminLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   return (
     <CrudPage

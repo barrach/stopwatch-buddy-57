@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import CrudPage from "@/components/CrudPage";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export default function CadastroObras() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const qc = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
@@ -35,6 +38,9 @@ export default function CadastroObras() {
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["obras"] });
   };
+
+  if (adminLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   return (
     <CrudPage title="Obras" subtitle="Gerencie as obras/projetos" items={items as any} loading={isLoading} onSave={save} onUpdate={update} onDelete={remove} />

@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import AppLayout from "@/components/AppLayout";
 import { SPECIALTIES, OBSERVATION_CATEGORIES } from "@/data/mockData";
 import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield } from "lucide-react";
@@ -23,11 +25,12 @@ interface AppUser {
 const roleLabels: Record<string, string> = {
   admin: "Admin",
   coordenador: "Coordenador",
-  cobrador: "Cobrador",
+  cobrador: "Usuário",
+  user: "Usuário",
 };
 
 export default function SettingsPage() {
-  
+  const { isAdmin: isAdminRole, loading: adminLoading } = useIsAdmin();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -128,6 +131,9 @@ export default function SettingsPage() {
       toast.error(e.message);
     }
   };
+
+  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!isAdminRole) return <Navigate to="/" replace />;
 
   return (
     <AppLayout>
@@ -296,7 +302,7 @@ export default function SettingsPage() {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="coordenador">Coordenador</SelectItem>
-                  <SelectItem value="cobrador">Cobrador</SelectItem>
+                  <SelectItem value="cobrador">Usuário</SelectItem>
                 </SelectContent>
               </Select>
             </div>
