@@ -3,12 +3,12 @@ import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route
 import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
   { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
   { to: "/registros", label: "Registros", icon: ClipboardList },
-  { to: "/auditoria", label: "Auditoria", icon: ShieldAlert },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
