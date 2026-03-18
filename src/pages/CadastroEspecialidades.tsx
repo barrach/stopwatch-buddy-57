@@ -39,6 +39,9 @@ export default function CadastroEspecialidades() {
     qc.invalidateQueries({ queryKey: ["especialidades"] });
   };
 
+  if (adminLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
+
   return (
     <CrudPage title="Especialidades" subtitle="Gerencie as especialidades de amostragem" items={items as any} loading={isLoading} onSave={save} onUpdate={update} onDelete={remove} />
   );

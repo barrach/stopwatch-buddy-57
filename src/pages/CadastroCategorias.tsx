@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import CrudPage, { type CrudField } from "@/components/CrudPage";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export default function CadastroCategorias() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const qc = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({

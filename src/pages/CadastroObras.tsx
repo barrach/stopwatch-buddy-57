@@ -39,6 +39,9 @@ export default function CadastroObras() {
     qc.invalidateQueries({ queryKey: ["obras"] });
   };
 
+  if (adminLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
+
   return (
     <CrudPage title="Obras" subtitle="Gerencie as obras/projetos" items={items as any} loading={isLoading} onSave={save} onUpdate={update} onDelete={remove} />
   );
