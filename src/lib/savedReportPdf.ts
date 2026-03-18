@@ -28,7 +28,9 @@ const DESC_COLORS: Record<string, string> = {
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
   "Aguardando Liberação de PT": "#D4B896",
+  "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
+  "Fatores Climáticos e Consequências": "#F97316",
   "Causas Naturais": "#F97316",
 };
 
