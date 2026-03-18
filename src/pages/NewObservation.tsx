@@ -265,6 +265,9 @@ export default function NewObservation() {
     }
   };
 
+  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!isAdmin) return <Navigate to="/" replace />;
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
