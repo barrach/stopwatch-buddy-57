@@ -1580,8 +1580,8 @@ export default function Dashboard() {
                   data={categoryTotals}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={110}
+                  innerRadius={isMobileView ? 40 : 60}
+                  outerRadius={isMobileView ? 80 : 110}
                   paddingAngle={3}
                   dataKey="value"
                   labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
