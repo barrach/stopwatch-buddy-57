@@ -83,8 +83,8 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Ocioso",
   // Não Produtivo Externo
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ];
 // All charts now use the full order including NPE descriptions
 const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
@@ -102,10 +102,12 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#D4B896",
+  "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
   // NPE extras
+  "Fatores Climáticos e Consequências": "#F97316",
   "Causas Naturais": "#F97316",
   // Legacy
   "Aguardando Instruções": "#16A34A",
@@ -166,7 +168,7 @@ const DESCRIPTION_GROUPS = {
     "Assistindo",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
-  "Não Produtivo Externo": ["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"],
+  "Não Produtivo Externo": ["Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências"],
 } as const;
 
 const DESCRIPTION_GROUP_ORDER = Object.keys(DESCRIPTION_GROUPS) as Array<keyof typeof DESCRIPTION_GROUPS>;
@@ -700,7 +702,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
-    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Causas Naturais");
+    return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Fatores Climáticos e Consequências");
   }, [records, isExternalRecord]);
 
 
@@ -893,7 +895,7 @@ export default function Dashboard() {
         const result: Record<string, Record<string, number>> = {};
         records.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-          if (isExternalRecord(r) && !["Aguardando Liberação de PT", "Vazamento / Interferência da Planta", "Causas Naturais"].includes(normalizedDesc)) return;
+          if (isExternalRecord(r) && !["Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
           if (mode === "horario") {
             key = r.horario || "";

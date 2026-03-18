@@ -48,8 +48,8 @@ const STACK_ORDER_FULL = [
   "Pessoal",
   "Ocioso",
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ] as const;
 
 const STACK_ORDER = [...STACK_ORDER_FULL];
@@ -72,7 +72,9 @@ const DESC_COLORS: Record<string, string> = {
   Pessoal: "#EF4444",
   Ocioso: "#DC2626",
   "Aguardando Liberação de PT": "#D4B896",
+  "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
+  "Fatores Climáticos e Consequências": "#F97316",
   "Causas Naturais": "#F97316",
 };
 
@@ -406,7 +408,7 @@ export function generatePDFReport(data: PDFReportData) {
   const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
-  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Causas Naturais", "Aguardando Liberação de PT", "Vazamento / Interferência da Planta"], DESC_COLORS, true);
+  const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Fatores Climáticos e Consequências", "Aguardando Liberação de PT", "Interferências Operacionais"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);

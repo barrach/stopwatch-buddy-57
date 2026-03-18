@@ -40,7 +40,7 @@ Categorias e critérios detalhados:
   • Pessoal: No bebedouro ou sanitário, exclusivamente.
   • Ocioso: No café, cantina, copa, banco, área médica, bate-papo entre funcionários.
 - Não Produtivo Externo:
-  • Causas Naturais, Vazamento / Interferência da Planta, Aguardando Liberação de PT (quando causada pelo cliente/operação).
+  • Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT (quando causada pelo cliente/operação).
 
 Responda APENAS em JSON válido com este formato exato:
 {"categoria": "nome da categoria pai", "descricao": "nome da subcategoria", "justificativa": "breve justificativa em português"}`;
@@ -70,7 +70,7 @@ CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 - Produtivo: Trabalhando (esforço físico, posicionando peças, limpando superfícies) e Planejando (medições, análise de desenhos, levantamento de materiais, instruções, DDS, APR).
 - Suplementar: Aguardando Instruções, Aguardando Movimentação de Carga, Aguardando Ferramenta ou Material, Aguardando Liberação de PT, Transitando com/sem ferramenta dentro/fora do local de trabalho.
 - Não Produtivo: Pessoal (bebedouro/sanitário) e Ocioso (café, cantina, bate-papo).
-- NPE (Não Produtivo Externo): Causas Naturais, Vazamento/Interferência da Planta, Aguardando Liberação de PT pelo cliente/operação.
+- NPE (Não Produtivo Externo): Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT pelo cliente/operação.
 
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
@@ -80,7 +80,7 @@ REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 
 FÓRMULAS DE CÁLCULO:
 - Existem 4 categorias: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
-- NPE são eventos fora do controle da equipe (Causas Naturais, Vazamento/Interferência da Planta, Aguardando Liberação de PT).
+- NPE são eventos fora do controle da equipe (Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT).
 - IMPORTANTE: O NPE ENTRA na conta da produtividade global. O denominador é o TOTAL BRUTO (incluindo NPE).
 - Produtividade = Produtivo / Total × 100
 - Suplementar% = Suplementar / Total × 100

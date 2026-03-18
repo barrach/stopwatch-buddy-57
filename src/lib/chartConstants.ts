@@ -54,8 +54,8 @@ export const CANONICAL_ORDER_FULL: string[] = [
   "Pessoal",
   "Ocioso",
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ];
 
 export const DESCRIPTION_COLORS: Record<string, string> = {
@@ -70,9 +70,11 @@ export const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#D4B896",
+  "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
   "Ocioso": "#DC2626",
+  "Fatores Climáticos e Consequências": "#F97316",
   "Causas Naturais": "#F97316",
   "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
