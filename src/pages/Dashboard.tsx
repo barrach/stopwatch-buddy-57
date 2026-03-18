@@ -1531,20 +1531,22 @@ export default function Dashboard() {
               <ZoomButton onClick={() => setZoomChart("contrato")} />
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="min-w-0" style={{ flex: '7 1 0%' }}>
-              <ResponsiveContainer width="100%" height={STACKED_CHART_HEIGHT}>
-                <BarChart data={byObra} margin={STACKED_CHART_MARGIN} barCategoryGap="14%" onClick={handleContratoClick}>
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height={isMobileView ? 350 : STACKED_CHART_HEIGHT}>
+                <BarChart data={byObra} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%" onClick={handleContratoClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} />
+                  <XAxis dataKey="name" tick={{ fontSize: isMobileView ? 8 : 10, fill: TICK_COLOR }} angle={-15} textAnchor="end" />
+                  <YAxis tick={{ fontSize: isMobileView ? 9 : 11, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
                   <Tooltip content={<ContratoTooltip />} shared={false} />
                   {renderStackedBars(allDescriptions)}
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions, descriptionTooltipMap)}
+            <div className="shrink-0 lg:max-w-[28%]">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
+                {renderLegendListInline(allDescriptions, descriptionTooltipMap)}
+              </div>
             </div>
           </div>
         </div>
