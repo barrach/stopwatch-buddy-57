@@ -30,7 +30,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function SettingsPage() {
-  
+  const { isAdmin: isAdminRole, loading: adminLoading } = useIsAdmin();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
