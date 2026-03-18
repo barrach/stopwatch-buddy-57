@@ -1444,7 +1444,7 @@ export default function Dashboard() {
             )}
             {crossFilters.pareto && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("pareto", crossFilters.pareto!)}>
-                Pareto ({paretoLabel}): {crossFilters.pareto} <X className="w-3 h-3" />
+                Pareto: {crossFilters.pareto} <X className="w-3 h-3" />
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
