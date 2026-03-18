@@ -1,4 +1,5 @@
 import React from "react";
+import { LegendTooltip } from "@/components/LegendTooltip";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList, ComposedChart,
@@ -45,16 +46,18 @@ export const renderStackedBars = (descriptions: string[]) =>
   });
 
 // ── renderLegendList ──
-export const renderLegendList = (descriptions: string[]) => {
+export const renderLegendList = (descriptions: string[], tooltipMap?: Record<string, string>) => {
   const legendOrder = [...descriptions].reverse();
   return (
     <div className="flex flex-col justify-start gap-[5px] overflow-y-auto pr-1"
       style={{ height: STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom, marginTop: STACKED_CHART_MARGIN.top, marginBottom: STACKED_CHART_MARGIN.bottom }}>
       {legendOrder.map((desc) => (
-        <div key={desc} className="flex items-center gap-2">
-          <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-          <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-        </div>
+        <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
+          <div className="flex items-center gap-2">
+            <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+            <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+          </div>
+        </LegendTooltip>
       ))}
     </div>
   );
@@ -89,9 +92,10 @@ interface StackedChartProps {
   descriptions: string[];
   title: string;
   xAngle?: number;
+  tooltipMap?: Record<string, string>;
 }
 
-export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0 }: StackedChartProps) {
+export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0, tooltipMap }: StackedChartProps) {
   return (
     <div className="stat-card animate-fade-in mb-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
@@ -108,7 +112,7 @@ export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xA
           </ResponsiveContainer>
         </div>
         <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-          {renderLegendList(descriptions)}
+          {renderLegendList(descriptions, tooltipMap)}
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
+import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -214,7 +215,7 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendList = (descriptions: string[]) => {
+const renderLegendList = (descriptions: string[], tooltipMap?: Record<string, string>) => {
   // Keep the legend vertically aligned with the visual stack order on screen.
   // Bars are rendered bottom→top, so the legend must be shown top→bottom.
   const legendOrder = [...descriptions].reverse();
@@ -229,10 +230,12 @@ const renderLegendList = (descriptions: string[]) => {
       }}
     >
       {legendOrder.map((desc) => (
-        <div key={desc} className="flex items-center gap-2">
-          <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-          <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-        </div>
+        <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
+          <div className="flex items-center gap-2">
+            <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+            <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+          </div>
+        </LegendTooltip>
       ))}
     </div>
   );
@@ -461,11 +464,20 @@ export default function Dashboard() {
   const { data: allCats = [] } = useQuery({
     queryKey: ["categorias_observacao", "all_with_impact"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, impacta_produtividade");
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, descricao, categoria_pai_id, impacta_produtividade");
       if (error) throw error;
       return data;
     },
   });
+
+  // Map description names → their descricao text for legend tooltips
+  const descriptionTooltipMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    allCats.forEach((c: any) => {
+      if (c.nome && c.descricao) map[c.nome] = c.descricao;
+    });
+    return map;
+  }, [allCats]);
 
   const parentCatMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -1530,7 +1542,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions)}
+              {renderLegendList(allDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1721,7 +1733,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1847,7 +1859,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1868,7 +1880,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions)}
+              {renderLegendList(allDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -1975,7 +1987,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -2041,7 +2053,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
