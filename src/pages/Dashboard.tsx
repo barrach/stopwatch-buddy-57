@@ -98,6 +98,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Transitando no local de trabalho - sem ferramenta": "#16A34A",
   "Transitando fora do local de trabalho - com ferramenta": "#65A30D",
   "Transitando fora do local de trabalho - sem ferramenta": "#84CC16",
+  "Assistindo / Stand By": "#15803D",
   "Assistindo": "#15803D",
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
