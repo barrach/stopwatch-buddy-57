@@ -29,6 +29,7 @@ interface LastObservation {
 }
 
 export default function NewObservation() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
