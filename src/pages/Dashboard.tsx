@@ -1561,7 +1561,7 @@ export default function Dashboard() {
         </div>
 
         {/* Row: Pie + Pareto */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Distribution Pie */}
           <div id="chart-categoria" className={`stat-card animate-fade-in transition-all ${crossFilters.categoria ? "ring-2 ring-primary/50" : ""}`}>
             <div className="flex items-center justify-between mb-4">
