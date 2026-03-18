@@ -156,12 +156,13 @@ Análise do Pareto por especialidades. Compare cada especialidade pelo % de prod
 Análise do Pareto por funções. Compare cada função pelo % de produtividade. Identifique: função benchmark (melhor), funções intermediárias e função crítica (pior).
 
 ===ESPECIALIDADE===
-Compare as especialidades pelo % de produtividade em relação à média geral.
+Compare as especialidades pelo % de produtividade EXATAMENTE como fornecido nos dados (valores do gráfico).
+REGRA ABSOLUTA: Use os percentuais EXATOS fornecidos na seção "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. NÃO invente valores.
 Estrutura obrigatória:
-- Melhor especialidade: nome, %, diferença em pontos percentuais acima da média.
-- Especialidade intermediária: nome, %, posição relativa.
-- Especialidade crítica: nome, %, impacto e causa provável.
-Exemplo: "A Caldeiraria lidera com 69%, posicionando-se 7 pontos acima da média geral de 62%. A Elétrica apresenta 59%, indicando oportunidades de melhoria. Andaime apresenta 53%, sendo impactada por atividades de movimentação."
+Melhor especialidade: [nome], com [X,X%] de produtividade (Trabalhando X% + Planejando X%). [Diagnóstico + Interpretação + Ação].
+Especialidade intermediária: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
+Especialidade crítica: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
+PROIBIDO: usar formatos como "**Nome (X%)**". Use APENAS o formato "Melhor especialidade:", "Especialidade intermediária:", "Especialidade crítica:".
 
 ===FUNCAO===
 Destaque obrigatoriamente:
