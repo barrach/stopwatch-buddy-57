@@ -1,12 +1,13 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { SavedReport } from "@/components/SavedReportsList";
+import { PDF_OCEAN_RGB, buildStyledPdfLines, wrapTextByWords } from "./pdfTextFormatting";
 
 type RGB = [number, number, number];
 
 const C = {
   headerBg: [15, 23, 42] as RGB,
-  sectionBg: [23, 80, 97] as RGB,
+  sectionBg: [...PDF_OCEAN_RGB] as RGB,
   white: [255, 255, 255] as RGB,
   pageBg: [255, 255, 255] as RGB,
   textDark: [31, 41, 55] as RGB,
@@ -89,7 +90,7 @@ export function generateSavedReportPDF(report: SavedReport) {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...C.textDark);
       const label = `${item.name} — ${fmtPct(item.percent)}`;
-      const lines = doc.splitTextToSize(label, CONTENT_W * 0.28) as string[];
+      const lines = wrapTextByWords(doc, label, CONTENT_W * 0.28);
       doc.text(lines[0] || "", x + 7, drawY + 3.6);
       if (lines.length > 1) {
         doc.setFont("helvetica", "normal");
@@ -101,44 +102,43 @@ export function generateSavedReportPDF(report: SavedReport) {
   };
 
   const drawFormattedText = (text: string, x: number, y: number, maxW: number): number => {
-    const normalized = text
-      .replace(/\s*\|\s*/g, "\n")
-      .replace(/([^\n])\s+(?=(?:\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|[A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:))/g, "$1\n");
-    const lines = normalized.split("\n").map((l) => l.trim()).filter(Boolean);
+    const blocks = buildStyledPdfLines(doc, text, maxW);
     let drawY = y;
-    const boldPrefixRe = /^(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:]{0,60}:|[A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:)/;
     doc.setFontSize(9);
-    for (const line of lines) {
-      const match = line.match(boldPrefixRe);
-      if (match) {
-        const prefix = match[1];
-        const rest = line.slice(prefix.length).trimStart();
+
+    for (const block of blocks) {
+      if (block.prefix) {
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(37, 99, 235);
-        doc.text(prefix, x, drawY);
-        const pw = doc.getTextWidth(prefix);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...C.textDark);
-        if (rest) {
-          const restLines = doc.splitTextToSize(rest, Math.max(maxW - pw - 1, 30)) as string[];
-          doc.text(restLines[0] || "", x + pw + 1, drawY);
-          for (let i = 1; i < restLines.length; i++) {
-            drawY += 4.5;
-            doc.text(restLines[i], x, drawY);
-          }
+        doc.setTextColor(...PDF_OCEAN_RGB);
+        doc.text(block.prefix, x, drawY);
+
+        const firstLine = block.lines[0] || "";
+        if (firstLine) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(firstLine, x + doc.getTextWidth(block.prefix) + 1.5, drawY);
         }
-      } else {
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...C.textDark);
-        const wrapped = doc.splitTextToSize(line, maxW) as string[];
-        for (const wrappedLine of wrapped) {
-          doc.text(wrappedLine, x, drawY);
+
+        drawY += 4.5;
+        for (const continuation of block.lines.slice(1)) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(continuation, x, drawY);
           drawY += 4.5;
         }
+        drawY += 0.8;
         continue;
       }
-      drawY += 4.5;
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...C.textDark);
+      for (const line of block.lines) {
+        doc.text(line, x, drawY);
+        drawY += 4.5;
+      }
+      drawY += 0.8;
     }
+
     return drawY - y;
   };
 
@@ -155,7 +155,7 @@ export function generateSavedReportPDF(report: SavedReport) {
     }
     return [...STACK_ORDER].reverse().map((desc) => ({
       name: desc,
-      percent: grand > 0 ? Number(((totals.get(desc) || 0) / grand * 100).toFixed(1)) : 0,
+      percent: grand > 0 ? Number((((totals.get(desc) || 0) / grand) * 100).toFixed(1)) : 0,
     }));
   };
 
@@ -163,13 +163,12 @@ export function generateSavedReportPDF(report: SavedReport) {
     if (!rows || rows.length === 0) return;
     const legend = computeLegendFromRows(rows);
     const tableH = Math.min(rows.length * 6 + 10, 80);
-    const legendH = legend.filter(l => l.percent > 0).length * 7.5;
+    const legendH = legend.filter((l) => l.percent > 0).length * 7.5;
     const blockH = 12 + Math.max(tableH, legendH) + 6;
     ensureSpace(blockH);
 
     sectionHeader(title);
 
-    // Simple table
     const chartW = CONTENT_W * 0.68;
     const startY = curY;
     doc.setFontSize(8);
@@ -186,12 +185,11 @@ export function generateSavedReportPDF(report: SavedReport) {
     doc.setFontSize(7.5);
     for (const row of rows.slice(0, 12)) {
       const name = String(row[nameKey] || "");
-      const displayName = name.length > 35 ? name.substring(0, 35) + "…" : name;
+      const displayName = name.length > 35 ? `${name.substring(0, 35)}…` : name;
       doc.setTextColor(...C.textDark);
       doc.text(displayName, MARGIN + 2, curY + 3);
       doc.text(String(row.total || 0), MARGIN + chartW - 15, curY + 3);
 
-      // Mini bar
       const trab = Number(row["Trabalhando"] || 0);
       if (trab > 0) {
         const barW = (trab / 100) * (chartW - 55);
@@ -201,7 +199,6 @@ export function generateSavedReportPDF(report: SavedReport) {
       curY += 5;
     }
 
-    // Legend on right side
     const legendX = MARGIN + CONTENT_W * 0.70;
     drawLegend(legend, legendX, startY);
 
@@ -227,7 +224,7 @@ export function generateSavedReportPDF(report: SavedReport) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     for (const item of data) {
-      const name = String(item.name || "").length > 45 ? item.name.substring(0, 45) + "…" : item.name;
+      const name = String(item.name || "").length > 45 ? `${item.name.substring(0, 45)}…` : item.name;
       doc.setTextColor(...C.textDark);
       doc.text(name, MARGIN + 2, curY + 3);
       doc.text(`${item.percent}%`, MARGIN + CONTENT_W - 15, curY + 3);
@@ -313,7 +310,6 @@ export function generateSavedReportPDF(report: SavedReport) {
   renderParetoTable("Top Causas (Pareto)", s.paretoData);
   renderExternalTable("Causas Externas de Parada (NPE)", s.externalCausas);
 
-  // Save
   const fileName = `relatorio-${report.obra_nome.replace(/\s+/g, "-")}-${periodLabel.replace(/\s+/g, "-")}.pdf`;
   doc.save(fileName);
 }

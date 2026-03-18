@@ -1,10 +1,7 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { ChartImages, ChartDimensions } from "./chartCapture";
-
-/* ═══════════════════════════════════════════════════════════
-   TYPES
-   ═══════════════════════════════════════════════════════════ */
+import { PDF_OCEAN_RGB, buildStyledPdfLines, countStyledPdfLines, wrapTextByWords } from "./pdfTextFormatting";
 
 export interface PDFReportData {
   periodo: string;
@@ -37,13 +34,8 @@ type RGB = [number, number, number];
 type LegendItem = { name: string; color: string; percent: number };
 type TimedBlock = { label: string; content: string };
 type AnalysisSections = Record<string, string>;
-type RecBlock = { title: string; problema: string; causa: string; acao: string; responsavel: string; impacto: string };
+type RecommendationBlock = { title: string; problema: string; causa: string; acao: string; responsavel: string; impacto: string };
 
-/* ═══════════════════════════════════════════════════════════
-   CONSTANTS — canonical orders & colors
-   ═══════════════════════════════════════════════════════════ */
-
-// Stack order bottom→top (Trabalhando at bottom, Ocioso/Causas Naturais at top)
 const STACK_ORDER_FULL = [
   "Trabalhando",
   "Planejando",
@@ -60,13 +52,9 @@ const STACK_ORDER_FULL = [
   "Causas Naturais",
 ] as const;
 
-// All charts now include NPE descriptions
 const STACK_ORDER = [...STACK_ORDER_FULL];
-
-// Legend order = reverse of stack order so the top legend item matches the top visible stack segment
 const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL].reverse();
 const LEGEND_ORDER = [...STACK_ORDER].reverse();
-
 const DONUT_ORDER = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
 const HOUR_ORDER = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
 const WEEKDAY_ORDER = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"] as const;
@@ -95,22 +83,18 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Não Produtivo Externo": "#F97316",
 };
 
-/* ═══════════════════════════════════════════════════════════
-   LAYOUT CONSTANTS
-   ═══════════════════════════════════════════════════════════ */
-
 const C = {
   headerBg: [15, 23, 42] as RGB,
-  sectionBg: [23, 80, 97] as RGB,
-  sectionBgDark: [14, 64, 74] as RGB,
+  sectionBg: [...PDF_OCEAN_RGB] as RGB,
+  sectionBgDark: [22, 59, 92] as RGB,
   white: [255, 255, 255] as RGB,
   pageBg: [255, 255, 255] as RGB,
   textDark: [31, 41, 55] as RGB,
   textMuted: [107, 114, 128] as RGB,
   border: [209, 213, 219] as RGB,
   cardBg: [248, 250, 252] as RGB,
-  analysisBg: [240, 247, 248] as RGB,
-  blue: [37, 99, 235] as RGB,
+  analysisBg: [248, 250, 252] as RGB,
+  blue: [...PDF_OCEAN_RGB] as RGB,
   green: [22, 163, 74] as RGB,
   amber: [245, 158, 11] as RGB,
   red: [220, 38, 38] as RGB,
@@ -123,43 +107,41 @@ const MARGIN = 14;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 const BOTTOM_MARGIN = 14;
 const MAX_Y = PAGE_H - BOTTOM_MARGIN;
-const CHART_RATIO = 0.70;
-const LEGEND_RATIO = 0.30;
+const CHART_RATIO = 0.7;
 const CHART_W = CONTENT_W * CHART_RATIO;
-const LEGEND_W = CONTENT_W * LEGEND_RATIO;
+const LEGEND_W = CONTENT_W - CHART_W;
 const MAX_CHART_H = 108;
 const LEGEND_FONT_PT = 9;
 const LEGEND_LINE_H = 4.2;
 const LEGEND_ITEM_GAP = 3;
-
-/* ═══════════════════════════════════════════════════════════
-   UTILITY FUNCTIONS
-   ═══════════════════════════════════════════════════════════ */
+const ANALYSIS_LINE_H = 4.5;
 
 function hexToRgb(hex: string): RGB {
-  const v = hex.replace("#", "");
-  return [parseInt(v.substring(0, 2), 16), parseInt(v.substring(2, 4), 16), parseInt(v.substring(4, 6), 16)];
+  const value = hex.replace("#", "");
+  return [parseInt(value.substring(0, 2), 16), parseInt(value.substring(2, 4), 16), parseInt(value.substring(4, 6), 16)];
 }
 
 function isWhiteColor(hex: string): boolean {
-  const h = hex.toUpperCase();
-  return h === "#FFFFFF" || h === "#D4B896";
+  const normalized = hex.toUpperCase();
+  return normalized === "#FFFFFF" || normalized === "#D4B896" || normalized === "#C8A882";
 }
 
 function toPercent(value: number): number {
   return Number((value || 0).toFixed(1));
 }
 
-function fmtPct(p: number): string {
-  return `${toPercent(p).toFixed(1)}%`;
+function fmtPct(value: number): string {
+  return `${toPercent(value).toFixed(1)}%`;
 }
 
 function normalizeTitle(raw: string): string {
   return raw
-    .replace(/^={2,}\s*(?:DIA|HORA)\s*:\s*/i, "")
-    .replace(/^\*\*/g, "").replace(/\*\*$/g, "")
+    .replace(/^={2,}\s*(?:DIA|HORA|MES)\s*:\s*/i, "")
+    .replace(/^\*\*/g, "")
+    .replace(/\*\*$/g, "")
     .replace(/^Dia\s*[:\-]\s*/i, "")
     .replace(/^Hora\s*[:\-]\s*/i, "")
+    .replace(/^M[eê]s\s*[:\-]\s*/i, "")
     .trim();
 }
 
@@ -170,23 +152,17 @@ function stripTags(text: string): string {
       return clean ? `\n${marker}: ${clean}\n` : "\n";
     })
     .replace(/\*\*/g, "")
+    .replace(/<[^>]+>/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
-
-/* ═══════════════════════════════════════════════════════════
-   AI ANALYSIS PARSING
-   ═══════════════════════════════════════════════════════════ */
 
 function normalizeBlockText(text: string): string {
   return text.replace(/\r\n/g, "\n").trim();
 }
 
 function getFirstMatchIndex(text: string, patterns: RegExp[]): number {
-  const indexes = patterns
-    .map((pattern) => text.search(pattern))
-    .filter((index) => index >= 0);
-
+  const indexes = patterns.map((pattern) => text.search(pattern)).filter((index) => index >= 0);
   return indexes.length ? Math.min(...indexes) : -1;
 }
 
@@ -198,7 +174,6 @@ function trimAtNestedMarker(text: string, patterns: RegExp[]): string {
 function extractInferredSection(text: string, startPattern: RegExp, endPatterns: RegExp[]): string {
   const start = text.search(startPattern);
   if (start < 0) return "";
-
   const slice = text.slice(start);
   const end = getFirstMatchIndex(slice, endPatterns);
   return (end >= 0 ? slice.slice(0, end) : slice).trim();
@@ -216,13 +191,12 @@ function parseAnalysis(aiText: string): AnalysisSections {
     contentStart: (match.index ?? 0) + match[0].length,
   }));
 
-  for (let i = 0; i < markers.length; i++) {
+  for (let i = 0; i < markers.length; i += 1) {
     const current = markers[i];
     const next = markers[i + 1];
     sections[current.key] = normalized.slice(current.contentStart, next?.start ?? normalized.length).trim();
   }
 
-  // --- Infer missing sections from inline markers ---
   if (!sections.HORARIO) {
     sections.HORARIO = extractInferredSection(normalized, /(?:^|\n)\s*===\s*HORA\s*:/i, [
       /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
@@ -242,13 +216,9 @@ function parseAnalysis(aiText: string): AnalysisSections {
   }
 
   if (!sections.MES) {
-    sections.MES = extractInferredSection(normalized, /(?:^|\n)\s*===\s*MES\s*:/i, [
-      /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
-    ]);
+    sections.MES = extractInferredSection(normalized, /(?:^|\n)\s*===\s*MES\s*:/i, [/(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i]);
   }
 
-  // --- CRITICAL: Trim each section to prevent content leaking into the next ---
-  // EXTERNO must not contain HORA/DIA/MES blocks
   sections.EXTERNO = trimAtNestedMarker(sections.EXTERNO || "", [
     /(?:^|\n)\s*===\s*HORA\s*:/i,
     /(?:^|\n)\s*===\s*DIA\s*:/i,
@@ -257,8 +227,6 @@ function parseAnalysis(aiText: string): AnalysisSections {
     /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
     /(?:^|\n)\s*===\s*MES\s*===/i,
   ]);
-
-  // HORARIO must not contain DIA or MES blocks
   sections.HORARIO = trimAtNestedMarker(sections.HORARIO || "", [
     /(?:^|\n)\s*===\s*DIA\s*:/i,
     /(?:^|\n)\s*===\s*DIA_SEMANA\s*===/i,
@@ -266,18 +234,12 @@ function parseAnalysis(aiText: string): AnalysisSections {
     /(?:^|\n)\s*===\s*MES\s*===/i,
     /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
   ]);
-
-  // DIA_SEMANA must not contain MES blocks
   sections.DIA_SEMANA = trimAtNestedMarker(sections.DIA_SEMANA || "", [
     /(?:^|\n)\s*===\s*MES\s*:/i,
     /(?:^|\n)\s*===\s*MES\s*===/i,
     /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
   ]);
-
-  // MES must not contain RECOMENDACOES
-  sections.MES = trimAtNestedMarker(sections.MES || "", [
-    /(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i,
-  ]);
+  sections.MES = trimAtNestedMarker(sections.MES || "", [/(?:^|\n)\s*===\s*RECOMENDACOES\s*===/i]);
 
   if (!Object.keys(sections).some((key) => sections[key]?.trim())) {
     sections.GERAL = normalized;
@@ -289,13 +251,11 @@ function parseAnalysis(aiText: string): AnalysisSections {
 function parseTimedBlocks(text: string, marker: "HORA" | "DIA" | "MES"): TimedBlock[] {
   const normalized = normalizeBlockText(text);
   if (!normalized) return [];
-  const blocks: TimedBlock[] = [];
 
-  const strictRegex = new RegExp(
-    `(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`,
-    "gi"
-  );
+  const blocks: TimedBlock[] = [];
+  const strictRegex = new RegExp(`(?:^|\\n)\\s*===\\s*${marker}\\s*:\\s*([^=\\n]+?)\\s*===\\s*\\n([\\s\\S]*?)(?=\\n\\s*===\\s*${marker}\\s*:|$)`, "gi");
   let match: RegExpExecArray | null;
+
   while ((match = strictRegex.exec(normalized)) !== null) {
     blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
   }
@@ -308,7 +268,7 @@ function parseTimedBlocks(text: string, marker: "HORA" | "DIA" | "MES"): TimedBl
   }
 
   if (!blocks.length && marker === "DIA") {
-    const dayPattern = WEEKDAY_ORDER.map((d) => d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const dayPattern = WEEKDAY_ORDER.map((day) => day.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
     const fb = new RegExp(`(?:^|\\n)\\s*(${dayPattern})\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:${dayPattern})\\s*\\n|$)`, "gi");
     while ((match = fb.exec(normalized)) !== null) {
       blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
@@ -316,7 +276,7 @@ function parseTimedBlocks(text: string, marker: "HORA" | "DIA" | "MES"): TimedBl
   }
 
   if (!blocks.length && marker === "MES") {
-    const monthPattern = MONTH_ORDER.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const monthPattern = MONTH_ORDER.map((month) => month.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
     const fb = new RegExp(`(?:^|\\n)\\s*(${monthPattern})\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:${monthPattern})\\s*\\n|$)`, "gi");
     while ((match = fb.exec(normalized)) !== null) {
       blocks.push({ label: normalizeTitle(match[1]), content: stripTags(match[2]) });
@@ -327,47 +287,63 @@ function parseTimedBlocks(text: string, marker: "HORA" | "DIA" | "MES"): TimedBl
 }
 
 function sortBlocks(blocks: TimedBlock[], order: readonly string[]): TimedBlock[] {
-  const map = new Map(order.map((item, i) => [item, i]));
+  const orderMap = new Map(order.map((item, index) => [item, index]));
   return [...blocks].sort((a, b) => {
-    const iA = map.get(a.label) ?? Number.MAX_SAFE_INTEGER;
-    const iB = map.get(b.label) ?? Number.MAX_SAFE_INTEGER;
-    return iA !== iB ? iA - iB : a.label.localeCompare(b.label, "pt-BR");
+    const indexA = orderMap.get(a.label) ?? Number.MAX_SAFE_INTEGER;
+    const indexB = orderMap.get(b.label) ?? Number.MAX_SAFE_INTEGER;
+    return indexA !== indexB ? indexA - indexB : a.label.localeCompare(b.label, "pt-BR");
   });
 }
 
-function parseRecommendations(text: string): RecBlock[] {
+function parseRecommendations(text: string): RecommendationBlock[] {
   const clean = stripTags(text);
   if (!clean) return [];
-  const parts = clean.split(/(?:^|\n)\s*(?:PROBLEMA\s+\d+|Problema\s+\d+)\s*[:\-]?\s*/).map((p) => p.trim()).filter(Boolean);
+
+  const parts = clean
+    .split(/(?:^|\n)\s*(?:PROBLEMA\s+\d+|Problema\s+\d+)\s*[:\-—]?\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   return parts.map((part) => {
-    const block: RecBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
-    const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
-    let activeField: keyof RecBlock = "title";
-    for (const line of lines) {
-      const n = line.replace(/^[-•]\s*/, "");
-      const lower = n.toLowerCase();
-      if (lower.startsWith("problema:")) { block.problema = n.replace(/^[^:]+:\s*/, ""); activeField = "problema"; }
-      else if (lower.startsWith("causa provável:") || lower.startsWith("causa provavel:") || lower.startsWith("causa:")) { block.causa = n.replace(/^[^:]+:\s*/, ""); activeField = "causa"; }
-      else if (lower.startsWith("ação recomendada:") || lower.startsWith("acao recomendada:") || lower.startsWith("ação:") || lower.startsWith("acao:")) { block.acao = n.replace(/^[^:]+:\s*/, ""); activeField = "acao"; }
-      else if (lower.startsWith("responsável:") || lower.startsWith("responsavel:")) { block.responsavel = n.replace(/^[^:]+:\s*/, ""); activeField = "responsavel"; }
-      else if (lower.startsWith("impacto esperado:") || lower.startsWith("impacto:")) { block.impacto = n.replace(/^[^:]+:\s*/, ""); activeField = "impacto"; }
-      else if (!block.title) block.title = n;
-      else block[activeField] = [block[activeField], n].filter(Boolean).join(" ").trim();
+    const block: RecommendationBlock = { title: "", problema: "", causa: "", acao: "", responsavel: "", impacto: "" };
+    const lines = part.split("\n").map((line) => line.trim()).filter(Boolean);
+    let activeField: keyof RecommendationBlock = "title";
+
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/^[-•]\s*/, "");
+      const lower = line.toLowerCase();
+      if (lower.startsWith("problema:")) {
+        block.problema = line.replace(/^[^:]+:\s*/, "");
+        activeField = "problema";
+      } else if (lower.startsWith("causa provável:") || lower.startsWith("causa provavel:") || lower.startsWith("causa:")) {
+        block.causa = line.replace(/^[^:]+:\s*/, "");
+        activeField = "causa";
+      } else if (lower.startsWith("ação recomendada:") || lower.startsWith("acao recomendada:") || lower.startsWith("ação:") || lower.startsWith("acao:")) {
+        block.acao = line.replace(/^[^:]+:\s*/, "");
+        activeField = "acao";
+      } else if (lower.startsWith("responsável:") || lower.startsWith("responsavel:")) {
+        block.responsavel = line.replace(/^[^:]+:\s*/, "");
+        activeField = "responsavel";
+      } else if (lower.startsWith("impacto esperado:") || lower.startsWith("impacto:")) {
+        block.impacto = line.replace(/^[^:]+:\s*/, "");
+        activeField = "impacto";
+      } else if (!block.title) {
+        block.title = line;
+      } else {
+        block[activeField] = [block[activeField], line].filter(Boolean).join(" ").trim();
+      }
     }
+
     if (!block.title) block.title = block.problema || "Problema crítico";
     return block;
   });
 }
 
-/* ═══════════════════════════════════════════════════════════
-   LEGEND COMPUTATION — respects visual stack order
-   ═══════════════════════════════════════════════════════════ */
-
 function computeLegendItems(
   rows: Array<{ [key: string]: any }>,
   legendOrder: readonly string[],
   stackOrder: readonly string[],
-  keepZero = true
+  keepZero = true,
 ): LegendItem[] {
   const totals = new Map<string, number>();
   let grandTotal = 0;
@@ -387,7 +363,7 @@ function computeLegendItems(
     .map((desc) => ({
       name: desc,
       color: DESC_COLORS[desc] || "#6B7280",
-      percent: grandTotal > 0 ? toPercent((Number(totals.get(desc) || 0) / grandTotal) * 100) : 0,
+      percent: grandTotal > 0 ? toPercent(((totals.get(desc) || 0) / grandTotal) * 100) : 0,
     }))
     .filter((item) => keepZero || item.percent > 0);
 }
@@ -396,14 +372,15 @@ function computeSimpleLegendItems(
   items: Array<{ name: string; value?: number; percent?: number }>,
   order: readonly string[],
   colorMap: Record<string, string>,
-  keepZero = true
+  keepZero = true,
 ): LegendItem[] {
-  const itemMap = new Map(items.map((i) => [i.name, i]));
-  const total = items.reduce((s, i) => s + Number(i.value || 0), 0);
+  const itemMap = new Map(items.map((item) => [item.name, item]));
+  const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+
   return order
     .map((name) => {
       const item = itemMap.get(name);
-      const percent = item?.percent != null ? toPercent(Number(item.percent)) : total > 0 ? toPercent((Number(item?.value || 0) / total) * 100) : 0;
+      const percent = item?.percent != null ? toPercent(Number(item.percent)) : total > 0 ? toPercent(((item?.value || 0) / total) * 100) : 0;
       return { name, color: colorMap[name] || "#6B7280", percent };
     })
     .filter((item) => keepZero || item.percent > 0);
@@ -415,42 +392,27 @@ function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width:
   return Math.min(width * (dim.height / dim.width), MAX_CHART_H);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MODEL BUILDER — validates all data before rendering
-   ═══════════════════════════════════════════════════════════ */
+export function generatePDFReport(data: PDFReportData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const images = data.chartImages || {};
+  const dimensions = data.chartDimensions || {};
+  const analysis = parseAnalysis(data.aiAnalysis);
+  const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
+  const recommendations = parseRecommendations(analysis.RECOMENDACOES || analysis.GERAL || "");
 
-function buildModel(data: PDFReportData, analysis: AnalysisSections) {
-  // Legend is reversed so top-to-bottom matches the visual top-to-bottom reading of the chart
   const contractLegend = computeLegendItems(data.byObra, LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const specialtyLegend = computeLegendItems(data.bySpecialty, LEGEND_ORDER, STACK_ORDER, true);
-  const hourLegend = computeLegendItems(data.byTimeHorario || [], LEGEND_ORDER, STACK_ORDER, true);
-  const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER, STACK_ORDER, true);
-  const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER, STACK_ORDER, true);
+  const hourLegend = computeLegendItems(data.byTimeHorario || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
+  const weekLegend = computeLegendItems(data.byTimeDiaSemana || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
+  const monthLegend = computeLegendItems(data.byTimeMes || [], LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const categoryLegend = computeSimpleLegendItems(data.categoryTotals, DONUT_ORDER, CATEGORY_COLORS, true);
   const npeLegend = computeSimpleLegendItems(data.externalCausas, ["Causas Naturais", "Aguardando Liberação de PT", "Vazamento / Interferência da Planta"], DESC_COLORS, true);
   const hourBlocks = sortBlocks(parseTimedBlocks(analysis.HORARIO || "", "HORA"), HOUR_ORDER);
   const weekdayBlocks = sortBlocks(parseTimedBlocks(analysis.DIA_SEMANA || "", "DIA"), WEEKDAY_ORDER);
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);
-  const recommendations = parseRecommendations(analysis.RECOMENDACOES || analysis.GERAL || "");
-
-  return { contractLegend, specialtyLegend, hourLegend, weekLegend, monthLegend, categoryLegend, npeLegend, hourBlocks, weekdayBlocks, monthBlocks, recommendations };
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MAIN PDF GENERATOR
-   ═══════════════════════════════════════════════════════════ */
-
-export function generatePDFReport(data: PDFReportData) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const images = data.chartImages || {};
-  const dims = data.chartDimensions || {};
-  const analysis = parseAnalysis(data.aiAnalysis);
-  const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
-  const model = buildModel(data, analysis);
 
   let curY = MARGIN;
 
-  /* ── page management ── */
   const newPage = () => {
     doc.addPage("a4", "portrait");
     doc.setFillColor(...C.pageBg);
@@ -458,11 +420,10 @@ export function generatePDFReport(data: PDFReportData) {
     curY = MARGIN;
   };
 
-  const ensureSpace = (h: number) => {
-    if (curY + h > MAX_Y) newPage();
+  const ensureSpace = (height: number) => {
+    if (curY + height > MAX_Y) newPage();
   };
 
-  /* ── drawing primitives ── */
   const sectionHeader = (title: string) => {
     ensureSpace(14);
     doc.setFillColor(...C.sectionBg);
@@ -487,49 +448,24 @@ export function generatePDFReport(data: PDFReportData) {
     curY += 10;
   };
 
-  const labelPrefixRe = /(\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|a[çc][ãa]o\s+recomendada\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|causa\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|produtividade\s*:|suplementar\s*:|n[aã]o\s+produtivo\s*:|npe\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:)/gi;
-
-  const normalizeAnalysisText = (text: string): string => {
-    return stripTags(text)
-      .replace(/\s*\|\s*/g, "\n")
-      .replace(/([^\n])\s+(?=(?:\d+[ªº°.]?\s*[A-ZÀ-Ú][^:\n]{0,60}:|a[çc][ãa]o\s+recomendada\s*:|a[çc][ãa]o\s*:|diagn[óo]stico\s*:|interpreta[çc][ãa]o\s*:|problema\s*:|causa\s+prov[áa]vel\s*:|causa\s*:|respons[áa]vel\s*:|impacto\s+esperado\s*:|impacto\s*:|produtividade\s*:|suplementar\s*:|n[aã]o\s+produtivo\s*:|npe\s*:|[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+){0,4}\s*:))/gi, "$1\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-  };
-
-  const wrapAnalysisText = (text: string): { wrapped: string[]; boxH: number } => {
-    const clean = normalizeAnalysisText(text);
-    if (!clean) return { wrapped: [], boxH: 0 };
+  const getAnalysisBlocks = (text: string, width: number) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    const paragraphs = clean.split("\n").map((l) => l.trim()).filter(Boolean);
-    const bodyW = CONTENT_W - 14;
-    const wrapped: string[] = [];
-    paragraphs.forEach((p, i) => {
-      const lines = doc.splitTextToSize(p, bodyW) as string[];
-      wrapped.push(...lines);
-      if (i < paragraphs.length - 1) wrapped.push("");
-    });
-    const boxH = Math.max(12, wrapped.length * 4 + 6);
-    return { wrapped, boxH };
+    return buildStyledPdfLines(doc, stripTags(text), width);
   };
 
-  /** Measure how tall an analysis box would be (without drawing) */
   const measureAnalysisBox = (text: string): number => {
-    const { boxH } = wrapAnalysisText(text);
-    return boxH > 0 ? boxH + 2 : 0;
-  };
-
-  /** Measure a sub-header height */
-  const measureSubHeader = (title: string): number => {
-    const clean = normalizeTitle(title);
-    return clean ? 10 : 0;
+    const blocks = getAnalysisBlocks(text, CONTENT_W - 12);
+    const lineCount = countStyledPdfLines(blocks);
+    return lineCount > 0 ? Math.max(16, lineCount * ANALYSIS_LINE_H + 8) + 2 : 0;
   };
 
   const drawAnalysisBox = (text: string) => {
-    const { wrapped, boxH } = wrapAnalysisText(text);
-    if (!wrapped.length) return;
+    const blocks = getAnalysisBlocks(text, CONTENT_W - 12);
+    if (!blocks.length) return;
 
+    const lineCount = countStyledPdfLines(blocks);
+    const boxH = Math.max(16, lineCount * ANALYSIS_LINE_H + 8);
     ensureSpace(boxH + 2);
 
     doc.setFillColor(...C.analysisBg);
@@ -537,35 +473,42 @@ export function generatePDFReport(data: PDFReportData) {
     doc.setFillColor(...C.sectionBg);
     doc.rect(MARGIN, curY, 2, boxH, "F");
 
-    let ty = curY + 5;
+    let textY = curY + 5;
     doc.setFontSize(9);
-    for (const line of wrapped) {
-      if (!line) {
-        ty += 1.5;
+
+    for (const block of blocks) {
+      if (block.prefix) {
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...C.blue);
+        doc.text(block.prefix, MARGIN + 6, textY);
+
+        const firstLine = block.lines[0] || "";
+        if (firstLine) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(firstLine, MARGIN + 6 + doc.getTextWidth(block.prefix) + 1.5, textY);
+        }
+
+        textY += ANALYSIS_LINE_H;
+        for (const continuation of block.lines.slice(1)) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...C.textDark);
+          doc.text(continuation, MARGIN + 6, textY);
+          textY += ANALYSIS_LINE_H;
+        }
+        textY += 0.8;
         continue;
       }
 
-      const ci = line.indexOf(":");
-      const hasBoldPrefix = ci > 0 && ci < 80 && labelPrefixRe.test(line);
-      labelPrefixRe.lastIndex = 0;
-
-      if (hasBoldPrefix) {
-        const prefix = line.slice(0, ci + 1);
-        const rest = line.slice(ci + 1).trimStart();
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...C.blue);
-        doc.text(prefix, MARGIN + 6, ty);
-        const pw = doc.getTextWidth(prefix);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...C.textDark);
-        if (rest) doc.text(rest, MARGIN + 6 + pw + 1, ty);
-      } else {
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...C.textDark);
-        doc.text(line, MARGIN + 6, ty);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...C.textDark);
+      for (const line of block.lines) {
+        doc.text(line, MARGIN + 6, textY);
+        textY += ANALYSIS_LINE_H;
       }
-      ty += 4;
+      textY += 0.8;
     }
+
     curY += boxH + 2;
   };
 
@@ -573,16 +516,17 @@ export function generatePDFReport(data: PDFReportData) {
     if (!items.length) return 0;
     const textW = LEGEND_W - 10;
     let drawY = y;
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(LEGEND_FONT_PT);
 
     for (const item of items) {
-      const swX = x + 2;
-      const swY = drawY + 0.7;
-      const tX = swX + 5.2;
       const label = `${item.name} — ${fmtPct(item.percent)}`;
-      const lines = doc.splitTextToSize(label, textW - 5) as string[];
+      const lines = wrapTextByWords(doc, label, textW - 5);
       const itemH = Math.max(4.5, lines.length * LEGEND_LINE_H);
       const rgb = hexToRgb(item.color);
+      const swX = x + 2;
+      const swY = drawY + 0.7;
+      const textX = swX + 5.2;
 
       doc.setFillColor(...rgb);
       if (isWhiteColor(item.color)) {
@@ -594,121 +538,102 @@ export function generatePDFReport(data: PDFReportData) {
 
       doc.setTextColor(...(isWhiteColor(item.color) ? C.textMuted : C.textDark));
       doc.setFont("helvetica", "bold");
-      doc.text(lines[0] || "", tX, drawY + 3.6);
+      doc.text(lines[0] || "", textX, drawY + 3.6);
       if (lines.length > 1) {
         doc.setFont("helvetica", "normal");
-        for (let i = 1; i < lines.length; i++) doc.text(lines[i], tX, drawY + 3.6 + i * LEGEND_LINE_H);
+        for (let i = 1; i < lines.length; i += 1) {
+          doc.text(lines[i], textX, drawY + 3.6 + i * LEGEND_LINE_H);
+        }
       }
+
       drawY += itemH + LEGEND_ITEM_GAP;
     }
+
     return drawY - y;
   };
 
   const measureLegendH = (items: LegendItem[]): number => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(LEGEND_FONT_PT);
-    const tW = LEGEND_W - 10;
-    let h = 0;
+    const textW = LEGEND_W - 10;
+    let height = 0;
     for (const item of items) {
-      const lines = doc.splitTextToSize(`${item.name} — ${fmtPct(item.percent)}`, tW - 5) as string[];
-      h += Math.max(4.5, lines.length * LEGEND_LINE_H) + LEGEND_ITEM_GAP;
+      const lines = wrapTextByWords(doc, `${item.name} — ${fmtPct(item.percent)}`, textW - 5);
+      height += Math.max(4.5, lines.length * LEGEND_LINE_H) + LEGEND_ITEM_GAP;
     }
-    return h;
+    return height;
   };
 
-  const drawChart = (image: string | undefined, dimKey: string, w: number): number => {
+  const drawChart = (image: string | undefined, dimKey: string, width: number, x = MARGIN): number => {
     if (!image) return 0;
-    const h = estimateChartHeight(dims, dimKey, w);
-    doc.addImage(image, "PNG", MARGIN, curY, w, h);
-    return h;
+    const height = estimateChartHeight(dimensions, dimKey, width);
+    doc.addImage(image, "PNG", x, curY, width, height);
+    return height;
   };
 
-  /* ══════════════════════════════════════════════════════════
-     BLOCK RENDERERS — enforce TITLE → CHART → LEGEND → ANALYSIS
-     ══════════════════════════════════════════════════════════ */
-
-  /** Standard section: title → chart(70%) + legend(30%) → analysis — UNBREAKABLE */
-  const renderBlock = (title: string, img: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
-    const chartH = estimateChartHeight(dims, dimKey, legend.length ? CHART_W : CONTENT_W);
+  const renderStandardBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+    const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
     const legendH = legend.length ? measureLegendH(legend) : 0;
     const rowH = Math.max(chartH, legendH);
     const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
-    const totalBlockH = 12 + rowH + 3 + analysisH;
+    ensureSpace(12 + rowH + 3 + analysisH);
 
-    // If the whole block doesn't fit, start a new page
-    ensureSpace(totalBlockH);
-
-    // 1. TITLE
     sectionHeader(title);
-
-    // 2. CHART + 3. LEGEND (side by side)
     const rowStart = curY;
-    const ch = drawChart(img, dimKey, legend.length ? CHART_W : CONTENT_W);
-    const lh = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
-    curY = rowStart + Math.max(ch, lh) + 3;
-
-    // 4. ANALYSIS
+    const drawnChartH = image ? drawChart(image, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
+    const drawnLegendH = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
+    curY = rowStart + Math.max(drawnChartH, drawnLegendH) + 3;
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  /** Section with per-item analysis blocks (hours, weekdays, months) */
-  const renderBlockWithSubs = (title: string, img: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
-    const chartH = estimateChartHeight(dims, dimKey, legend.length ? CHART_W : CONTENT_W);
-    const legendH = legend.length ? measureLegendH(legend) : 0;
-    const rowH = Math.max(chartH, legendH);
-    const totalChartBlockH = 12 + rowH + 3;
-
-    // Ensure the title + chart + legend fit on one page
-    ensureSpace(totalChartBlockH);
-
-    // 1. TITLE
-    sectionHeader(title);
-
-    // 2. CHART + 3. LEGEND
-    const rowStart = curY;
-    const ch = drawChart(img, dimKey, legend.length ? CHART_W : CONTENT_W);
-    const lh = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
-    curY = rowStart + Math.max(ch, lh) + 3;
-
-    // 4. ANALYSIS — each sub-block (e.g. each hour/day/month) is UNBREAKABLE
-    blocks.forEach((b) => {
-      const subHeaderH = measureSubHeader(b.label);
-      const subAnalysisH = b.content?.trim() ? measureAnalysisBox(b.content) : 0;
-      const subTotalH = subHeaderH + subAnalysisH;
-      // Keep sub-header + its analysis together on the same page
-      if (subTotalH > 0) ensureSpace(subTotalH);
-      if (b.label) subHeader(b.label);
-      if (b.content?.trim()) drawAnalysisBox(b.content);
-    });
-  };
-
-  /** Pareto section: title → chart(100%) → analysis — NO legend, UNBREAKABLE */
-  const renderPareto = (title: string, img: string | undefined, dimKey: string, analysisText?: string) => {
-    const chartH = estimateChartHeight(dims, dimKey, CONTENT_W);
+  const renderParetoBlock = (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
+    if (!image && !analysisText?.trim()) return;
+    const chartH = image ? estimateChartHeight(dimensions, dimKey, CONTENT_W) : 0;
     const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
-    const totalBlockH = 12 + chartH + 3 + analysisH;
+    ensureSpace(12 + chartH + 3 + analysisH);
 
-    ensureSpace(totalBlockH);
-
-    // 1. TITLE
     sectionHeader(title);
-
-    // 2. CHART (full width, no legend)
-    const ch = drawChart(img, dimKey, CONTENT_W);
-    curY += ch + 3;
-
-    // 3. ANALYSIS
+    if (image) {
+      const drawnChartH = drawChart(image, dimKey, CONTENT_W);
+      curY += drawnChartH + 3;
+    }
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  /* ══════════════════════════════════════════════════════════
-     RENDER SEQUENCE — strict order, no blank pages
-     ══════════════════════════════════════════════════════════ */
+  const renderTimedBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
+    const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
+    const legendH = legend.length ? measureLegendH(legend) : 0;
+    ensureSpace(12 + Math.max(chartH, legendH) + 3);
 
-  // ─── PAGE 1: COVER (draw on the initial page jsPDF already created) ───
+    sectionHeader(title);
+    const rowStart = curY;
+    const drawnChartH = image ? drawChart(image, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
+    const drawnLegendH = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
+    curY = rowStart + Math.max(drawnChartH, drawnLegendH) + 3;
+
+    for (const block of blocks) {
+      const headerH = block.label ? 10 : 0;
+      const boxH = block.content?.trim() ? measureAnalysisBox(block.content) : 0;
+      if (headerH + boxH > 0) ensureSpace(headerH + boxH);
+      if (block.label) subHeader(block.label);
+      if (block.content?.trim()) drawAnalysisBox(block.content);
+    }
+  };
+
+  const buildRecommendationText = (item: RecommendationBlock, index: number) => {
+    const lines = [
+      item.title ? `Problema crítico ${index + 1}: ${item.title}` : "",
+      item.problema ? `1. Diagnóstico: ${item.problema}` : "",
+      item.causa ? `2. Interpretação operacional: ${item.causa}` : "",
+      item.acao ? `3. Ação recomendada: ${item.acao}` : "",
+      item.responsavel ? `4. Responsável: ${item.responsavel}` : "",
+      item.impacto ? `5. Impacto esperado: ${item.impacto}` : "",
+    ].filter(Boolean);
+    return lines.join("\n");
+  };
+
   doc.setFillColor(...C.pageBg);
   doc.rect(0, 0, PAGE_W, PAGE_H, "F");
-
   doc.setFillColor(...C.headerBg);
   doc.rect(0, 0, PAGE_W, 50, "F");
   doc.setTextColor(...C.white);
@@ -724,7 +649,6 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Data de geração: ${dateStr}`, PAGE_W - MARGIN, 47, { align: "right" });
   curY = 58;
 
-  // ─── SECTION 2: KPI CARDS ───
   sectionHeader("Indicadores Principais");
   const kpis = [
     { label: "Total de Amostras", value: `${data.totalAmostras}`, color: C.blue },
@@ -734,14 +658,14 @@ export function generatePDFReport(data: PDFReportData) {
     { label: "NPE (Externo)", value: fmtPct(data.externoPct), color: C.orange },
   ];
   const kpiGap = 3;
-  const kpiW = (CONTENT_W - kpiGap * 4) / 5;
-  kpis.forEach((kpi, i) => {
-    const x = MARGIN + i * (kpiW + kpiGap);
+  const kpiWidth = (CONTENT_W - kpiGap * 4) / 5;
+  kpis.forEach((kpi, index) => {
+    const x = MARGIN + index * (kpiWidth + kpiGap);
     doc.setFillColor(...C.cardBg);
     doc.setDrawColor(...C.border);
-    doc.roundedRect(x, curY, kpiW, 22, 1.2, 1.2, "FD");
+    doc.roundedRect(x, curY, kpiWidth, 22, 1.2, 1.2, "FD");
     doc.setFillColor(...kpi.color);
-    doc.rect(x, curY, kpiW, 1.5, "F");
+    doc.rect(x, curY, kpiWidth, 1.5, "F");
     doc.setTextColor(...kpi.color);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
@@ -752,122 +676,32 @@ export function generatePDFReport(data: PDFReportData) {
     doc.text(kpi.label, x + 3.5, curY + 17.5);
   });
   curY += 25;
+  drawAnalysisBox(analysis.RESUMO || analysis.GERAL || "Diagnóstico geral indisponível para este período.");
 
-  // Executive summary
-  drawAnalysisBox(analysis.RESUMO || analysis.GERAL || "Diagnóstico geral da obra indisponível para este período.");
+  renderStandardBlock("Visão Geral por Contrato", images.contrato, "contrato", contractLegend, analysis.CONTRATO);
+  renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
+  renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
+  renderParetoBlock("Top Causas — Pareto por Especialidades", images.paretoEspecialidade, "paretoEspecialidade", analysis.PARETO_ESPECIALIDADE);
+  renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
+  renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
+  renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
+  renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
+  renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
 
-  // ─── SECTION 3: Visão Geral por Contrato ───
-  renderBlock("Visão Geral por Contrato", images.contrato, "contrato", model.contractLegend, analysis.CONTRATO);
-
-  // ─── SECTION 4: Distribuição por Categoria ───
-  renderBlock("Distribuição por Categoria", images.categoria, "categoria", model.categoryLegend, analysis.CATEGORIA);
-
-  // ─── SECTION 5: Pareto por Categorias ───
-  renderPareto("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
-
-  // ─── SECTION 6: Pareto por Especialidades ───
-  renderPareto("Top Causas — Pareto por Especialidades", images.paretoEspecialidade, "paretoEspecialidade", analysis.PARETO_ESPECIALIDADE);
-
-  // ─── SECTION 7: Produtividade por Especialidade ───
-  renderBlock("Produtividade por Especialidade", images.especialidade, "especialidade", model.specialtyLegend, analysis.ESPECIALIDADE);
-
-  // ─── SECTION 8: Causas Externas de Parada ───
-  renderBlock("Causas Externas de Parada (NPE)", images.externas, "externas", model.npeLegend, analysis.EXTERNO);
-
-  // ─── SECTION 9: Produtividade por Horário ───
-  if (images.tempoHorario) {
-    renderBlockWithSubs("Produtividade por Horário", images.tempoHorario, "tempoHorario", model.hourLegend, model.hourBlocks);
-  }
-
-  // ─── SECTION 10: Produtividade por Dia da Semana ───
-  if (images.tempoDiaSemana) {
-    renderBlockWithSubs("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", model.weekLegend, model.weekdayBlocks);
-  }
-
-  // ─── SECTION 11: Produtividade por Mês ───
-  renderBlockWithSubs("Produtividade por Mês", images.tempoMes, "tempoMes", model.monthLegend, model.monthBlocks);
-
-  // ─── SECTION 12: Conclusões e Recomendações ───
-  if (model.recommendations.length) {
-    // Measure first recommendation block to keep header with it
-    const measureRecBlock = (item: RecBlock): number => {
-      const fields = [
-        { label: "PROBLEMA", value: item.problema },
-        { label: "CAUSA PROVÁVEL", value: item.causa },
-        { label: "AÇÃO RECOMENDADA", value: item.acao },
-        { label: "RESPONSÁVEL", value: item.responsavel },
-        { label: "IMPACTO ESPERADO", value: item.impacto },
-      ].filter((f) => f.value?.trim());
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      let blockH = 12;
-      fields.forEach((f) => {
-        const lines = doc.splitTextToSize(f.value, CONTENT_W - 16) as string[];
-        blockH += 5 + lines.length * 3.6;
-      });
-      return blockH + 6;
-    };
-
-    // Ensure section header + first block stay together
-    const firstBlockH = measureRecBlock(model.recommendations[0]);
-    ensureSpace(12 + firstBlockH);
-    sectionHeader("Conclusões e Recomendações");
-
-    model.recommendations.forEach((item, index) => {
-      const fields = [
-        { label: "PROBLEMA", value: item.problema },
-        { label: "CAUSA PROVÁVEL", value: item.causa },
-        { label: "AÇÃO RECOMENDADA", value: item.acao },
-        { label: "RESPONSÁVEL", value: item.responsavel },
-        { label: "IMPACTO ESPERADO", value: item.impacto },
-      ].filter((f) => f.value?.trim());
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      let blockH = 12;
-      fields.forEach((f) => {
-        const lines = doc.splitTextToSize(f.value, CONTENT_W - 16) as string[];
-        blockH += 5 + lines.length * 3.6;
-      });
-
-      ensureSpace(blockH + 6);
-      doc.setFillColor(...C.sectionBgDark);
-      doc.roundedRect(MARGIN + 1, curY, CONTENT_W - 2, 8, 1.6, 1.6, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...C.white);
-      doc.text(`PROBLEMA ${index + 1} — ${item.title}`, MARGIN + 5, curY + 5.2);
-      curY += 10;
-
-      fields.forEach((f) => {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(...C.sectionBg);
-        doc.text(f.label, MARGIN + 5, curY + 3.5);
-        curY += 5;
-        const lines = doc.splitTextToSize(f.value, CONTENT_W - 16) as string[];
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(...C.textDark);
-        doc.text(lines, MARGIN + 9, curY + 3);
-        curY += lines.length * 3.6 + 2;
-      });
-      curY += 2;
-    });
+  sectionHeader("Conclusões e Recomendações");
+  if (recommendations.length) {
+    recommendations.forEach((item, index) => drawAnalysisBox(buildRecommendationText(item, index)));
   } else {
-    ensureSpace(12 + measureAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período."));
-    sectionHeader("Conclusões e Recomendações");
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
   }
 
-  // ─── FOOTER (all pages) ───
   const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
+  for (let page = 1; page <= totalPages; page += 1) {
+    doc.setPage(page);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...C.textMuted);
-    doc.text(`ProdControl — Página ${p} de ${totalPages}`, MARGIN, PAGE_H - 8);
+    doc.text(`ProdControl — Página ${page} de ${totalPages}`, MARGIN, PAGE_H - 8);
     doc.text(dateStr, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
   }
 
