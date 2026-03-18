@@ -98,7 +98,7 @@ export const getDescColor = (desc: string): string => {
 
 export const getLegendTextColor = (desc: string): string => {
   const c = getDescColor(desc);
-  return c === "#FFFFFF" || c === "#D4B896" || c === "#C8A882" ? "#9CA3AF" : c;
+  return c === "#FFFFFF" || c === "#C8A882" ? "#9CA3AF" : c;
 };
 
 export const isLightColor = (hex: string): boolean => {

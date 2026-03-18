@@ -140,7 +140,7 @@ const getDescColor = (desc: string): string => {
 // Legend text color: use gray for white items so text is readable
 const getLegendTextColor = (desc: string): string => {
   const c = getDescColor(desc);
-  return c === "#FFFFFF" || c === "#D4B896" || c === "#C8A882" ? "#9CA3AF" : c;
+  return c === "#FFFFFF" || c === "#C8A882" ? "#9CA3AF" : c;
 };
 const getDescriptionCategoryColor = (cat: string, descricao?: string): string => {
   if (descricao) return getDescColor(descricao);
