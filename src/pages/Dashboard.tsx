@@ -461,11 +461,20 @@ export default function Dashboard() {
   const { data: allCats = [] } = useQuery({
     queryKey: ["categorias_observacao", "all_with_impact"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, categoria_pai_id, impacta_produtividade");
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, descricao, categoria_pai_id, impacta_produtividade");
       if (error) throw error;
       return data;
     },
   });
+
+  // Map description names → their descricao text for legend tooltips
+  const descriptionTooltipMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    allCats.forEach((c: any) => {
+      if (c.nome && c.descricao) map[c.nome] = c.descricao;
+    });
+    return map;
+  }, [allCats]);
 
   const parentCatMap = useMemo(() => {
     const map: Record<string, string> = {};
