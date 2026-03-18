@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import AppLayout from "@/components/AppLayout";
 import { SPECIALTIES, OBSERVATION_CATEGORIES } from "@/data/mockData";
 import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield } from "lucide-react";
