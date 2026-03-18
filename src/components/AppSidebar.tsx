@@ -6,10 +6,10 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: BarChart3 },
-  { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
-  { to: "/registros", label: "Registros", icon: ClipboardList },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
+  { to: "/", label: "Dashboard", icon: BarChart3, adminOnly: false },
+  { to: "/nova-observacao", label: "Nova Observação", icon: Plus, adminOnly: true },
+  { to: "/registros", label: "Registros", icon: ClipboardList, adminOnly: false },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, adminOnly: false },
 ];
 
 const cadastroItems = [
