@@ -92,9 +92,10 @@ interface StackedChartProps {
   descriptions: string[];
   title: string;
   xAngle?: number;
+  tooltipMap?: Record<string, string>;
 }
 
-export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0 }: StackedChartProps) {
+export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0, tooltipMap }: StackedChartProps) {
   return (
     <div className="stat-card animate-fade-in mb-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
@@ -111,7 +112,7 @@ export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xA
           </ResponsiveContainer>
         </div>
         <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-          {renderLegendList(descriptions)}
+          {renderLegendList(descriptions, tooltipMap)}
         </div>
       </div>
     </div>
