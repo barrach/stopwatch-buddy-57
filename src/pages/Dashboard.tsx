@@ -1574,7 +1574,7 @@ export default function Dashboard() {
               </div>
               <ZoomButton onClick={() => setZoomChart("categoria")} />
             </div>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={isMobileView ? 250 : 320}>
               <PieChart>
                 <Pie
                   data={categoryTotals}
