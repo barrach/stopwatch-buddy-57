@@ -1481,7 +1481,56 @@ export default function Dashboard() {
           <StatCard title="NPE (Externo)" value={`${externalPercent}%`} icon={CloudRain} variant="default" />
         </div>
 
-        {/* AI Analysis Section */}
+        {/* Ranking de Produtividade por Especialidade */}
+        {(() => {
+          const rankData = bySpecialty
+            .map((row: any) => ({
+              nome: row.name,
+              produtividade: +((row["Trabalhando"] || 0) + (row["Planejando"] || 0)).toFixed(1),
+            }))
+            .sort((a, b) => b.produtividade - a.produtividade || a.nome.localeCompare(b.nome))
+            .slice(0, 3);
+
+          const medals = [
+            { emoji: "🥇", color: "#F59E0B", label: "1º" },
+            { emoji: "🥈", color: "#9CA3AF", label: "2º" },
+            { emoji: "🥉", color: "#92400E", label: "3º" },
+          ];
+
+          return rankData.length > 0 ? (
+            <div className="stat-card animate-fade-in mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-sm font-semibold text-foreground">Ranking de Produtividade</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {rankData.map((item, idx) => (
+                  <div
+                    key={item.nome}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all"
+                    style={{
+                      borderLeftWidth: 4,
+                      borderLeftColor: medals[idx].color,
+                      backgroundColor: idx === 0 ? "hsl(var(--accent) / 0.3)" : undefined,
+                    }}
+                  >
+                    <span className="text-2xl">{medals[idx].emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`truncate ${idx === 0 ? "text-sm font-bold text-foreground" : "text-sm font-medium text-foreground/80"}`}>
+                        {medals[idx].label} {item.nome}
+                      </p>
+                      <p className={`${idx === 0 ? "text-lg font-bold" : "text-base font-semibold"}`} style={{ color: medals[idx].color }}>
+                        {item.produtividade.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
+
+
         <div className="stat-card animate-fade-in mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
