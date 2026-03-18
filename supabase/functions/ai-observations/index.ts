@@ -156,12 +156,13 @@ Análise do Pareto por especialidades. Compare cada especialidade pelo % de prod
 Análise do Pareto por funções. Compare cada função pelo % de produtividade. Identifique: função benchmark (melhor), funções intermediárias e função crítica (pior).
 
 ===ESPECIALIDADE===
-Compare as especialidades pelo % de produtividade em relação à média geral.
+Compare as especialidades pelo % de produtividade EXATAMENTE como fornecido nos dados (valores do gráfico).
+REGRA ABSOLUTA: Use os percentuais EXATOS fornecidos na seção "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. NÃO invente valores.
 Estrutura obrigatória:
-- Melhor especialidade: nome, %, diferença em pontos percentuais acima da média.
-- Especialidade intermediária: nome, %, posição relativa.
-- Especialidade crítica: nome, %, impacto e causa provável.
-Exemplo: "A Caldeiraria lidera com 69%, posicionando-se 7 pontos acima da média geral de 62%. A Elétrica apresenta 59%, indicando oportunidades de melhoria. Andaime apresenta 53%, sendo impactada por atividades de movimentação."
+Melhor especialidade: [nome], com [X,X%] de produtividade (Trabalhando X% + Planejando X%). [Diagnóstico + Interpretação + Ação].
+Especialidade intermediária: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
+Especialidade crítica: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
+PROIBIDO: usar formatos como "**Nome (X%)**". Use APENAS o formato "Melhor especialidade:", "Especialidade intermediária:", "Especialidade crítica:".
 
 ===FUNCAO===
 Destaque obrigatoriamente:
@@ -303,7 +304,7 @@ Depois do diagnóstico, estruture o relatório com:
 1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
 2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
 3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
-4. **Análise por Especialidade** (comparação de % produtividade entre especialidades vs média geral)
+4. **Análise por Especialidade** (use EXATAMENTE os % fornecidos em "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. Formato: Melhor especialidade: / Especialidade intermediária: / Especialidade crítica:)
 5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
 6. **Causas Externas** (impacto % do NPE e ações de mitigação)
 7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
@@ -323,8 +324,9 @@ TOTAIS:
 - Não Produtivo: ${c.naoProdutivoPct}% do total
 - Não Produtivo Externo (NPE): ${c.externoPct ?? c.npePct ?? 0}% do total
 
-PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
+PRODUTIVIDADE POR ESPECIALIDADE (VALORES DO GRÁFICO — USE EXATAMENTE ESTES VALORES):
 ${c.porEspecialidade || "Não disponível"}
+REGRA ABSOLUTA: Os valores acima são os MESMOS exibidos no gráfico. PROIBIDO recalcular. Use-os literalmente na análise.
 
 PRODUTIVIDADE POR FUNÇÃO (excluindo NPE):
 ${c.porFuncao || "Não disponível"}

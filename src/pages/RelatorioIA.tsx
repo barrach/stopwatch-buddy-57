@@ -76,7 +76,7 @@ export default function RelatorioIA() {
     };
 
     let prod = 0, supl = 0, naoProd = 0, npe = 0;
-    const byEsp: Record<string, { prod: number; total: number }> = {};
+    const byEspDesc: Record<string, Record<string, number>> = {};
     const byCat: Record<string, number> = {};
 
     const NPE_CATS = ["Não Produtivo Externo"];
@@ -91,17 +91,26 @@ export default function RelatorioIA() {
       else naoProd += qty;
 
       const espName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!byEsp[espName]) byEsp[espName] = { prod: 0, total: 0 };
-      byEsp[espName].total += qty;
-      if (cat === "Produtivo") byEsp[espName].prod += qty;
+      if (!byEspDesc[espName]) byEspDesc[espName] = { total: 0 };
+      byEspDesc[espName].total = (byEspDesc[espName].total || 0) + qty;
+      const desc = r.descricao || "Sem descrição";
+      byEspDesc[espName][desc] = (byEspDesc[espName][desc] || 0) + qty;
 
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
 
-    const porEspecialidade = Object.entries(byEsp)
+    const porEspecialidade = Object.entries(byEspDesc)
       .sort(([, a], [, b]) => b.total - a.total)
       .slice(0, 8)
-      .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
+      .map(([nome, v]) => {
+        const total = v.total || 0;
+        const trabalhando = v["Trabalhando"] || 0;
+        const planejando = v["Planejando"] || 0;
+        const prodPct = total > 0 ? +((trabalhando / total) * 100).toFixed(1) : 0;
+        const planPct = total > 0 ? +((planejando / total) * 100).toFixed(1) : 0;
+        const prodTotal = total > 0 ? +(((trabalhando + planejando) / total) * 100).toFixed(1) : 0;
+        return `${nome}: Produtividade ${prodTotal}% (Trabalhando ${prodPct}% + Planejando ${planPct}%)`;
+      })
       .join("\n");
 
     const topCategorias = Object.entries(byCat)
