@@ -1336,30 +1336,30 @@ export default function Dashboard() {
     <AppLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header + Filters */}
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
-            <p className="text-sm text-muted-foreground mt-1">Painel analítico de produtividade industrial — MEGASTEAM</p>
+        <div className="mb-6 md:mb-8">
+          <div className="mb-4">
+            <h1 className="text-lg md:text-2xl font-bold text-foreground">Dashboard de Produtividade</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">Painel analítico — MEGASTEAM</p>
           </div>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex gap-2 items-end flex-wrap">
+          <div className="flex flex-wrap gap-2 md:gap-3 items-end">
+            <div className="flex gap-1 items-end flex-wrap">
               <div>
-                <Label className="text-xs text-muted-foreground">Atalhos</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Atalhos</Label>
                 <div className="flex gap-1 mt-1">
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("today")}>Hoje</Button>
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("week")}>Semana</Button>
-                  <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={() => applyQuickFilter("month")}>Mês</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("today")}>Hoje</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("week")}>Semana</Button>
+                  <Button variant="outline" size="sm" className="h-8 md:h-10 px-2 md:px-3 text-[10px] md:text-xs" onClick={() => applyQuickFilter("month")}>Mês</Button>
                   {dateMode !== "all" && (
-                    <Button variant="ghost" size="sm" className="h-10 px-2 text-xs text-muted-foreground" onClick={() => setDateMode("all")}>
+                    <Button variant="ghost" size="sm" className="h-8 md:h-10 px-2 text-xs text-muted-foreground" onClick={() => setDateMode("all")}>
                       <X className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Período</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Período</Label>
                 <Select value={dateMode} onValueChange={(v) => setDateMode(v as any)}>
-                  <SelectTrigger className="w-32 mt-1"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-24 md:w-32 mt-1 h-8 md:h-10 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="day">Dia</SelectItem>
@@ -1369,27 +1369,27 @@ export default function Dashboard() {
               </div>
               {dateMode === "day" && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Data</Label>
-                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-40 mt-1" />
+                  <Label className="text-[10px] md:text-xs text-muted-foreground">Data</Label>
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                 </div>
               )}
               {dateMode === "period" && (
                 <>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Início</Label>
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40 mt-1" />
+                    <Label className="text-[10px] md:text-xs text-muted-foreground">Início</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Fim</Label>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40 mt-1" />
+                    <Label className="text-[10px] md:text-xs text-muted-foreground">Fim</Label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-36 md:w-40 mt-1 h-8 md:h-10 text-xs" />
                   </div>
                 </>
               )}
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Contrato</Label>
+              <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
               <Select value={obraFilter} onValueChange={setObraFilter}>
-                <SelectTrigger className="w-48 mt-1"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
+                <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Contratos</SelectItem>
                   {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
@@ -1398,9 +1398,9 @@ export default function Dashboard() {
             </div>
             {npeDescList.length > 0 && (
               <div>
-                <Label className="text-xs text-muted-foreground">Fatores</Label>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Fatores</Label>
                 <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
-                  <SelectTrigger className="w-64 mt-1"><SelectValue placeholder="Fatores" /></SelectTrigger>
+                  <SelectTrigger className="w-48 md:w-64 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Fatores" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Com todos os fatores</SelectItem>
                     {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
@@ -1409,15 +1409,15 @@ export default function Dashboard() {
               </div>
             )}
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
-                <Download className="w-3.5 h-3.5" /> Excel
+              <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                <Download className="w-3 h-3 md:w-3.5 md:h-3.5" /> Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1.5">
-                {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} PDF
+              <Button variant="outline" size="sm" onClick={exportToPDF} disabled={isGeneratingPDF} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                {isGeneratingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3 md:w-3.5 md:h-3.5" />} PDF
               </Button>
               {canExportPPTX && (
-                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1.5">
-                  {isGeneratingPPTX ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Presentation className="w-3.5 h-3.5" />} PPTX
+                <Button variant="outline" size="sm" onClick={exportToPPTX} disabled={isGeneratingPPTX} className="gap-1 h-8 md:h-10 text-[10px] md:text-xs px-2 md:px-3">
+                  {isGeneratingPPTX ? <Loader2 className="w-3 h-3 animate-spin" /> : <Presentation className="w-3 h-3 md:w-3.5 md:h-3.5" />} PPTX
                 </Button>
               )}
             </div>
