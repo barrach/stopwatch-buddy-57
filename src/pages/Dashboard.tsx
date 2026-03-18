@@ -83,8 +83,8 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Ocioso",
   // Não Produtivo Externo
   "Aguardando Liberação de PT",
-  "Vazamento / Interferência da Planta",
-  "Causas Naturais",
+  "Interferências Operacionais",
+  "Fatores Climáticos e Consequências",
 ];
 // All charts now use the full order including NPE descriptions
 const CANONICAL_ORDER: string[] = [...CANONICAL_ORDER_FULL];
