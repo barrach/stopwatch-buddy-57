@@ -576,11 +576,22 @@ export default function Dashboard() {
     [records, getParentCatName]
   );
   // Global productivity: NPE included in denominator
-  const productivePercent = totalSamples > 0 ? Math.round((productiveCount / totalSamples) * 100) : 0;
+  // Largest-remainder method to guarantee sum = 100%
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
-  const unproductivePercent = totalSamples > 0 ? Math.round((unproductiveCount / totalSamples) * 100) : 0;
-  const supplementaryPercent = totalSamples > 0 ? Math.round((supplementaryCount / totalSamples) * 100) : 0;
-  const externalPercent = totalSamples > 0 ? Math.round((externalCount / totalSamples) * 100) : 0;
+  const [productivePercent, supplementaryPercent, unproductivePercent, externalPercent] = useMemo(() => {
+    if (totalSamples === 0) return [0, 0, 0, 0];
+    const counts = [productiveCount, supplementaryCount, unproductiveCount, externalCount];
+    const rawPercents = counts.map(c => (c / totalSamples) * 100);
+    const floored = rawPercents.map(p => Math.floor(p));
+    let remainder = 100 - floored.reduce((a, b) => a + b, 0);
+    const decimals = rawPercents.map((p, i) => ({ i, d: p - floored[i] })).sort((a, b) => b.d - a.d);
+    for (const item of decimals) {
+      if (remainder <= 0) break;
+      floored[item.i]++;
+      remainder--;
+    }
+    return floored as [number, number, number, number];
+  }, [totalSamples, productiveCount, supplementaryCount, unproductiveCount, externalCount]);
 
   // ── Chart data ─────────────────────────────────────────────────
 
