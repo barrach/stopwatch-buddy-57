@@ -166,7 +166,7 @@ const DESCRIPTION_GROUPS = {
     "Transitando no local de trabalho - sem ferramenta",
     "Transitando fora do local de trabalho - com ferramenta",
     "Transitando fora do local de trabalho - sem ferramenta",
-    "Assistindo",
+    "Assistindo / Stand By",
   ],
   "Não Produtivo": ["Pessoal", "Ocioso"],
   "Não Produtivo Externo": ["Aguardando Liberação de PT", "Interferências Operacionais", "Fatores Climáticos e Consequências"],
