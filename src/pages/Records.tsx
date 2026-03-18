@@ -526,14 +526,16 @@ export default function Records() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-4">
-                  <Checkbox
-                    checked={allFilteredSelected}
-                    onCheckedChange={toggleSelectAll}
-                    aria-label="Selecionar todos"
-                    className="translate-y-[2px]"
-                  />
-                </TableHead>
+                {isAdmin && (
+                  <TableHead className="w-10 pl-4">
+                    <Checkbox
+                      checked={allFilteredSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                      className="translate-y-[2px]"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="text-xs font-semibold">Data</TableHead>
                 <TableHead className="text-xs font-semibold">Hora</TableHead>
                 <TableHead className="text-xs font-semibold">Obra</TableHead>
