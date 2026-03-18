@@ -1900,7 +1900,7 @@ export default function Dashboard() {
         </ChartZoomDialog>
 
         {/* Pareto */}
-        <ChartZoomDialog title={`Top Causas (Pareto) — ${paretoLabel}`} subtitle="Clique em uma barra para filtrar" open={zoomChart === "pareto"} onOpenChange={(o) => !o && setZoomChart(null)}>
+        <ChartZoomDialog title="Top Causas (Pareto)" subtitle="Clique em uma barra para filtrar" open={zoomChart === "pareto"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={paretoData} layout="vertical" margin={{ left: 20, right: 80 }} onClick={handleParetoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
