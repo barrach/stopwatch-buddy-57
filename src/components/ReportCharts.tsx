@@ -10,6 +10,7 @@ import {
   tooltipStyle, getDescColor, getLegendTextColor, displayName, isLightColor,
   getSpecialtyColor,
 } from "@/lib/chartConstants";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ── BarPercentLabel ──
 const BarPercentLabel = (props: any) => {
