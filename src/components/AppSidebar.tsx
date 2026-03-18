@@ -67,6 +67,13 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           );
         })}
 
+        {isAdmin && (
+          <NavLink to="/auditoria" onClick={handleClick} className={`sidebar-item ${location.pathname === "/auditoria" ? "sidebar-item-active" : ""}`}>
+            <ShieldAlert className="w-[18px] h-[18px]" />
+            <span className="text-sm">Auditoria</span>
+          </NavLink>
+        )}
+
         <div className="pt-4 pb-1 px-2">
           <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Cadastros</p>
         </div>
