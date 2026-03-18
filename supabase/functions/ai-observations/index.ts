@@ -62,8 +62,8 @@ Analise os dados de observações fornecidos e gere um relatório executivo em p
 TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de comparação):
 | Categoria              | % Ideal         |
 |------------------------|-----------------|
-| Produtivo (total)      | 63%             |
-|   - Trabalhando        | (maior parte)   |
+| Produtivo (total)      | 68% (Trabalhando 63% + Planejando 5%) |
+|   - Trabalhando        | 63%             |
 |   - Planejando         | 5% (máximo)     |
 | Suplementar (total)    | 30% (≈4,28% por subcategoria) |
 |   - Aguardando Instruções | ≤4,28%       |
@@ -77,6 +77,7 @@ TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de co
 |   - Aguardando Liberação de PT | 0%      |
 |   - Fatores Climáticos e Consequências | 0% |
 |   - Interferências Operacionais | 0%     |
+NOTA: A soma ideal é 68% + 30% + 2% + 0% = 100%.
 
 REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
 🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
