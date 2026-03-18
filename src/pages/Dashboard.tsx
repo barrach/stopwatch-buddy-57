@@ -645,11 +645,7 @@ export default function Dashboard() {
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      // In especialidade mode, exclude NPE; in categoria mode, include all NPE descriptions
-      if (paretoMode === "especialidade" && isExternalRecord(r)) return;
-      let key: string;
-      if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
-      else key = r.descricao || "Sem descrição";
+      const key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
