@@ -1547,7 +1547,14 @@ export default function Dashboard() {
             </div>
             <div className="shrink-0 lg:max-w-[28%]">
               <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]" style={{ paddingTop: isMobileView ? 0 : STACKED_CHART_MARGIN.top }}>
-                {renderLegendListInline(allDescriptions, descriptionTooltipMap)}
+                {[...allDescriptions].reverse().map((desc) => (
+                  <LegendTooltip key={desc} name={displayName(desc)} description={descriptionTooltipMap?.[desc] || descriptionTooltipMap?.[displayName(desc)]}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                      <span className="text-[11px] lg:text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                    </div>
+                  </LegendTooltip>
+                ))}
               </div>
             </div>
           </div>
