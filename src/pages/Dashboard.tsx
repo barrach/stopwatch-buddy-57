@@ -1291,7 +1291,7 @@ export default function Dashboard() {
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
 
-  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : "Categorias";
+  
 
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
