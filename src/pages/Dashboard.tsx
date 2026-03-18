@@ -548,8 +548,7 @@ export default function Dashboard() {
       }
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
-        if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
-        if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
+        if (r.descricao !== crossFilters.pareto) return false;
       }
       return true;
     });
