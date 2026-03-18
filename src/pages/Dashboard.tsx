@@ -1506,24 +1506,14 @@ export default function Dashboard() {
         <div id="chart-contrato" className={chartCardClass("contrato")}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">
+             <h3 className="text-sm font-semibold text-foreground">
                 Visão Geral por Contrato
                 {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
-                {npeExclude && <span className="text-xs font-normal text-destructive ml-2">• Sem "{npeExclude}"</span>}
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
             </div>
             <div className="flex items-center gap-2">
               <ZoomButton onClick={() => setZoomChart("contrato")} />
-              {npeDescList.length > 0 && (
-                <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
-                  <SelectTrigger className="w-44 h-7 text-[10px]"><SelectValue placeholder="Comparar sem..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Com todos os fatores</SelectItem>
-                    {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
           </div>
           <div className="flex flex-col md:flex-row gap-3 md:gap-4">
