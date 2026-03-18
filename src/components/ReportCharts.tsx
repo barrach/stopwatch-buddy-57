@@ -1,4 +1,5 @@
 import React from "react";
+import { LegendTooltip } from "@/components/LegendTooltip";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList, ComposedChart,

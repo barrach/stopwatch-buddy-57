@@ -1542,7 +1542,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions)}
+              {renderLegendList(allDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1733,7 +1733,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1859,7 +1859,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </div>
@@ -1880,7 +1880,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(allDescriptions)}
+              {renderLegendList(allDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -1987,7 +1987,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
@@ -2053,7 +2053,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="shrink-0 overflow-auto" style={{ flex: '0 0 28%', maxWidth: '28%', paddingTop: ZOOM_STACKED_CHART_MARGIN.top }}>
-              {renderLegendList(nonNpeDescriptions)}
+              {renderLegendList(nonNpeDescriptions, descriptionTooltipMap)}
             </div>
           </div>
         </ChartZoomDialog>
