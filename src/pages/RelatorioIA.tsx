@@ -75,15 +75,19 @@ export default function RelatorioIA() {
       return catData.nome;
     };
 
-    let prod = 0, supl = 0, naoProd = 0;
+    let prod = 0, supl = 0, naoProd = 0, npe = 0;
     const byEsp: Record<string, { prod: number; total: number }> = {};
     const byCat: Record<string, number> = {};
+
+    const NPE_CATS = ["Não Produtivo Externo"];
+    const isNpe = (cat: string) => NPE_CATS.includes(cat);
 
     filteredRecords.forEach((r: any) => {
       const qty = r.quantidade || 0;
       const cat = getParentCat(r);
       if (cat === "Produtivo") prod += qty;
       else if (cat === "Suplementar") supl += qty;
+      else if (isNpe(cat)) npe += qty;
       else naoProd += qty;
 
       const espName = (r.especialidades as any)?.nome || "Sem especialidade";
@@ -113,9 +117,11 @@ export default function RelatorioIA() {
       produtivo: prod,
       suplementar: supl,
       naoProdutivo: naoProd,
+      npe: npe,
       produtivoPct: total > 0 ? Math.round((prod / total) * 100) : 0,
       suplementarPct: total > 0 ? Math.round((supl / total) * 100) : 0,
       naoProdutivoPct: total > 0 ? Math.round((naoProd / total) * 100) : 0,
+      npePct: total > 0 ? Math.round((npe / total) * 100) : 0,
       periodo: `${startDate} a ${endDate}`,
       obra: obraName,
       porEspecialidade,
@@ -254,22 +260,26 @@ export default function RelatorioIA() {
 
           {/* Stats preview */}
           {filteredRecords.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Total</p>
                 <p className="text-xl font-bold text-foreground">{stats.totalAmostras}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Produtivo</p>
-              <p className="text-xl font-bold text-chart-2">{stats.produtivoPct}%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Suplementar</p>
-              <p className="text-xl font-bold text-chart-3">{stats.suplementarPct}%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Não Produtivo</p>
-              <p className="text-xl font-bold text-destructive">{stats.naoProdutivoPct}%</p>
+                <p className="text-xl font-bold text-chart-2">{stats.produtivoPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Suplementar</p>
+                <p className="text-xl font-bold text-chart-3">{stats.suplementarPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Não Produtivo</p>
+                <p className="text-xl font-bold text-destructive">{stats.naoProdutivoPct}%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">NPE (Externo)</p>
+                <p className="text-xl font-bold text-orange-500">{stats.npePct}%</p>
               </div>
             </div>
           )}

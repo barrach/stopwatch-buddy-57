@@ -59,12 +59,43 @@ Qual categoria e descrição você sugere para esta observação?`;
       systemPrompt = `Você é um especialista sênior em análise de produtividade de obras de engenharia industrial da MEGASTEAM.
 Analise os dados de observações fornecidos e gere um relatório executivo em português com insights acionáveis.
 
-CONHECIMENTO INTERNO DE BENCHMARKS (NÃO CITE ESSES VALORES LITERALMENTE — use-os como referência silenciosa para avaliar, diagnosticar problemas e propor melhorias):
-Você conhece os padrões ideais de produtividade em obras industriais. Use esse conhecimento para:
-- Identificar se os indicadores estão acima ou abaixo do esperado.
-- Diagnosticar gargalos operacionais e propor soluções concretas.
-- Apontar quais subcategorias estão causando perda de produtividade.
-NÃO escreva frases como "a meta ideal é X%" ou "o benchmark é Y%". Em vez disso, diga coisas como "o índice está abaixo do esperado para obras bem gerenciadas" ou "há margem significativa de melhoria".
+TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de comparação):
+| Categoria              | % Ideal         |
+|------------------------|-----------------|
+| Produtivo (total)      | 63%             |
+|   - Trabalhando        | (maior parte)   |
+|   - Planejando         | 5% (máximo)     |
+| Suplementar (total)    | 30% (≈4,28% por subcategoria) |
+|   - Aguardando Instruções | ≤4,28%       |
+|   - Assistindo / Stand By | ≤4,28%       |
+|   - Aguardando Ferramenta ou Material | ≤4,28% |
+|   - Transitando com/sem ferramenta | ≤4,28% cada |
+| Não Produtivo          | 2% (máximo)     |
+|   - Pessoal            | mínimo          |
+|   - Ocioso             | mínimo          |
+| NPE (Externo)          | 0% (ideal)      |
+|   - Aguardando Liberação de PT | 0%      |
+|   - Fatores Climáticos e Consequências | 0% |
+|   - Interferências Operacionais | 0%     |
+
+REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
+🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
+Cada uma das 4 categorias (Produtivo, Suplementar, Não Produtivo, NPE) DEVE ser analisada SEPARADAMENTE.
+
+LÓGICA DE CLASSIFICAÇÃO OBRIGATÓRIA — Para CADA categoria, compare o valor real com a faixa ideal e classifique:
+- ✅ Dentro do ideal: valor dentro da faixa esperada
+- ⚠️ Acima do ideal: valor superior ao máximo aceitável (para Suplementar, NP, NPE)
+- 🔻 Abaixo do ideal: valor inferior ao mínimo esperado (para Produtivo)
+- 🔴 Crítico: desvio severo que compromete a operação
+
+DIAGNÓSTICO OBRIGATÓRIO NO INÍCIO DE CADA ANÁLISE:
+Diagnóstico:
+- Produtivo: X% (classificação baseada na tabela)
+- Suplementar: X% (classificação baseada na tabela)
+- Não Produtivo: X% (classificação baseada na tabela)
+- NPE: X% (classificação baseada na tabela)
+
+A IA deve se comportar como um Engenheiro de Produção + Analista de Performance. Rigor máximo, sem suavizar problemas críticos.
 
 CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 - Produtivo: Trabalhando (esforço físico, posicionando peças, limpando superfícies) e Planejando (medições, análise de desenhos, levantamento de materiais, instruções, DDS, APR).
@@ -257,18 +288,26 @@ Problema 2 — [Nome curto]
 
 IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor. Cada bloco DEVE ser claramente separado com "Problema N — Título".
 
-IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `Estruture o relatório com:
-1. **Resumo Executivo** (3-4 frases com percentuais reais — SEM números de amostras)
-2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE%)
+IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
+
+## Diagnóstico Comparativo (Real vs Ideal)
+- **Produtivo**: X% (Ideal: 63%) → classificação
+- **Suplementar**: X% (Ideal: ≤30%) → classificação
+- **Não Produtivo**: X% (Ideal: ≤2%) → classificação
+- **NPE (Externo)**: X% (Ideal: 0%) → classificação
+
+Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
+
+Depois do diagnóstico, estruture o relatório com:
+1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
+2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
 3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
 4. **Análise por Especialidade** (comparação de % produtividade entre especialidades vs média geral)
-5. **Análise por Função** (benchmark, intermediária, crítica — com % e ações)
-6. **Análise por Horário** (horário mais/menos produtivo, tendência do dia)
-7. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
-8. **Causas Externas** (impacto % do NPE e ações de mitigação)
-9. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
+5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
+6. **Causas Externas** (impacto % do NPE e ações de mitigação)
+7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
 
-REGRA: NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
+REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
 
 Use linguagem técnica, objetiva e profissional de engenharia industrial. Seja preciso com os percentuais. Não invente dados. SEMPRE priorize a análise por % de produtividade. NUNCA mencione números absolutos de amostras. Cada análise deve conter obrigatoriamente: Diagnóstico + Interpretação operacional + Ação recomendada.`;
 
@@ -281,7 +320,7 @@ TOTAIS:
 - Produtivo: ${c.produtivoPct}% do total
 - Suplementar: ${c.suplementarPct}% do total
 - Não Produtivo: ${c.naoProdutivoPct}% do total
-- Não Produtivo Externo (NPE): ${c.externoPct}% do total
+- Não Produtivo Externo (NPE): ${c.externoPct ?? c.npePct ?? 0}% do total
 
 PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
 ${c.porEspecialidade || "Não disponível"}
