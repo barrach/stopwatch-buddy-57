@@ -370,6 +370,7 @@ const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
 };
 
 export default function Dashboard() {
+  const isMobileView = useIsMobile();
   const { toast } = useToast();
   const { user } = useAuth();
   const [obraFilter, setObraFilter] = useState("all");
