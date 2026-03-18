@@ -338,7 +338,6 @@ const getHighlightBorder = (type: "best" | "worst" | "none") => {
   return "";
 };
 
-type ParetoMode = "especialidade" | "categoria";
 type TimeViewMode = "horario" | "diasemana" | "mes";
 
 interface CrossFilters {
@@ -407,15 +406,7 @@ export default function Dashboard() {
     }
   };
   const [crossFilters, setCrossFilters] = useState<CrossFilters>({});
-  const [paretoMode, setParetoMode] = useState<ParetoMode>(() => {
-    try { return (sessionStorage.getItem("paretoMode") as ParetoMode) || "categoria"; } catch { return "categoria"; }
-  });
-
-  const handleParetoModeChange = (mode: ParetoMode) => {
-    setParetoMode(mode);
-    try { sessionStorage.setItem("paretoMode", mode); } catch {}
-    setCrossFilters(prev => ({ ...prev, pareto: undefined }));
-  };
+  const paretoMode = "categoria" as const;
 
   const hasActiveFilters = Object.values(crossFilters).some(Boolean);
 
@@ -557,12 +548,11 @@ export default function Dashboard() {
       }
       if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
-        if (paretoMode === "especialidade" && ((r.especialidades as any)?.nome || "Sem especialidade") !== crossFilters.pareto) return false;
-        if (paretoMode === "categoria" && r.descricao !== crossFilters.pareto) return false;
+        if (r.descricao !== crossFilters.pareto) return false;
       }
       return true;
     });
-  }, [baseRecords, crossFilters, getParentCatName, paretoMode]);
+  }, [baseRecords, crossFilters, getParentCatName]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
@@ -655,11 +645,7 @@ export default function Dashboard() {
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      // In especialidade mode, exclude NPE; in categoria mode, include all NPE descriptions
-      if (paretoMode === "especialidade" && isExternalRecord(r)) return;
-      let key: string;
-      if (paretoMode === "especialidade") key = (r.especialidades as any)?.nome || "Sem especialidade";
-      else key = r.descricao || "Sem descrição";
+      const key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
     const sorted = Object.entries(totals)
@@ -675,7 +661,7 @@ export default function Dashboard() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, paretoMode, totalSamples]);
+  }, [records, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
@@ -870,7 +856,7 @@ export default function Dashboard() {
     try {
       // 1) Capture charts from DOM
       const { captureAllCharts } = await import("@/lib/chartCapture");
-      const { images: chartImages, dimensions: chartDimensions } = await captureAllCharts(setTimeViewMode, timeViewMode, handleParetoModeChange, paretoMode);
+      const { images: chartImages, dimensions: chartDimensions } = await captureAllCharts(setTimeViewMode, timeViewMode);
 
       toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando relatório." });
 
@@ -999,7 +985,7 @@ export default function Dashboard() {
     try {
       // 1) Capture charts from DOM
       const { captureAllCharts } = await import("@/lib/chartCapture");
-      const { images: chartImages, dimensions: chartDimensions } = await captureAllCharts(setTimeViewMode, timeViewMode, handleParetoModeChange, paretoMode);
+      const { images: chartImages, dimensions: chartDimensions } = await captureAllCharts(setTimeViewMode, timeViewMode);
 
       toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando apresentação." });
 
@@ -1305,7 +1291,7 @@ export default function Dashboard() {
   const chartCardClass = (filterKey: keyof CrossFilters) =>
     `stat-card animate-fade-in mb-6 transition-all ${crossFilters[filterKey] ? "ring-2 ring-primary/50" : ""}`;
 
-  const paretoLabel = paretoMode === "especialidade" ? "Especialidades" : "Categorias";
+  
 
   // ── Custom tooltip for Contrato chart ──────────────────────────
   const ContratoTooltip = ({ active, payload }: any) => {
@@ -1458,7 +1444,7 @@ export default function Dashboard() {
             )}
             {crossFilters.pareto && (
               <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleCrossFilter("pareto", crossFilters.pareto!)}>
-                Pareto ({paretoLabel}): {crossFilters.pareto} <X className="w-3 h-3" />
+                Pareto: {crossFilters.pareto} <X className="w-3 h-3" />
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
@@ -1630,16 +1616,6 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <ZoomButton onClick={() => setZoomChart("pareto")} />
-                <span className="text-[10px] text-muted-foreground mr-1">Por:</span>
-                {(["categoria", "especialidade"] as ParetoMode[]).map(mode => (
-                  <button key={mode} onClick={() => handleParetoModeChange(mode)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors border ${
-                      paretoMode === mode ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {mode === "categoria" ? "Categorias" : "Especialidades"}
-                  </button>
-                ))}
               </div>
             </div>
             {paretoData.length === 0 ? (
@@ -1663,7 +1639,7 @@ export default function Dashboard() {
                        return (
                          <div style={{ ...tooltipStyle, padding: "12px 16px", minWidth: 200 }}>
                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: paretoMode === "especialidade" ? getSpecialtyColor(data.name) : (DESCRIPTION_COLORS[data.name] || PIE_COLORS[0]), display: "inline-block", flexShrink: 0 }} />
+                             <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: DESCRIPTION_COLORS[data.name] || PIE_COLORS[0], display: "inline-block", flexShrink: 0 }} />
                              <strong style={{ fontSize: 13 }}>{data.name}</strong>
                            </div>
                             <div style={{ fontSize: 11, lineHeight: 1.8 }}>
@@ -1675,7 +1651,7 @@ export default function Dashboard() {
                    />
                    <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
-                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
+                        <Cell key={i} fill={DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                      ))}
                      <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: TICK_COLOR }} />
@@ -1924,7 +1900,7 @@ export default function Dashboard() {
         </ChartZoomDialog>
 
         {/* Pareto */}
-        <ChartZoomDialog title={`Top Causas (Pareto) — ${paretoLabel}`} subtitle="Clique em uma barra para filtrar" open={zoomChart === "pareto"} onOpenChange={(o) => !o && setZoomChart(null)}>
+        <ChartZoomDialog title="Top Causas (Pareto)" subtitle="Clique em uma barra para filtrar" open={zoomChart === "pareto"} onOpenChange={(o) => !o && setZoomChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={paretoData} layout="vertical" margin={{ left: 20, right: 80 }} onClick={handleParetoClick}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
@@ -1946,7 +1922,7 @@ export default function Dashboard() {
               }} />
               <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                 {paretoData.map((item, i) => (
-                  <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
+                  <Cell key={i} fill={DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]}
                     opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                 ))}
                 <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 12, fill: TICK_COLOR }} />

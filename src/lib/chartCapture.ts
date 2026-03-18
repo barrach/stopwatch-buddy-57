@@ -4,7 +4,6 @@ export interface ChartImages {
   contrato?: string;
   categoria?: string;
   paretoCategoria?: string;
-  paretoEspecialidade?: string;
   especialidade?: string;
   externas?: string;
   tempoHorario?: string;
@@ -137,8 +136,6 @@ async function captureElement(cardEl: HTMLElement): Promise<{ data: string; widt
 export async function captureAllCharts(
   setTimeViewMode: (mode: "horario" | "diasemana" | "mes") => void,
   currentTimeViewMode: "horario" | "diasemana" | "mes",
-  setParetoMode: (mode: "categoria" | "especialidade") => void,
-  currentParetoMode: "categoria" | "especialidade",
 ): Promise<{ images: ChartImages; dimensions: ChartDimensions }> {
   const images: ChartImages = {};
   const dimensions: ChartDimensions = {};
@@ -157,27 +154,17 @@ export async function captureAllCharts(
     }
   }
 
-  // Capture Pareto — all 3 variants
-  const paretoModes: Array<{ mode: "categoria" | "especialidade"; key: keyof ChartImages }> = [
-    { mode: "categoria", key: "paretoCategoria" },
-    { mode: "especialidade", key: "paretoEspecialidade" },
-  ];
-
-  for (const { mode, key } of paretoModes) {
-    setParetoMode(mode);
-    await new Promise((r) => setTimeout(r, 1200));
-    const el = document.getElementById("chart-pareto");
-    if (el) {
-      try {
-        const result = await captureElement(el);
-        images[key] = result.data;
-        dimensions[key as string] = { width: result.width, height: result.height };
-      } catch (e) {
-        console.warn(`Failed to capture chart-pareto (${mode}):`, e);
-      }
+  // Capture Pareto (categories only)
+  const paretoEl = document.getElementById("chart-pareto");
+  if (paretoEl) {
+    try {
+      const result = await captureElement(paretoEl);
+      images.paretoCategoria = result.data;
+      dimensions.paretoCategoria = { width: result.width, height: result.height };
+    } catch (e) {
+      console.warn("Failed to capture chart-pareto:", e);
     }
   }
-  setParetoMode(currentParetoMode);
 
   // Capture time charts — all 3 variants
   const timeModes: Array<{ mode: "horario" | "diasemana" | "mes"; key: keyof ChartImages }> = [
