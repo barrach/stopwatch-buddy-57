@@ -170,15 +170,23 @@ export default function NewObservation() {
       toast({ title: "Nenhum registro anterior", description: "Salve uma observação primeiro para poder repetir.", variant: "destructive" });
       return;
     }
-    setTime(lastObs.time);
-    setRotaId(lastObs.rotaId);
+    // Set obraId first so rotas memo recomputes, then set rotaId after a tick
     setObraId(lastObs.obraId);
+    setTime(lastObs.time);
     setEspecialidadeId(lastObs.especialidadeId);
     setCategoriaId(lastObs.categoriaId);
     setQuantity(lastObs.quantity);
     setNotes(lastObs.notes);
-    // Set descricao after a tick so subcategorias recompute with the new categoriaId
-    setTimeout(() => setDescricao(normalizeDescriptionName(lastObs.descricao)), 50);
+    // Defer rotaId and descricao so dependent memos recompute first
+    setTimeout(() => {
+      setRotaId(lastObs.rotaId);
+      setDescricao(normalizeDescriptionName(lastObs.descricao));
+      // Validate rota still exists
+      const rotaExists = allRotas.some((r) => r.id === lastObs.rotaId && r.obra_id === lastObs.obraId);
+      if (!rotaExists) {
+        toast({ title: "Rota anterior não encontrada", description: "A rota da última observação não está mais disponível.", variant: "destructive" });
+      }
+    }, 50);
     toast({ title: "Repetir último registro", description: "Campos preenchidos com a última observação." });
   };
 
