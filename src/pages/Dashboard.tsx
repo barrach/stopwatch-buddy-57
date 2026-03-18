@@ -406,15 +406,7 @@ export default function Dashboard() {
     }
   };
   const [crossFilters, setCrossFilters] = useState<CrossFilters>({});
-  const [paretoMode, setParetoMode] = useState<ParetoMode>(() => {
-    try { return (sessionStorage.getItem("paretoMode") as ParetoMode) || "categoria"; } catch { return "categoria"; }
-  });
-
-  const handleParetoModeChange = (mode: ParetoMode) => {
-    setParetoMode(mode);
-    try { sessionStorage.setItem("paretoMode", mode); } catch {}
-    setCrossFilters(prev => ({ ...prev, pareto: undefined }));
-  };
+  const paretoMode = "categoria" as const;
 
   const hasActiveFilters = Object.values(crossFilters).some(Boolean);
 
