@@ -49,7 +49,7 @@ const STACK_ORDER_FULL = [
   "Pessoal",
   "Ocioso",
   "Interferências Operacionais",
-  "Fatores Climáticas e Consequências",
+  "Fatores Climáticos e Consequências",
 ] as const;
 
 const STACK_ORDER = [...STACK_ORDER_FULL];
