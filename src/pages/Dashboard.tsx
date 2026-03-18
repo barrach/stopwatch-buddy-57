@@ -1136,13 +1136,29 @@ export default function Dashboard() {
 
     // Global total — NPE included in denominator
 
-    const porEspecialidade = Object.entries(byEsp)
+    // Build porEspecialidade from the SAME data as the bySpecialty chart
+    // Each specialty row has description-level % (e.g. "Trabalhando": 25.5)
+    // We derive Produtivo = Trabalhando + Planejando, matching the chart exactly
+    const espChartData: Record<string, Record<string, number>> = {};
+    records.forEach((r: any) => {
+      const sName = (r.especialidades as any)?.nome || "Sem especialidade";
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      const qty = r.quantidade || 0;
+      if (!espChartData[sName]) espChartData[sName] = { total: 0 };
+      espChartData[sName].total = (espChartData[sName].total || 0) + qty;
+      espChartData[sName][desc] = (espChartData[sName][desc] || 0) + qty;
+    });
+
+    const porEspecialidade = Object.entries(espChartData)
       .sort(([, a], [, b]) => b.total - a.total).slice(0, 8)
       .map(([nome, v]) => {
-        const prodPct = v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0;
-        const suplPct = v.total > 0 ? Math.round((v.supl / v.total) * 100) : 0;
-        const npPct = v.total > 0 ? Math.round((v.naoProd / v.total) * 100) : 0;
-        return `${nome}: ${v.total} amostras (Prod ${prodPct}%, Supl ${suplPct}%, NP ${npPct}%)`;
+        const total = v.total || 0;
+        const trabalhando = v["Trabalhando"] || 0;
+        const planejando = v["Planejando"] || 0;
+        const prodPct = total > 0 ? +((trabalhando / total) * 100).toFixed(1) : 0;
+        const planPct = total > 0 ? +((planejando / total) * 100).toFixed(1) : 0;
+        const prodTotal = total > 0 ? +((( trabalhando + planejando) / total) * 100).toFixed(1) : 0;
+        return `${nome}: Produtividade ${prodTotal}% (Trabalhando ${prodPct}% + Planejando ${planPct}%)`;
       })
       .join("\n");
 

@@ -323,8 +323,9 @@ TOTAIS:
 - Não Produtivo: ${c.naoProdutivoPct}% do total
 - Não Produtivo Externo (NPE): ${c.externoPct ?? c.npePct ?? 0}% do total
 
-PRODUTIVIDADE POR ESPECIALIDADE (excluindo NPE):
+PRODUTIVIDADE POR ESPECIALIDADE (VALORES DO GRÁFICO — USE EXATAMENTE ESTES VALORES):
 ${c.porEspecialidade || "Não disponível"}
+REGRA ABSOLUTA: Os valores acima são os MESMOS exibidos no gráfico. PROIBIDO recalcular. Use-os literalmente na análise.
 
 PRODUTIVIDADE POR FUNÇÃO (excluindo NPE):
 ${c.porFuncao || "Não disponível"}
