@@ -62,8 +62,8 @@ Analise os dados de observações fornecidos e gere um relatório executivo em p
 TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de comparação):
 | Categoria              | % Ideal         |
 |------------------------|-----------------|
-| Produtivo (total)      | 63%             |
-|   - Trabalhando        | (maior parte)   |
+| Produtivo (total)      | 68% (Trabalhando 63% + Planejando 5%) |
+|   - Trabalhando        | 63%             |
 |   - Planejando         | 5% (máximo)     |
 | Suplementar (total)    | 30% (≈4,28% por subcategoria) |
 |   - Aguardando Instruções | ≤4,28%       |
@@ -77,6 +77,7 @@ TABELA DE REFERÊNCIA DE FAIXAS IDEAIS (VERDADE ABSOLUTA — use como base de co
 |   - Aguardando Liberação de PT | 0%      |
 |   - Fatores Climáticos e Consequências | 0% |
 |   - Interferências Operacionais | 0%     |
+NOTA: A soma ideal é 68% + 30% + 2% + 0% = 100%.
 
 REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
 🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
@@ -291,7 +292,7 @@ IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor.
 IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
 
 ## Diagnóstico Comparativo (Real vs Ideal)
-- **Produtivo**: X% (Ideal: 63%) → classificação
+- **Produtivo**: X% (Ideal: 68% = Trabalhando 63% + Planejando 5%) → classificação
 - **Suplementar**: X% (Ideal: ≤30%) → classificação
 - **Não Produtivo**: X% (Ideal: ≤2%) → classificação
 - **NPE (Externo)**: X% (Ideal: 0%) → classificação
