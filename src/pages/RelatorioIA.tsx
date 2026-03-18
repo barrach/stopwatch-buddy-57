@@ -99,10 +99,18 @@ export default function RelatorioIA() {
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
     });
 
-    const porEspecialidade = Object.entries(byEsp)
+    const porEspecialidade = Object.entries(byEspDesc)
       .sort(([, a], [, b]) => b.total - a.total)
       .slice(0, 8)
-      .map(([nome, v]) => `${nome}: ${v.total} amostras (${v.total > 0 ? Math.round((v.prod / v.total) * 100) : 0}% produtivo)`)
+      .map(([nome, v]) => {
+        const total = v.total || 0;
+        const trabalhando = v["Trabalhando"] || 0;
+        const planejando = v["Planejando"] || 0;
+        const prodPct = total > 0 ? +((trabalhando / total) * 100).toFixed(1) : 0;
+        const planPct = total > 0 ? +((planejando / total) * 100).toFixed(1) : 0;
+        const prodTotal = total > 0 ? +(((trabalhando + planejando) / total) * 100).toFixed(1) : 0;
+        return `${nome}: Produtividade ${prodTotal}% (Trabalhando ${prodPct}% + Planejando ${planPct}%)`;
+      })
       .join("\n");
 
     const topCategorias = Object.entries(byCat)
