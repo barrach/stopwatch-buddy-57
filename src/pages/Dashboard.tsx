@@ -512,7 +512,8 @@ export default function Dashboard() {
   }, [parentCatImpactMap, npeDescriptions]);
 
   // ── Filtering ──────────────────────────────────────────────────
-  const baseRecords = useMemo(() => {
+  // Pre-NPE filter: used to compute available NPE options
+  const preNpeRecords = useMemo(() => {
     let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
@@ -521,6 +522,15 @@ export default function Dashboard() {
     }
     return filtered;
   }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
+
+  // Apply global NPE exclusion filter
+  const baseRecords = useMemo(() => {
+    if (!npeExclude) return preNpeRecords;
+    return preNpeRecords.filter((r: any) => {
+      if (!isExternalRecord(r)) return true;
+      return canonicalDescription(r.descricao || "Sem descrição") !== npeExclude;
+    });
+  }, [preNpeRecords, npeExclude, isExternalRecord]);
 
   const records = useMemo(() => {
     return baseRecords.filter((r: any) => {
@@ -667,7 +677,6 @@ export default function Dashboard() {
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      if (npeExclude && isExternalRecord(r) && canonicalDescription(r.descricao || "Sem descrição") === npeExclude) return;
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) {
         result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -694,16 +703,17 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
-  }, [records, isExternalRecord, npeExclude]);
+  }, [records]);
 
   // NPE descriptions for comparison button
+  // Compute available NPE options from pre-filter data so they remain visible
   const npeDescList = useMemo(() => {
     const descs = new Set<string>();
-    records.forEach((r: any) => {
+    preNpeRecords.forEach((r: any) => {
       if (isExternalRecord(r)) descs.add(canonicalDescription(r.descricao || ""));
     });
     return CANONICAL_ORDER_FULL.filter((desc) => descs.has(desc) && desc === "Fatores Climáticos e Consequências");
-  }, [records, isExternalRecord]);
+  }, [preNpeRecords, isExternalRecord]);
 
 
 
@@ -1371,6 +1381,18 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
+            {npeDescList.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Fatores</Label>
+                <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
+                  <SelectTrigger className="w-64 mt-1"><SelectValue placeholder="Fatores" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Com todos os fatores</SelectItem>
+                    {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-1">
               <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Excel
@@ -1484,24 +1506,14 @@ export default function Dashboard() {
         <div id="chart-contrato" className={chartCardClass("contrato")}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">
+             <h3 className="text-sm font-semibold text-foreground">
                 Visão Geral por Contrato
                 {crossFilters.contrato && <span className="text-xs font-normal text-primary ml-2">• {crossFilters.contrato}</span>}
-                {npeExclude && <span className="text-xs font-normal text-destructive ml-2">• Sem "{npeExclude}"</span>}
               </h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">Clique em uma barra para filtrar • Passe o mouse para detalhes</p>
             </div>
             <div className="flex items-center gap-2">
               <ZoomButton onClick={() => setZoomChart("contrato")} />
-              {npeDescList.length > 0 && (
-                <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
-                  <SelectTrigger className="w-44 h-7 text-[10px]"><SelectValue placeholder="Comparar sem..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Com todos os fatores</SelectItem>
-                    {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
           </div>
           <div className="flex flex-col md:flex-row gap-3 md:gap-4">
