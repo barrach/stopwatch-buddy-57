@@ -23,7 +23,8 @@ interface AppUser {
 const roleLabels: Record<string, string> = {
   admin: "Admin",
   coordenador: "Coordenador",
-  cobrador: "Cobrador",
+  cobrador: "Usuário",
+  user: "Usuário",
 };
 
 export default function SettingsPage() {
