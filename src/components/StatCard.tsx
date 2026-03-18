@@ -26,19 +26,19 @@ const iconVariantStyles = {
 export default function StatCard({ title, value, subtitle, icon: Icon, trend, variant = "default" }: StatCardProps) {
   return (
     <div className={`stat-card ${variantStyles[variant]} animate-fade-in`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconVariantStyles[variant]}`}>
-          <Icon className="w-5 h-5" />
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${iconVariantStyles[variant]}`}>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
         {trend && (
-          <span className={`text-xs font-semibold flex items-center gap-1 ${trend.positive ? "text-success" : "text-destructive"}`}>
+          <span className={`text-[10px] sm:text-xs font-semibold flex items-center gap-1 ${trend.positive ? "text-success" : "text-destructive"}`}>
             {trend.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             {trend.value}
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-1">{title}</p>
+      <p className="text-lg sm:text-2xl font-bold text-foreground">{value}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">{title}</p>
       {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
     </div>
   );

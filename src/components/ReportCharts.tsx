@@ -194,21 +194,23 @@ export function ExternalPieSection({ data, title }: ExternalPieProps) {
           </div>
         ))}
       </div>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 768 ? 220 : 280}>
         <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%"
+            outerRadius={typeof window !== 'undefined' && window.innerWidth < 768 ? 70 : 100}
             label={({ cx, cy, midAngle, outerRadius, payload }: any) => {
               const dp = payload?.percent;
               if (!dp || dp <= 0) return null;
-              const radius = (outerRadius || 0) + 22;
+              const radius = (outerRadius || 0) + 18;
               const rad = Math.PI / 180;
               const x = cx + radius * Math.cos(-midAngle * rad);
               const y = cy + radius * Math.sin(-midAngle * rad);
+              const isMob = typeof window !== 'undefined' && window.innerWidth < 768;
               return (
                 <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central"
-                  fill="hsl(var(--foreground))" fontSize={11} fontWeight={700}
+                  fill="hsl(var(--foreground))" fontSize={isMob ? 9 : 11} fontWeight={700}
                   stroke="hsl(var(--background))" strokeWidth={3} paintOrder="stroke">
-                  {`${payload.name} ${dp}%`}
+                  {isMob ? `${dp}%` : `${payload.name} ${dp}%`}
                 </text>
               );
             }}
