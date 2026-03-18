@@ -288,18 +288,26 @@ Problema 2 — [Nome curto]
 
 IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor. Cada bloco DEVE ser claramente separado com "Problema N — Título".
 
-IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `Estruture o relatório com:
-1. **Resumo Executivo** (3-4 frases com percentuais reais — SEM números de amostras)
-2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE%)
+IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
+
+## Diagnóstico Comparativo (Real vs Ideal)
+- **Produtivo**: X% (Ideal: 63%) → classificação
+- **Suplementar**: X% (Ideal: ≤30%) → classificação
+- **Não Produtivo**: X% (Ideal: ≤2%) → classificação
+- **NPE (Externo)**: X% (Ideal: 0%) → classificação
+
+Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
+
+Depois do diagnóstico, estruture o relatório com:
+1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
+2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
 3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
 4. **Análise por Especialidade** (comparação de % produtividade entre especialidades vs média geral)
-5. **Análise por Função** (benchmark, intermediária, crítica — com % e ações)
-6. **Análise por Horário** (horário mais/menos produtivo, tendência do dia)
-7. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
-8. **Causas Externas** (impacto % do NPE e ações de mitigação)
-9. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
+5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
+6. **Causas Externas** (impacto % do NPE e ações de mitigação)
+7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
 
-REGRA: NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
+REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
 
 Use linguagem técnica, objetiva e profissional de engenharia industrial. Seja preciso com os percentuais. Não invente dados. SEMPRE priorize a análise por % de produtividade. NUNCA mencione números absolutos de amostras. Cada análise deve conter obrigatoriamente: Diagnóstico + Interpretação operacional + Ação recomendada.`;
 
