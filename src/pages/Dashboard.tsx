@@ -1651,7 +1651,7 @@ export default function Dashboard() {
                    />
                    <Bar dataKey="percent" name="Percentual" radius={[0, 4, 4, 0]} className="cursor-pointer">
                      {paretoData.map((item, i) => (
-                       <Cell key={i} fill={paretoMode === "especialidade" ? getSpecialtyColor(item.name) : paretoMode === "categoria" ? (DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[i % PIE_COLORS.length]}
+                        <Cell key={i} fill={DESCRIPTION_COLORS[item.name] || PIE_COLORS[i % PIE_COLORS.length]}
                          opacity={crossFilters.pareto && crossFilters.pareto !== item.name ? 0.3 : 1} />
                      ))}
                      <LabelList dataKey="percent" position="right" formatter={(v: number) => `${v}%`} style={{ fontSize: 10, fill: TICK_COLOR }} />
