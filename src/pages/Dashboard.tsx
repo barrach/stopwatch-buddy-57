@@ -597,7 +597,7 @@ export default function Dashboard() {
     const totalHoursSet = new Set<string>();
     records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
-      const desc = r.descricao || "Sem descrição";
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
       if (!hoursSet[desc]) hoursSet[desc] = new Set();
       const key = `${r.data}_${r.horario}`;
