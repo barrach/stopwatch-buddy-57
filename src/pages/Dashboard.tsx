@@ -1381,6 +1381,18 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
+            {npeDescList.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Fatores</Label>
+                <Select value={npeExclude || "none"} onValueChange={(v) => setNpeExclude(v === "none" ? null : v)}>
+                  <SelectTrigger className="w-64 mt-1"><SelectValue placeholder="Fatores" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Com todos os fatores</SelectItem>
+                    {npeDescList.map(d => <SelectItem key={d} value={d}>Sem {d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-1">
               <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Excel
