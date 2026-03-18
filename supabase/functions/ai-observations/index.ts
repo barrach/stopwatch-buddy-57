@@ -70,7 +70,7 @@ CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 - Produtivo: Trabalhando (esforço físico, posicionando peças, limpando superfícies) e Planejando (medições, análise de desenhos, levantamento de materiais, instruções, DDS, APR).
 - Suplementar: Aguardando Instruções, Aguardando Movimentação de Carga, Aguardando Ferramenta ou Material, Aguardando Liberação de PT, Transitando com/sem ferramenta dentro/fora do local de trabalho.
 - Não Produtivo: Pessoal (bebedouro/sanitário) e Ocioso (café, cantina, bate-papo).
-- NPE (Não Produtivo Externo): Causas Naturais, Vazamento/Interferência da Planta, Aguardando Liberação de PT pelo cliente/operação.
+- NPE (Não Produtivo Externo): Fatores Climáticos e Consequências, Interferências Operacionais, Aguardando Liberação de PT pelo cliente/operação.
 
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
