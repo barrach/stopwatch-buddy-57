@@ -119,8 +119,8 @@ const DESCRIPTION_COLORS: Record<string, string> = {
 
 // Display name normalization — renames legacy names for UI
 const DISPLAY_NAME_MAP: Record<string, string> = {
-  "Aguardando Movimentação de Carga": "Assistindo",
-  "Aguardando movimentação de carga": "Assistindo",
+  "Aguardando Movimentação de Carga": "Assistindo / Stand By",
+  "Aguardando movimentação de carga": "Assistindo / Stand By",
 };
 const displayName = (desc: string): string => normalizeDescriptionName(desc);
 const canonicalDescription = (desc: string): string => displayName(desc);
