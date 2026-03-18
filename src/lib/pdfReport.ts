@@ -45,11 +45,11 @@ const STACK_ORDER_FULL = [
   "Transitando fora do local de trabalho - com ferramenta",
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo / Stand By",
+  "Aguardando Liberação de PT",
   "Pessoal",
   "Ocioso",
-  "Aguardando Liberação de PT",
   "Interferências Operacionais",
-  "Fatores Climáticos e Consequências",
+  "Fatores Climáticas e Consequências",
 ] as const;
 
 const STACK_ORDER = [...STACK_ORDER_FULL];
