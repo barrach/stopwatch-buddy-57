@@ -4,7 +4,6 @@ export interface ChartImages {
   contrato?: string;
   categoria?: string;
   paretoCategoria?: string;
-  paretoEspecialidade?: string;
   especialidade?: string;
   externas?: string;
   tempoHorario?: string;
