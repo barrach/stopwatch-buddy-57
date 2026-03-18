@@ -215,7 +215,7 @@ const BarPercentLabel = (props: any & { labelKey?: string }) => {
   );
 };
 
-const renderLegendList = (descriptions: string[]) => {
+const renderLegendList = (descriptions: string[], tooltipMap?: Record<string, string>) => {
   // Keep the legend vertically aligned with the visual stack order on screen.
   // Bars are rendered bottom→top, so the legend must be shown top→bottom.
   const legendOrder = [...descriptions].reverse();
@@ -230,10 +230,12 @@ const renderLegendList = (descriptions: string[]) => {
       }}
     >
       {legendOrder.map((desc) => (
-        <div key={desc} className="flex items-center gap-2">
-          <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-          <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
-        </div>
+        <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
+          <div className="flex items-center gap-2">
+            <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+            <span className="text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+          </div>
+        </LegendTooltip>
       ))}
     </div>
   );
