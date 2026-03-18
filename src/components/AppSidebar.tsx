@@ -3,12 +3,12 @@ import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route
 import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
   { to: "/nova-observacao", label: "Nova Observação", icon: Plus },
   { to: "/registros", label: "Registros", icon: ClipboardList },
-  { to: "/auditoria", label: "Auditoria", icon: ShieldAlert },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
@@ -27,6 +27,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { canInstall, install } = useInstallPrompt();
+  const { isAdmin } = useIsAdmin();
 
   const handleClick = () => {
     onNavigate?.();
@@ -65,6 +66,13 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
             </NavLink>
           );
         })}
+
+        {isAdmin && (
+          <NavLink to="/auditoria" onClick={handleClick} className={`sidebar-item ${location.pathname === "/auditoria" ? "sidebar-item-active" : ""}`}>
+            <ShieldAlert className="w-[18px] h-[18px]" />
+            <span className="text-sm">Auditoria</span>
+          </NavLink>
+        )}
 
         <div className="pt-4 pb-1 px-2">
           <p className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Cadastros</p>
