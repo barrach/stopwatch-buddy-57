@@ -405,7 +405,7 @@ function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width:
   return Math.min(width * (dim.height / dim.width), MAX_CHART_H);
 }
 
-export function generatePDFReport(data: PDFReportData) {
+export async function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const images = data.chartImages || {};
   const dimensions = data.chartDimensions || {};
