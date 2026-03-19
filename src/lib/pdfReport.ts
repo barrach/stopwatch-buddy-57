@@ -441,7 +441,7 @@ export function generatePDFReport(data: PDFReportData) {
     const clean = normalizeTitle(title);
     if (!clean) return;
     ensureSpace(10);
-    doc.setFillColor(...C.sectionBgDark);
+    doc.setFillColor(...C.sectionBg);
     doc.roundedRect(MARGIN + 1, curY, CONTENT_W - 2, 8, 1.6, 1.6, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
