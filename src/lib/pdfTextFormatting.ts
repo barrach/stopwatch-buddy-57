@@ -78,7 +78,7 @@ function standardizeLabel(label: string): string {
 
 // ── Label detection regex ─────────────────────────────────────
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:(?:Diagn[oó]stico|Interpreta[çc][ãa]o\s*[Oo]peracional|A[çc][ãa]o\s*[Rr]ecomendada|Recomend[ae]|Melhor\s*especialidade|Especialidade\s*(?:cr[ií]tica|intermedi[aá]ria)|Recomenda[çc][õo]es|[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}))\s*:)\s*(.*)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:(?:Diagn[oó]stico|Interpreta[çc][ãa]o\s*[Oo]peracional|A[çc][ãa]o\s*[Rr]ecomendada|Recomenda[çc][ãa]o|Recomend[ae]|Melhor\s*especialidade|Especialidade\s*(?:cr[ií]tica|intermedi[aá]ria)|Recomenda[çc][õo]es|[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}))\s*:)\s*(.*)$/;
 
 // ── Broken label repairs ──────────────────────────────────────
 
