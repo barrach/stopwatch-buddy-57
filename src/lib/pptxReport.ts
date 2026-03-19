@@ -286,12 +286,12 @@ function addAnalysisBlock(slide: PptxGenJS.Slide, text: string, y: number, maxH:
         // Label
         textParts.push({
           text: lp.label + "\n",
-          options: { fontSize: 10, bold: true, color: T.ocean, fontFace: "Calibri", breakType: "none" as const },
+          options: { fontSize: 10, bold: true, color: T.ocean, fontFace: "Calibri" },
         });
         if (body) {
           textParts.push({
             text: body + "\n\n",
-            options: { fontSize: 10, color: T.textDark, fontFace: "Calibri", breakType: "none" as const },
+            options: { fontSize: 10, color: T.textDark, fontFace: "Calibri" },
           });
         }
         matched = true;
@@ -302,7 +302,7 @@ function addAnalysisBlock(slide: PptxGenJS.Slide, text: string, y: number, maxH:
     if (!matched) {
       textParts.push({
         text: trimmed + "\n",
-        options: { fontSize: 10, color: T.textDark, fontFace: "Calibri", breakType: "none" as const },
+        options: { fontSize: 10, color: T.textDark, fontFace: "Calibri" },
       });
     }
   }
@@ -344,11 +344,11 @@ function addRecBlock(slide: PptxGenJS.Slide, block: RecBlock, y: number): number
   for (const f of fields) {
     parts.push({
       text: f.label + "\n",
-      options: { fontSize: 11, bold: true, color: f.color, fontFace: "Calibri", breakType: "none" as const },
+      options: { fontSize: 11, bold: true, color: f.color, fontFace: "Calibri" },
     });
     parts.push({
       text: f.value + "\n\n",
-      options: { fontSize: 10, color: T.textDark, fontFace: "Calibri", breakType: "none" as const },
+      options: { fontSize: 10, color: T.textDark, fontFace: "Calibri" },
     });
   }
 
