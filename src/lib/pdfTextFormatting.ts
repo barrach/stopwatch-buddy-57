@@ -8,12 +8,11 @@ export interface StyledPdfLine {
   lines: string[];
 }
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9\-–—]+){0,8})\s*:)\s*(.*)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
-  [/Interpreta[çc][ãa]o\s*\n\s*[Oo]peracional:/gi, "Interpretação Operacional:"],
-  [/A[çc][ãa]o\s*\n\s*[Rr]ecomendada:/gi, "Ação Recomendada:"],
-  [/Principal\s*\n\s*Causa\s+de\s+Perda:/gi, "Principal Causa de Perda:"],
+  [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação operacional:"],
+  [/A[çc][ãa]o\s*\n\s*recomendada:/gi, "Ação recomendada:"],
   [/N[ãa]o\s*\n\s*Produtivo\s*Externo:/gi, "Não Produtivo Externo:"],
   [/N[ãa]o\s*\n\s*Produtivo:/gi, "Não Produtivo:"],
   [/Especialidade\s*\n\s*cr[ií]tica:/gi, "Especialidade crítica:"],
