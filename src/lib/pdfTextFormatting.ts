@@ -8,51 +8,20 @@ export interface StyledPdfLine {
   lines: string[];
 }
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,6})\s*:)\s*(.*)$/;
-
-/** Matches Pareto cause titles like "1ª Principal Causa de Perda: NPE (48%)" */
-const PARETO_CAUSE_RE = /^(\d+[ªº°.]\s*[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*.+)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
-  [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação Operacional:"],
-  [/Interpreta[çc][ãa]o\s+operacional:/gi, "Interpretação Operacional:"],
-  [/Interpreta[çc][ãa]o:/gi, "Interpretação Operacional:"],
-  [/A[çc][ãa]o\s*\n\s*recomendada:/gi, "Ação Recomendada:"],
-  [/A[çc][ãa]o\s+recomendada:/gi, "Ação Recomendada:"],
-  [/Recomende:/gi, "Ação Recomendada:"],
-  [/A[çc][õo]es:/gi, "Ação Recomendada:"],
-  [/An[aá]lise\s+do\s+impacto\s+operacionalizado:/gi, "Diagnóstico:"],
-  [/Principais\s*\n\s*causas:/gi, "Principais causas:"],
+  [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação operacional:"],
+  [/A[çc][ãa]o\s*\n\s*recomendada:/gi, "Ação recomendada:"],
   [/N[ãa]o\s*\n\s*Produtivo\s*Externo:/gi, "Não Produtivo Externo:"],
   [/N[ãa]o\s*\n\s*Produtivo:/gi, "Não Produtivo:"],
   [/Especialidade\s*\n\s*cr[ií]tica:/gi, "Especialidade crítica:"],
   [/Especialidade\s*\n\s*intermedi[aá]ria:/gi, "Especialidade intermediária:"],
   [/Melhor\s*\n\s*especialidade:/gi, "Melhor especialidade:"],
   [/Recomenda[çc][õo]es:/gi, "Recomendações:"],
-  [/(\d+[ªº°.])\s*[Pp]rincipal\s*\n\s*[Cc]ausa\s+de\s+[Pp]erda:/gi, "$1 Principal Causa de Perda:"],
-  [/(\d+[ªº°.]?\s*)[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*([A-ZÀ-Ú])/g, "$1 Principal Causa de Perda: $2"],
-  [/(\d+[ªº°.])\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
+  [/(\d+[ªº°.]?)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
   [/([A-ZÀ-Úa-zà-ú0-9]+)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,3}:)/g, "$1 $2"],
 ];
-
-/** Strip emoji and special unicode symbols that jsPDF cannot render */
-function stripEmoji(text: string): string {
-  return text
-    // Remove common emoji ranges
-    .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
-    .replace(/[\u{2600}-\u{27BF}]/gu, "")
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
-    .replace(/[\u{200D}]/gu, "")
-    .replace(/[\u{20E3}]/gu, "")
-    // Remove specific problematic sequences that appear as garbage in PDF
-    .replace(/Ø=Ý4/g, "Crítico")
-    .replace(/[&]\s*þ/g, "Acima do ideal")
-    .replace(/[']\s*Dentro/g, "Dentro")
-    // Ensure space after colon when followed by a letter
-    .replace(/:([A-ZÀ-Úa-zà-ú])/g, ": $1")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
 
 function repairBrokenLabels(text: string): string {
   let current = text;
@@ -92,7 +61,7 @@ export function wrapTextByWords(doc: jsPDF, text: string, maxWidth: number): str
 }
 
 export function normalizePdfParagraphs(text: string): string[] {
-  let normalized = stripEmoji(text)
+  let normalized = text
     .replace(/\r\n/g, "\n")
     .replace(/\t/g, " ")
     .replace(/\s*\|\s*/g, "\n")
@@ -114,9 +83,7 @@ export function normalizePdfParagraphs(text: string): string[] {
     }
 
     const startsLabeledBlock = LABEL_LINE_RE.test(line);
-    const isParetoCause = PARETO_CAUSE_RE.test(line);
-
-    if ((startsLabeledBlock || isParetoCause) && current) {
+    if (startsLabeledBlock && current) {
       paragraphs.push(current.trim());
       current = line;
     } else {
@@ -130,12 +97,6 @@ export function normalizePdfParagraphs(text: string): string[] {
 
 export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number): StyledPdfLine[] {
   return normalizePdfParagraphs(text).map((paragraph) => {
-    // Pareto cause title — render entirely as bold prefix on its own line
-    const paretoMatch = paragraph.match(PARETO_CAUSE_RE);
-    if (paretoMatch) {
-      return { prefix: paragraph, lines: [""] };
-    }
-
     const match = paragraph.match(LABEL_LINE_RE);
     if (!match) {
       return { lines: wrapTextByWords(doc, paragraph, maxWidth) };

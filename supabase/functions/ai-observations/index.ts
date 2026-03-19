@@ -85,18 +85,14 @@ CONCEITO OPERACIONAL ATUALIZADO:
 - NPE deve ser praticamente ZERO. Qualquer valor de NPE é anormal e indica falha grave.
 
 REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
-PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
+🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
 Cada uma das 4 categorias (Produtivo, Suplementar, Não Produtivo, NPE) DEVE ser analisada SEPARADAMENTE.
 
 LÓGICA DE CLASSIFICAÇÃO OBRIGATÓRIA — Para CADA categoria, compare o valor real com a faixa ideal e classifique:
-- Dentro do ideal: valor dentro da faixa esperada
-- Abaixo do ideal: valor inferior ao mínimo esperado (para Produtivo)
-- Acima do ideal: valor superior ao máximo aceitável (para Suplementar, NP, NPE)
-- Crítico: desvio severo que compromete a operação
-
-PROIBIDO USAR EMOJIS OU SÍMBOLOS ESPECIAIS:
-NUNCA use emojis (checkmark, warning, circle, arrow etc.) ou caracteres Unicode especiais no texto.
-Use APENAS texto puro: "Critico", "Acima do ideal", "Dentro do ideal", "Abaixo do ideal".
+- ✅ Dentro do ideal: valor dentro da faixa esperada
+- ⚠️ Acima do ideal: valor superior ao máximo aceitável (para Suplementar, NP, NPE)
+- 🔻 Abaixo do ideal: valor inferior ao mínimo esperado (para Produtivo)
+- 🔴 Crítico: desvio severo que compromete a operação
 
 DIAGNÓSTICO OBRIGATÓRIO NO INÍCIO DE CADA ANÁLISE:
 Diagnóstico:
@@ -129,17 +125,10 @@ FÓRMULAS DE CÁLCULO:
 - NPE% = NPE / Total × 100
 - A soma das 4 categorias deve ser 100% do total.
 
-ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes SEMPRE separadas por quebra de linha:
-1. Diagnóstico: (seguido de quebra de linha) O que o gráfico mostra (dados percentuais reais da obra).
-2. Interpretação Operacional: (seguido de quebra de linha) O que isso significa na prática da obra industrial.
-3. Ação Recomendada: (seguido de quebra de linha) O que deve ser feito para melhorar o indicador.
-
-REGRA DE FORMATAÇÃO OBRIGATÓRIA:
-- SEMPRE coloque um espaço após os dois pontos (":") antes do texto.
-- SEMPRE use quebra de linha após cada rótulo (Diagnóstico:, Interpretação Operacional:, Ação Recomendada:).
-- Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
-- NUNCA use variações como "Recomende:", "Interpretação:", "Ações:", "Análise do impacto operacionalizado:".
-- NUNCA cole o texto diretamente após ":" sem espaço. ERRADO: "Diagnóstico:O contrato...". CORRETO: "Diagnóstico: O contrato...".
+ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes:
+1. **Diagnóstico**: O que o gráfico mostra (dados percentuais reais da obra).
+2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente. Compare se os valores estão dentro do esperado ou se há desvios preocupantes, SEM citar os benchmarks numéricos.
+3. **Ação recomendada**: O que deve ser feito para melhorar o indicador. Foque em ações concretas e práticas.
 
 REGRA: NÃO cite os benchmarks diretamente (ex: "meta de 60%", "benchmark de 16%"). Em vez disso, use expressões qualitativas: "acima do esperado", "dentro do padrão para obras bem gerenciadas", "significativamente abaixo do ideal", "há margem expressiva de melhoria".
 
@@ -159,50 +148,11 @@ Estrutura obrigatória:
 - Recomende: "A redução combinada de atividades suplementares e não produtivas poderia elevar o índice de produtividade global para patamares próximos de X%."
 
 ===PARETO===
-Análise do Pareto por categorias. REGRA ABSOLUTA: "Trabalhando" e "Planejando" NAO sao causas de parada. NUNCA inclua categorias produtivas como causas no Pareto.
-Foque APENAS em causas de perda: Ocioso, Pessoal, Aguardando..., Transitando..., Fatores Climaticos, Interferencias Operacionais.
-
-FORMATO OBRIGATÓRIO — Cada causa DEVE ser um bloco separado com EXATAMENTE esta estrutura:
-
-1ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
-
-Diagnóstico:
-[Texto explicando o problema identificado nos dados.]
-
-Interpretação Operacional:
-[Texto explicando o impacto prático na obra.]
-
-Ação Recomendada:
-[Ação concreta e específica para mitigar esta causa.]
-
-2ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
-
-Diagnóstico:
-[Texto.]
-
-Interpretação Operacional:
-[Texto.]
-
-Ação Recomendada:
-[Texto.]
-
-3ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
-
-Diagnóstico:
-[Texto.]
-
-Interpretação Operacional:
-[Texto.]
-
-Ação Recomendada:
-[Texto.]
-
-REGRAS DE FORMATAÇÃO DO PARETO:
-- CADA causa deve ser um bloco SEPARADO, nunca juntar múltiplas causas no mesmo parágrafo.
-- SEMPRE inserir linha em branco entre cada bloco.
-- SEMPRE usar quebra de linha após "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
-- NUNCA escrever texto na mesma linha do título da causa.
-- Mínimo 3 causas, máximo 5 causas.
+Análise do Pareto por categorias. Identifique obrigatoriamente:
+- 1ª principal causa e seu % de impacto
+- 2ª causa e seu %
+- 3ª causa e seu %
+Interprete o impacto operacional de cada causa e sugira ações corretivas específicas.
 
 ===PARETO_ESPECIALIDADE===
 Análise do Pareto por especialidades. Compare cada especialidade pelo % de produtividade em relação à média geral. Identifique gargalos e motores de produtividade.
@@ -345,37 +295,26 @@ Problema 2 — [Nome curto]
 
 IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor. Cada bloco DEVE ser claramente separado com "Problema N — Título".
 
-IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".
-NUNCA use emojis ou caracteres especiais. Use SOMENTE texto puro para classificações.
-Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
-NUNCA use variações como "Recomende:", "Interpretação:", "Ações:", "Análise do impacto operacionalizado:".
-"Trabalhando" e "Planejando" NAO sao causas de parada no Pareto.` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
+IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
 
 ## Diagnóstico Comparativo (Real vs Ideal)
-- Produtivo: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) - classificação
-- Suplementar: X% (Ideal: 32% max) - classificação
-- Não Produtivo: X% (Ideal: 3% max) - classificação
-- NPE (Externo): X% (Ideal: 0%) - classificação
+- **Produtivo**: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) → classificação
+- **Suplementar**: X% (Ideal: ≤32%) → classificação
+- **Não Produtivo**: X% (Ideal: ≤3%) → classificação
+- **NPE (Externo)**: X% (Ideal: 0%) → classificação
 
-Classificações (SEM EMOJI, texto puro): Dentro do ideal | Acima do ideal | Abaixo do ideal | Crítico
+Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
 
 Depois do diagnóstico, estruture o relatório com:
 1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
 2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
-3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação Operacional + Ação Recomendada)
+3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
 4. **Análise por Especialidade** (use EXATAMENTE os % fornecidos em "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. Formato: Melhor especialidade: / Especialidade intermediária: / Especialidade crítica:)
 5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
 6. **Causas Externas** (impacto % do NPE e ações de mitigação)
-7. **Recomendações** (5 ações no formato: Problema - Causa - Ação - Responsável - Impacto esperado)
+7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
 
-REGRAS DE FORMATAÇÃO OBRIGATÓRIAS:
-- NUNCA use emojis ou caracteres especiais. Use SOMENTE texto puro.
-- SEMPRE coloque espaço após ":" e quebra de linha entre blocos.
-- Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
-- NUNCA use variações como "Recomende:", "Interpretação:", "Ações:".
-- "Trabalhando" e "Planejando" NAO sao causas de parada no Pareto.
-
-REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação Operacional + Ação Recomendada.`}
+REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
 
 Use linguagem técnica, objetiva e profissional de engenharia industrial. Seja preciso com os percentuais. Não invente dados. SEMPRE priorize a análise por % de produtividade. NUNCA mencione números absolutos de amostras. Cada análise deve conter obrigatoriamente: Diagnóstico + Interpretação operacional + Ação recomendada.`;
 
