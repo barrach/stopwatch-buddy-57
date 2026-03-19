@@ -156,6 +156,10 @@ function stripTags(text: string): string {
     })
     .replace(/\*\*/g, "")
     .replace(/<[^>]+>/g, "")
+    // Ensure space after colon when followed by letter/number
+    .replace(/:([A-Za-zÀ-ú0-9])/g, ": $1")
+    // Ensure each "- " bullet starts on its own line
+    .replace(/([^\n])\s+- /g, "$1\n- ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -460,7 +464,8 @@ export function generatePDFReport(data: PDFReportData) {
   const measureAnalysisBox = (text: string): number => {
     const blocks = getAnalysisBlocks(text, CONTENT_W - 12);
     const lineCount = countStyledPdfLines(blocks);
-    return lineCount > 0 ? Math.max(16, lineCount * ANALYSIS_LINE_H + 8) + 2 : 0;
+    const blockGaps = blocks.length * 1.2;
+    return lineCount > 0 ? Math.max(16, lineCount * ANALYSIS_LINE_H + blockGaps + 10) + 3 : 0;
   };
 
   const drawAnalysisBox = (text: string) => {
@@ -499,7 +504,7 @@ export function generatePDFReport(data: PDFReportData) {
           doc.text(continuation, MARGIN + 6, textY);
           textY += ANALYSIS_LINE_H;
         }
-        textY += 0.8;
+        textY += 1.8;
         continue;
       }
 
@@ -509,10 +514,10 @@ export function generatePDFReport(data: PDFReportData) {
         doc.text(line, MARGIN + 6, textY);
         textY += ANALYSIS_LINE_H;
       }
-      textY += 0.8;
+      textY += 1.2;
     }
 
-    curY += boxH + 2;
+    curY += boxH + 3;
   };
 
   const drawLegend = (items: LegendItem[], x: number, y: number): number => {

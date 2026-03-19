@@ -8,7 +8,7 @@ export interface StyledPdfLine {
   lines: string[];
 }
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,6})\s*:)\s*(.*)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação operacional:"],
@@ -67,6 +67,9 @@ export function normalizePdfParagraphs(text: string): string[] {
     .replace(/\s*\|\s*/g, "\n")
     .trim();
 
+  // Ensure space after colon when followed by a letter/number (e.g. "Diagnóstico:O" → "Diagnóstico: O")
+  normalized = normalized.replace(/:([A-Za-zÀ-ú0-9])/g, ": $1");
+
   normalized = repairBrokenLabels(normalized)
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ ]{2,}/g, " ");
@@ -82,8 +85,11 @@ export function normalizePdfParagraphs(text: string): string[] {
       continue;
     }
 
+    // Bullet/list items always start a new paragraph
+    const isBullet = /^[-•]\s/.test(line);
     const startsLabeledBlock = LABEL_LINE_RE.test(line);
-    if (startsLabeledBlock && current) {
+
+    if ((startsLabeledBlock || isBullet) && current) {
       paragraphs.push(current.trim());
       current = line;
     } else {
