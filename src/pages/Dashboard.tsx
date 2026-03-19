@@ -625,7 +625,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = {};
     const hoursSet: Record<string, Set<string>> = {};
     const totalHoursSet = new Set<string>();
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
@@ -645,7 +645,7 @@ export default function Dashboard() {
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
       _totalHours: totalHoursSet.size,
     }));
-  }, [records, isExternalRecord]);
+  }, [weightedRecords, isExternalRecord]);
 
 
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
