@@ -870,6 +870,12 @@ export default function Dashboard() {
     setIsGeneratingPDF(true);
     toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
 
+    // Timeout safety: cancel after 120s
+    const timeoutId = setTimeout(() => {
+      setIsGeneratingPDF(false);
+      toast({ title: "Tempo esgotado", description: "A geração do PDF demorou demais. Tente novamente com menos dados.", variant: "destructive" });
+    }, 120000);
+
     try {
       // 1) Capture charts from DOM
       const { captureAllCharts } = await import("@/lib/chartCapture");
@@ -957,7 +963,8 @@ export default function Dashboard() {
         });
       };
 
-      generatePDFReport({
+      toast({ title: "Montando PDF...", description: "Gerando o documento final." });
+      await generatePDFReport({
         periodo: aiStats.periodo,
         obra: aiStats.obra,
         totalAmostras: aiStats.totalAmostras,
@@ -987,6 +994,7 @@ export default function Dashboard() {
     } catch (e: any) {
       toast({ title: "Erro ao gerar PDF", description: e.message, variant: "destructive" });
     } finally {
+      clearTimeout(timeoutId);
       setIsGeneratingPDF(false);
     }
   };

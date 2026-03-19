@@ -405,7 +405,7 @@ function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width:
   return Math.min(width * (dim.height / dim.width), MAX_CHART_H);
 }
 
-export function generatePDFReport(data: PDFReportData) {
+export async function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const images = data.chartImages || {};
   const dimensions = data.chartDimensions || {};
@@ -425,6 +425,10 @@ export function generatePDFReport(data: PDFReportData) {
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);
 
   let curY = MARGIN;
+  let sectionCount = 0;
+
+  // Yield to main thread periodically to prevent UI freeze
+  const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
 
   const newPage = () => {
     doc.addPage("a4", "portrait");
@@ -584,7 +588,10 @@ export function generatePDFReport(data: PDFReportData) {
     return height;
   };
 
-  const renderStandardBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+  const renderStandardBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+    sectionCount++;
+    if (sectionCount % 2 === 0) await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
     const legendH = legend.length ? measureLegendH(legend) : 0;
     const rowH = Math.max(chartH, legendH);
@@ -599,8 +606,10 @@ export function generatePDFReport(data: PDFReportData) {
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  const renderParetoBlock = (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
+  const renderParetoBlock = async (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
     if (!image && !analysisText?.trim()) return;
+    await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, CONTENT_W) : 0;
     const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
     ensureSpace(12 + chartH + 3 + analysisH);
@@ -613,7 +622,9 @@ export function generatePDFReport(data: PDFReportData) {
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  const renderTimedBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
+  const renderTimedBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
+    await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
     const legendH = legend.length ? measureLegendH(legend) : 0;
     ensureSpace(12 + Math.max(chartH, legendH) + 3);
@@ -691,15 +702,15 @@ export function generatePDFReport(data: PDFReportData) {
   curY += 25;
   drawAnalysisBox(analysis.RESUMO || analysis.GERAL || "Diagnóstico geral indisponível para este período.");
 
-  renderStandardBlock("Visão Geral por Contrato", images.contrato, "contrato", contractLegend, analysis.CONTRATO);
-  renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
-  renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
+  await renderStandardBlock("Visão Geral por Contrato", images.contrato, "contrato", contractLegend, analysis.CONTRATO);
+  await renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
+  await renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
   
-  renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
-  renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
-  renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
-  renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
-  renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
+  await renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
+  await renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
+  await renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
+  await renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
+  await renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
 
   sectionHeader("Conclusões e Recomendações");
   if (recommendations.length) {
