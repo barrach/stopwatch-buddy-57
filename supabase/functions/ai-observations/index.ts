@@ -85,14 +85,18 @@ CONCEITO OPERACIONAL ATUALIZADO:
 - NPE deve ser praticamente ZERO. Qualquer valor de NPE é anormal e indica falha grave.
 
 REGRA CRÍTICA — ANÁLISE INDIVIDUAL POR CATEGORIA:
-🚨 PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
+PROIBIDO agrupar categorias (ex: "Produtivo + Suplementar" ou "Tempo produtivo total").
 Cada uma das 4 categorias (Produtivo, Suplementar, Não Produtivo, NPE) DEVE ser analisada SEPARADAMENTE.
 
 LÓGICA DE CLASSIFICAÇÃO OBRIGATÓRIA — Para CADA categoria, compare o valor real com a faixa ideal e classifique:
-- ✅ Dentro do ideal: valor dentro da faixa esperada
-- ⚠️ Acima do ideal: valor superior ao máximo aceitável (para Suplementar, NP, NPE)
-- 🔻 Abaixo do ideal: valor inferior ao mínimo esperado (para Produtivo)
-- 🔴 Crítico: desvio severo que compromete a operação
+- Dentro do ideal: valor dentro da faixa esperada
+- Abaixo do ideal: valor inferior ao mínimo esperado (para Produtivo)
+- Acima do ideal: valor superior ao máximo aceitável (para Suplementar, NP, NPE)
+- Crítico: desvio severo que compromete a operação
+
+PROIBIDO USAR EMOJIS OU SÍMBOLOS ESPECIAIS:
+NUNCA use emojis (checkmark, warning, circle, arrow etc.) ou caracteres Unicode especiais no texto.
+Use APENAS texto puro: "Critico", "Acima do ideal", "Dentro do ideal", "Abaixo do ideal".
 
 DIAGNÓSTICO OBRIGATÓRIO NO INÍCIO DE CADA ANÁLISE:
 Diagnóstico:
