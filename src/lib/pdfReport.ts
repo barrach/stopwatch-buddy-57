@@ -735,7 +735,11 @@ export function generatePDFReport(data: PDFReportData) {
 
   sectionHeader("Conclusões e Recomendações");
   if (recommendations.length) {
-    recommendations.forEach((item, index) => drawAnalysisBox(buildRecommendationText(item, index)));
+    recommendations.forEach((item, index) => {
+      const title = item.title || `Problema ${index + 1}`;
+      subHeader(`Problema Crítico ${index + 1} — ${title}`);
+      drawAnalysisBox(buildRecommendationText(item));
+    });
   } else {
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
   }
