@@ -1167,7 +1167,7 @@ export default function Dashboard() {
     // Each specialty row has description-level % (e.g. "Trabalhando": 25.5)
     // We derive Produtivo = Trabalhando + Planejando, matching the chart exactly
     const espChartData: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
