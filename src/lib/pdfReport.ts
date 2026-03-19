@@ -503,7 +503,7 @@ export function generatePDFReport(data: PDFReportData) {
           doc.text(continuation, MARGIN + 6, textY);
           textY += ANALYSIS_LINE_H;
         }
-        textY += 0.8;
+        textY += 1.8;
         continue;
       }
 
