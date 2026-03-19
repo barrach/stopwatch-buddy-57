@@ -994,6 +994,7 @@ export default function Dashboard() {
     } catch (e: any) {
       toast({ title: "Erro ao gerar PDF", description: e.message, variant: "destructive" });
     } finally {
+      clearTimeout(timeoutId);
       setIsGeneratingPDF(false);
     }
   };
