@@ -707,7 +707,7 @@ export default function Dashboard() {
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) {
         result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -734,7 +734,7 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
-  }, [records]);
+  }, [weightedRecords]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
