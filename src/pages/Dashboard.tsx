@@ -651,7 +651,7 @@ export default function Dashboard() {
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
   const nonprodCausas = useMemo(() => {
     const totals: Record<string, { value: number; cat: string }> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (cat !== "Não Produtivo" && cat !== "Suplementar") return;
       const desc = r.descricao || "Sem descrição";
@@ -671,7 +671,7 @@ export default function Dashboard() {
         cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, getParentCatName]);
+  }, [weightedRecords, getParentCatName]);
 
   // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
