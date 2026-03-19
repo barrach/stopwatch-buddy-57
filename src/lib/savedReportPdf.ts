@@ -111,6 +111,10 @@ export function generateSavedReportPDF(report: SavedReport) {
 
     for (const block of blocks) {
       if (block.prefix) {
+        // Add extra spacing before specialty-level labels
+        const isSpecialtyLabel = /^(Melhor especialidade|Especialidade (crítica|intermediária)):/i.test(block.prefix);
+        if (isSpecialtyLabel) drawY += 3;
+
         // Render label on its own line
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...PDF_OCEAN_RGB);
