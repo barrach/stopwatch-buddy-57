@@ -136,12 +136,22 @@ export default function RelatoriosPage() {
     });
   }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
 
+  // ── NPE Weighted Records (centralized engine) ──
+  const weightedRecords = useMemo(
+    () => buildWeightedRecords(records, isExternalRecord),
+    [records, isExternalRecord]
+  );
+  const npeResult = useMemo(
+    () => computeNpeWeights(records, isExternalRecord),
+    [records, isExternalRecord]
+  );
+
   // ── Summary ──
   const summary = useMemo(() => {
     const dates = new Set<string>();
     const times = new Set<string>();
     let totalMeasurements = 0;
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       dates.add(r.data);
       times.add(r.horario);
       totalMeasurements += r.quantidade || 0;
@@ -155,10 +165,10 @@ export default function RelatoriosPage() {
       dateStart: sortedDates[0] || "",
       dateEnd: sortedDates[sortedDates.length - 1] || "",
     };
-  }, [records]);
+  }, [weightedRecords]);
 
   // ── Chart Data ──
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const totalSamples = useMemo(() => npeResult.adjustedTotal, [npeResult]);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
