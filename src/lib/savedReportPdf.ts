@@ -119,7 +119,7 @@ export function generateSavedReportPDF(report: SavedReport) {
         if (firstLine) {
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
-          doc.text(firstLine, x + doc.getTextWidth(block.prefix) + 1.5, drawY);
+          doc.text(firstLine, x + doc.getTextWidth(block.prefix) + 3, drawY);
         }
 
         drawY += 4.5;
