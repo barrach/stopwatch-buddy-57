@@ -236,7 +236,7 @@ function addChartSlide(
   slides.push(slide);
 }
 
-export function generatePPTXReport(data: PDFReportData) {
+export function generatePPTXReport(data: PPTXReportData) {
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "MEGASTEAM";
