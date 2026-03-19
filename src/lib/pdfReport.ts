@@ -513,10 +513,10 @@ export function generatePDFReport(data: PDFReportData) {
         doc.text(line, MARGIN + 6, textY);
         textY += ANALYSIS_LINE_H;
       }
-      textY += 0.8;
+      textY += 1.2;
     }
 
-    curY += boxH + 2;
+    curY += boxH + 3;
   };
 
   const drawLegend = (items: LegendItem[], x: number, y: number): number => {
