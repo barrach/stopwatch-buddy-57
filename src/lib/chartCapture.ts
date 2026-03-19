@@ -177,7 +177,7 @@ export async function captureAllCharts(
 
   for (const { mode, key } of timeModes) {
     setTimeViewMode(mode);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 800)); // Reduced from 1200ms
     const el = document.getElementById("chart-tempo");
     if (el) {
       try {
