@@ -89,7 +89,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 const C = {
   headerBg: [15, 23, 42] as RGB,
   sectionBg: [...PDF_OCEAN_RGB] as RGB,
-  sectionBgDark: [22, 59, 92] as RGB,
   white: [255, 255, 255] as RGB,
   pageBg: [255, 255, 255] as RGB,
   textDark: [31, 41, 55] as RGB,
@@ -442,7 +441,7 @@ export function generatePDFReport(data: PDFReportData) {
     const clean = normalizeTitle(title);
     if (!clean) return;
     ensureSpace(10);
-    doc.setFillColor(...C.sectionBgDark);
+    doc.setFillColor(...C.sectionBg);
     doc.roundedRect(MARGIN + 1, curY, CONTENT_W - 2, 8, 1.6, 1.6, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
@@ -698,29 +697,31 @@ export function generatePDFReport(data: PDFReportData) {
     const specDrawnLegendH = specialtyLegend.length ? drawLegend(specialtyLegend, MARGIN + CHART_W, specRowStart) : 0;
     curY = specRowStart + Math.max(specDrawnChartH, specDrawnLegendH) + 3;
 
-    // Parse specialty blocks and render each with a subHeader
+    // Parse specialty blocks and render each as an indivisible unit (header + analysis)
     const specBlocks = specText.split(/(?=Melhor\s+especialidade|Especialidade\s+(?:intermedi[aá]ria|cr[ií]tica))/i).filter((b) => b.trim());
     if (specBlocks.length > 1 || /Melhor\s+especialidade/i.test(specText)) {
       for (const block of specBlocks) {
         const headerMatch = block.match(/^(Melhor\s+especialidade|Especialidade\s+intermedi[aá]ria|Especialidade\s+cr[ií]tica)\s*:\s*(.*)$/im);
         if (headerMatch) {
-          // Standardize the header title
           let headerTitle = headerMatch[1].trim();
           headerTitle = headerTitle.replace(/intermedi[aá]ria/i, "Intermediária").replace(/cr[ií]tica/i, "Crítica");
           if (/^melhor/i.test(headerTitle)) headerTitle = "Melhor Especialidade";
           else if (/intermediária/i.test(headerTitle)) headerTitle = "Especialidade Intermediária";
           else if (/crítica/i.test(headerTitle)) headerTitle = "Especialidade Crítica";
           
-          // Extract the value part (e.g., "Elétrica (28%)") and the rest of the body
           const valuePart = headerMatch[2]?.trim() || "";
           const bodyStart = block.indexOf(headerMatch[0]) + headerMatch[0].length;
           const bodyText = block.slice(bodyStart).trim();
           
           const fullTitle = valuePart ? `${headerTitle} — ${valuePart}` : headerTitle;
+          
+          // Measure the full block (header + body) to keep it indivisible
+          const bodyH = bodyText ? measureAnalysisBox(bodyText) : 0;
+          ensureSpace(10 + bodyH);
+          
           subHeader(fullTitle);
           if (bodyText) drawAnalysisBox(bodyText);
         } else {
-          // Fallback: render as analysis box
           if (block.trim()) drawAnalysisBox(block);
         }
       }
@@ -728,17 +729,26 @@ export function generatePDFReport(data: PDFReportData) {
       drawAnalysisBox(specText);
     }
   }
+
+  // Force new page before NPE section for clean separation
+  newPage();
   renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
   renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
   renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
   renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
 
+  // Force new page for Conclusions to avoid orphan headers
+  newPage();
   sectionHeader("Conclusões e Recomendações");
   if (recommendations.length) {
     recommendations.forEach((item, index) => {
       const title = item.title || `Problema ${index + 1}`;
+      const bodyText = buildRecommendationText(item);
+      const bodyH = bodyText.trim() ? measureAnalysisBox(bodyText) : 0;
+      // Keep each problem block indivisible (header + body on same page)
+      ensureSpace(10 + bodyH);
       subHeader(`Problema Crítico ${index + 1} — ${title}`);
-      drawAnalysisBox(buildRecommendationText(item));
+      drawAnalysisBox(bodyText);
     });
   } else {
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
