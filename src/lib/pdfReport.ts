@@ -684,7 +684,50 @@ export function generatePDFReport(data: PDFReportData) {
   renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
   renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
   
-  renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
+  // Specialty section: split analysis into blocks and render specialty labels as visual headers
+  {
+    const specText = analysis.ESPECIALIDADE || "";
+    const specChartH = images.especialidade ? estimateChartHeight(dimensions, "especialidade", specialtyLegend.length ? CHART_W : CONTENT_W) : 0;
+    const specLegendH = specialtyLegend.length ? measureLegendH(specialtyLegend) : 0;
+    const specRowH = Math.max(specChartH, specLegendH);
+    ensureSpace(12 + specRowH + 3);
+
+    sectionHeader("Produtividade por Especialidade");
+    const specRowStart = curY;
+    const specDrawnChartH = images.especialidade ? drawChart(images.especialidade, "especialidade", specialtyLegend.length ? CHART_W : CONTENT_W) : 0;
+    const specDrawnLegendH = specialtyLegend.length ? drawLegend(specialtyLegend, MARGIN + CHART_W, specRowStart) : 0;
+    curY = specRowStart + Math.max(specDrawnChartH, specDrawnLegendH) + 3;
+
+    // Parse specialty blocks and render each with a subHeader
+    const specBlocks = specText.split(/(?=Melhor\s+especialidade|Especialidade\s+(?:intermedi[aá]ria|cr[ií]tica))/i).filter((b) => b.trim());
+    if (specBlocks.length > 1 || /Melhor\s+especialidade/i.test(specText)) {
+      for (const block of specBlocks) {
+        const headerMatch = block.match(/^(Melhor\s+especialidade|Especialidade\s+intermedi[aá]ria|Especialidade\s+cr[ií]tica)\s*:\s*(.*)$/im);
+        if (headerMatch) {
+          // Standardize the header title
+          let headerTitle = headerMatch[1].trim();
+          headerTitle = headerTitle.replace(/intermedi[aá]ria/i, "Intermediária").replace(/cr[ií]tica/i, "Crítica");
+          if (/^melhor/i.test(headerTitle)) headerTitle = "Melhor Especialidade";
+          else if (/intermediária/i.test(headerTitle)) headerTitle = "Especialidade Intermediária";
+          else if (/crítica/i.test(headerTitle)) headerTitle = "Especialidade Crítica";
+          
+          // Extract the value part (e.g., "Elétrica (28%)") and the rest of the body
+          const valuePart = headerMatch[2]?.trim() || "";
+          const bodyStart = block.indexOf(headerMatch[0]) + headerMatch[0].length;
+          const bodyText = block.slice(bodyStart).trim();
+          
+          const fullTitle = valuePart ? `${headerTitle} — ${valuePart}` : headerTitle;
+          subHeader(fullTitle);
+          if (bodyText) drawAnalysisBox(bodyText);
+        } else {
+          // Fallback: render as analysis box
+          if (block.trim()) drawAnalysisBox(block);
+        }
+      }
+    } else if (specText.trim()) {
+      drawAnalysisBox(specText);
+    }
+  }
   renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
   renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
   renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
