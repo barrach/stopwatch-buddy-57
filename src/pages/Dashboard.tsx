@@ -929,7 +929,7 @@ export default function Dashboard() {
       // Compute time data for all 3 modes for PDF legends
       const computeTimeData = (mode: "horario" | "diasemana" | "mes") => {
         const result: Record<string, Record<string, number>> = {};
-        records.forEach((r: any) => {
+        weightedRecords.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
           if (isExternalRecord(r) && !["Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
