@@ -11,8 +11,15 @@ export interface StyledPdfLine {
 const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
-  [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação operacional:"],
-  [/A[çc][ãa]o\s*\n\s*recomendada:/gi, "Ação recomendada:"],
+  [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação Operacional:"],
+  [/Interpreta[çc][ãa]o\s+operacional:/gi, "Interpretação Operacional:"],
+  [/Interpreta[çc][ãa]o:/gi, "Interpretação Operacional:"],
+  [/A[çc][ãa]o\s*\n\s*recomendada:/gi, "Ação Recomendada:"],
+  [/A[çc][ãa]o\s+recomendada:/gi, "Ação Recomendada:"],
+  [/Recomende:/gi, "Ação Recomendada:"],
+  [/A[çc][õo]es:/gi, "Ação Recomendada:"],
+  [/An[aá]lise\s+do\s+impacto\s+operacionalizado:/gi, "Diagnóstico:"],
+  [/Principais\s*\n\s*causas:/gi, "Principais causas:"],
   [/N[ãa]o\s*\n\s*Produtivo\s*Externo:/gi, "Não Produtivo Externo:"],
   [/N[ãa]o\s*\n\s*Produtivo:/gi, "Não Produtivo:"],
   [/Especialidade\s*\n\s*cr[ií]tica:/gi, "Especialidade crítica:"],
@@ -22,6 +29,25 @@ const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/(\d+[ªº°.]?)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
   [/([A-ZÀ-Úa-zà-ú0-9]+)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,3}:)/g, "$1 $2"],
 ];
+
+/** Strip emoji and special unicode symbols that jsPDF cannot render */
+function stripEmoji(text: string): string {
+  return text
+    // Remove common emoji ranges
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
+    .replace(/[\u{2600}-\u{27BF}]/gu, "")
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
+    .replace(/[\u{200D}]/gu, "")
+    .replace(/[\u{20E3}]/gu, "")
+    // Remove specific problematic sequences that appear as garbage in PDF
+    .replace(/Ø=Ý4/g, "Crítico")
+    .replace(/[&]\s*þ/g, "Acima do ideal")
+    .replace(/[']\s*Dentro/g, "Dentro")
+    // Ensure space after colon when followed by a letter
+    .replace(/:([A-ZÀ-Úa-zà-ú])/g, ": $1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 function repairBrokenLabels(text: string): string {
   let current = text;
@@ -61,7 +87,7 @@ export function wrapTextByWords(doc: jsPDF, text: string, maxWidth: number): str
 }
 
 export function normalizePdfParagraphs(text: string): string[] {
-  let normalized = text
+  let normalized = stripEmoji(text)
     .replace(/\r\n/g, "\n")
     .replace(/\t/g, " ")
     .replace(/\s*\|\s*/g, "\n")

@@ -156,6 +156,16 @@ function stripTags(text: string): string {
     })
     .replace(/\*\*/g, "")
     .replace(/<[^>]+>/g, "")
+    // Strip emoji/special unicode that jsPDF cannot render
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
+    .replace(/[\u{2600}-\u{27BF}]/gu, "")
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
+    .replace(/[\u{200D}]/gu, "")
+    // Fix encoding artifacts
+    .replace(/Ø=Ý4/g, "Crítico")
+    .replace(/[&]\s*þ/g, "Acima do ideal")
+    // Ensure space after colons
+    .replace(/:([A-ZÀ-Úa-zà-ú])/g, ": $1")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
