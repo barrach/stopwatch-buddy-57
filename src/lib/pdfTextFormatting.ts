@@ -104,7 +104,7 @@ export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number):
 
     const prefix = match[1].replace(/\s+/g, " ").trim();
     const body = (match[2] || "").replace(/\s+/g, " ").trim();
-    const firstLineWidth = maxWidth - doc.getTextWidth(prefix) - 1.5;
+    const firstLineWidth = maxWidth - doc.getTextWidth(prefix) - 3;
 
     if (!body) {
       return { prefix, lines: [""] };
