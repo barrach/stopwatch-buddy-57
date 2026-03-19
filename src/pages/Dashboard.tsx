@@ -868,16 +868,16 @@ export default function Dashboard() {
       return;
     }
     setIsGeneratingPDF(true);
-    toast({ title: "Capturando gráficos...", description: "Aguarde enquanto os gráficos são capturados e a IA analisa os dados." });
+    toast({ title: "Gerando análise IA...", description: "Aguarde enquanto a IA analisa os dados." });
+
+    // Timeout safety: cancel after 30s (text-only PDF is fast)
+    const timeoutId = setTimeout(() => {
+      setIsGeneratingPDF(false);
+      toast({ title: "Tempo esgotado", description: "A geração do PDF demorou demais. Tente novamente com menos dados.", variant: "destructive" });
+    }, 30000);
 
     try {
-      // 1) Capture charts from DOM
-      const { captureAllCharts } = await import("@/lib/chartCapture");
-      const { images: chartImages, dimensions: chartDimensions } = await captureAllCharts(setTimeViewMode, timeViewMode);
-
-      toast({ title: "Gerando análise IA...", description: "Os gráficos foram capturados. Gerando relatório." });
-
-      // 2) Generate AI analysis
+      // 1) Generate AI analysis (no DOM capture needed)
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       let aiText = "";
@@ -914,9 +914,7 @@ export default function Dashboard() {
         }
       }
 
-      // 3) Generate PDF
-      const { generatePDFReport } = await import("@/lib/pdfReport");
-      // Compute time data for all 3 modes for PDF legends
+      // 2) Compute time data for all 3 modes
       const computeTimeData = (mode: "horario" | "diasemana" | "mes") => {
         const result: Record<string, Record<string, number>> = {};
         records.forEach((r: any) => {
@@ -957,7 +955,10 @@ export default function Dashboard() {
         });
       };
 
-      generatePDFReport({
+      // 3) Generate PDF (pure jsPDF — no html2canvas, no DOM)
+      toast({ title: "Montando PDF...", description: "Gerando o documento final." });
+      const { generatePDFReport } = await import("@/lib/pdfReport");
+      await generatePDFReport({
         periodo: aiStats.periodo,
         obra: aiStats.obra,
         totalAmostras: aiStats.totalAmostras,
@@ -979,14 +980,14 @@ export default function Dashboard() {
         externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
-        chartImages,
-        chartDimensions,
+        onProgress: (step) => toast({ title: step }),
       });
 
       toast({ title: "PDF gerado!", description: "O relatório foi baixado com sucesso." });
     } catch (e: any) {
       toast({ title: "Erro ao gerar PDF", description: e.message, variant: "destructive" });
     } finally {
+      clearTimeout(timeoutId);
       setIsGeneratingPDF(false);
     }
   };
