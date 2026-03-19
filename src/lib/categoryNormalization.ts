@@ -3,7 +3,11 @@ export const LEGACY_DESCRIPTION_MAP: Record<string, string> = {
   "Aguardando movimentação de carga": "Assistindo / Stand By",
   "Assistindo": "Assistindo / Stand By",
   "Causas Naturais": "Fatores Climáticos e Consequências",
+  "Causas Naturais / Clima": "Fatores Climáticos e Consequências",
+  "Causas naturais": "Fatores Climáticos e Consequências",
   "Vazamento / Interferência da Planta": "Interferências Operacionais",
+  "Vazamento/Interferência": "Interferências Operacionais",
+  "Vazamento / Interferência": "Interferências Operacionais",
 };
 
 export const HIDDEN_LEGACY_DESCRIPTION_NAMES = new Set(Object.keys(LEGACY_DESCRIPTION_MAP));
