@@ -21,7 +21,6 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
-import { computeNpeWeights, buildWeightedRecords } from "@/lib/npeEngine";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
@@ -136,22 +135,12 @@ export default function RelatoriosPage() {
     });
   }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
 
-  // ── NPE Weighted Records (centralized engine) ──
-  const weightedRecords = useMemo(
-    () => buildWeightedRecords(records, isExternalRecord),
-    [records, isExternalRecord]
-  );
-  const npeResult = useMemo(
-    () => computeNpeWeights(records, isExternalRecord),
-    [records, isExternalRecord]
-  );
-
   // ── Summary ──
   const summary = useMemo(() => {
     const dates = new Set<string>();
     const times = new Set<string>();
     let totalMeasurements = 0;
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       dates.add(r.data);
       times.add(r.horario);
       totalMeasurements += r.quantidade || 0;
@@ -165,14 +154,14 @@ export default function RelatoriosPage() {
       dateStart: sortedDates[0] || "",
       dateEnd: sortedDates[sortedDates.length - 1] || "",
     };
-  }, [weightedRecords]);
+  }, [records]);
 
   // ── Chart Data ──
-  const totalSamples = useMemo(() => npeResult.adjustedTotal, [npeResult]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
@@ -184,11 +173,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [weightedRecords]);
+  }, [records]);
 
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
@@ -202,11 +191,11 @@ export default function RelatoriosPage() {
         for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
         return row;
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [weightedRecords]);
+  }, [records]);
 
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "horario");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -219,11 +208,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [weightedRecords]);
+  }, [records]);
 
   const byDiaSemana = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "diasemana");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -236,11 +225,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [weightedRecords]);
+  }, [records]);
 
   const byMes = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "mes");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -253,11 +242,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [weightedRecords]);
+  }, [records]);
 
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -271,11 +260,11 @@ export default function RelatoriosPage() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [weightedRecords, totalSamples]);
+  }, [records, totalSamples]);
 
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
@@ -286,7 +275,7 @@ export default function RelatoriosPage() {
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
     }));
-  }, [weightedRecords, isExternalRecord]);
+  }, [records, isExternalRecord]);
 
   // ── Validation & generation ──
   const handleGenerate = () => {

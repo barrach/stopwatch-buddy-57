@@ -21,7 +21,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
-import { computeNpeWeights, buildWeightedRecords } from "@/lib/npeEngine";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -559,8 +558,8 @@ export default function Dashboard() {
   }, [baseRecords, crossFilters, getParentCatName]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
-  const totalSamplesRaw = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
-  const externalCountRaw = useMemo(
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const externalCount = useMemo(
     () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, isExternalRecord]
   );
@@ -576,20 +575,6 @@ export default function Dashboard() {
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
-
-  // ── NPE Weighted Calculation (centralized engine) ───────────
-  const npeResult = useMemo(
-    () => computeNpeWeights(records, isExternalRecord),
-    [records, isExternalRecord]
-  );
-  const { weightedNpe: externalCount, adjustedTotal: totalSamples } = npeResult;
-
-  // Build virtual records with weighted NPE quantities for all charts
-  const weightedRecords = useMemo(
-    () => buildWeightedRecords(records, isExternalRecord),
-    [records, isExternalRecord]
-  );
-
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
@@ -612,12 +597,12 @@ export default function Dashboard() {
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
     });
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [weightedRecords, getParentCatName]);
+  }, [records, getParentCatName]);
 
   // External causes chart data — includes NPE + "Aguardando Liberação de PT" (Suplementar, shown for operational visibility)
   const externalCausas = useMemo(() => {
@@ -625,7 +610,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = {};
     const hoursSet: Record<string, Set<string>> = {};
     const totalHoursSet = new Set<string>();
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
@@ -645,13 +630,13 @@ export default function Dashboard() {
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
       _totalHours: totalHoursSet.size,
     }));
-  }, [weightedRecords, isExternalRecord]);
+  }, [records, isExternalRecord]);
 
 
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
   const nonprodCausas = useMemo(() => {
     const totals: Record<string, { value: number; cat: string }> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (cat !== "Não Produtivo" && cat !== "Suplementar") return;
       const desc = r.descricao || "Sem descrição";
@@ -671,12 +656,12 @@ export default function Dashboard() {
         cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
       };
     });
-  }, [weightedRecords, getParentCatName]);
+  }, [records, getParentCatName]);
 
   // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const key = canonicalDescription(r.descricao || "Sem descrição");
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -693,7 +678,7 @@ export default function Dashboard() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [weightedRecords, totalSamples]);
+  }, [records, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
@@ -707,7 +692,7 @@ export default function Dashboard() {
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) {
         result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -734,7 +719,7 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
-  }, [weightedRecords]);
+  }, [records]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
@@ -752,7 +737,9 @@ export default function Dashboard() {
   // By Specialty — description-level breakdown, sorted by "Trabalhando" (productivity) desc
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
+      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
+      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -776,13 +763,16 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [weightedRecords]);
+  }, [records, isExternalRecord]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
+      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
+      // Allow all NPE descriptions through
+
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
 
@@ -816,7 +806,7 @@ export default function Dashboard() {
       }
       return row;
     });
-  }, [weightedRecords, timeViewMode]);
+  }, [records, isExternalRecord, timeViewMode]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
@@ -929,7 +919,7 @@ export default function Dashboard() {
       // Compute time data for all 3 modes for PDF legends
       const computeTimeData = (mode: "horario" | "diasemana" | "mes") => {
         const result: Record<string, Record<string, number>> = {};
-        weightedRecords.forEach((r: any) => {
+        records.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
           if (isExternalRecord(r) && !["Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
@@ -1099,7 +1089,7 @@ export default function Dashboard() {
     const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const qty = r.quantidade || 0;
       total += qty;
       const cat = getParentCatName(r);
@@ -1167,7 +1157,7 @@ export default function Dashboard() {
     // Each specialty row has description-level % (e.g. "Trabalhando": 25.5)
     // We derive Produtivo = Trabalhando + Planejando, matching the chart exactly
     const espChartData: Record<string, Record<string, number>> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
@@ -1203,7 +1193,7 @@ export default function Dashboard() {
 
     // topCategorias excludes NPE descriptions for the AI report
     const controlDescriptions: Record<string, number> = {};
-    weightedRecords.forEach((r: any) => {
+    records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       controlDescriptions[desc] = (controlDescriptions[desc] || 0) + (r.quantidade || 0);
@@ -1215,7 +1205,7 @@ export default function Dashboard() {
     const causasExternas = Object.entries(byCat)
       .filter(([nome]) => {
         // Only external descriptions
-        return weightedRecords.some((r: any) => r.descricao === nome && isExternalRecord(r));
+        return records.some((r: any) => r.descricao === nome && isExternalRecord(r));
       })
       .sort(([, a], [, b]) => b - a)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`)
@@ -1498,7 +1488,7 @@ export default function Dashboard() {
 
         {/* 7) Strategic KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-6 md:mb-8">
-          <StatCard title="Total de Amostras" value={totalSamplesRaw} icon={Users} />
+          <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
           <StatCard title="Suplementar" value={`${supplementaryPercent}%`} icon={Clock} variant="warning" />
           <StatCard title="Não Produtivo" value={`${unproductivePercent}%`} icon={AlertTriangle} variant="danger" />
