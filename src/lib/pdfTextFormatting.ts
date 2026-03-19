@@ -45,6 +45,7 @@ function enforceSpecialtyStructure(text: string): string {
     /([^\n])(Diagn[oó]stico\s*:)/gi,
     /([^\n])(Interpreta[çc][ãa]o\s*(?:[Oo]peracional)?\s*:)/gi,
     /([^\n])(A[çc][ãa]o\s*[Rr]ecomendada\s*:)/gi,
+    /([^\n])(Recomenda[çc][ãa]o\s*:)/gi,
   ];
 
   for (const pattern of forceBreakBefore) {
