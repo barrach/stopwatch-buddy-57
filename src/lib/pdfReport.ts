@@ -425,6 +425,10 @@ export async function generatePDFReport(data: PDFReportData) {
   const monthBlocks = sortBlocks(parseTimedBlocks(analysis.MES || "", "MES"), MONTH_ORDER);
 
   let curY = MARGIN;
+  let sectionCount = 0;
+
+  // Yield to main thread periodically to prevent UI freeze
+  const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
 
   const newPage = () => {
     doc.addPage("a4", "portrait");
