@@ -1075,7 +1075,7 @@ export default function Dashboard() {
         byObra,
         bySpecialty,
         nonprodCausas,
-        externalCausas: externalCausas.filter((c: any) => c.name !== "Aguardando Liberação de PT"),
+        externalCausas,
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
