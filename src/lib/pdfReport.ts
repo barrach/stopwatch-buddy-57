@@ -623,14 +623,13 @@ export function generatePDFReport(data: PDFReportData) {
     }
   };
 
-  const buildRecommendationText = (item: RecommendationBlock, index: number) => {
+  const buildRecommendationText = (item: RecommendationBlock) => {
     const lines = [
-      item.title ? `Problema crítico ${index + 1}: ${item.title}` : "",
-      item.problema ? `1. Diagnóstico: ${item.problema}` : "",
-      item.causa ? `2. Interpretação operacional: ${item.causa}` : "",
-      item.acao ? `3. Ação recomendada: ${item.acao}` : "",
-      item.responsavel ? `4. Responsável: ${item.responsavel}` : "",
-      item.impacto ? `5. Impacto esperado: ${item.impacto}` : "",
+      item.problema ? `Diagnóstico: ${item.problema}` : "",
+      item.causa ? `Interpretação Operacional: ${item.causa}` : "",
+      item.acao ? `Ação Recomendada: ${item.acao}` : "",
+      item.responsavel ? `Responsável: ${item.responsavel}` : "",
+      item.impacto ? `Impacto Esperado: ${item.impacto}` : "",
     ].filter(Boolean);
     return lines.join("\n");
   };
