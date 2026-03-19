@@ -29,7 +29,7 @@ Categorias e critérios detalhados:
   • Planejando: Efetuando medições, analisando desenhos/croquis, fazendo levantamento de materiais, dando/recebendo instruções do técnico/supervisor, realizando DDS ou elaborando APR.
 - Suplementar:
   • Aguardando Instruções: Detecta-se através de perguntas (pode ou não estar no local de trabalho).
-  • Aguardando Movimentação de Carga: Esperando vez na equipe, aguardando movimentação de máquinas, apoio stand-by.
+  • Assistindo / Stand By: Esperando vez na equipe, aguardando movimentação de máquinas, apoio stand-by ou revezamento.
   • Aguardando Ferramenta ou Material: Recebendo/entregando ferramentas, no almoxarifado/ferramentaria, aguardando guindaste/caminhão/apoio.
   • Aguardando Liberação de PT: Solicitando/devolvendo PT, aguardando emissão de PT ou manobra de liberação.
   • Transitando no local de trabalho - com ferramenta: Deslocando-se dentro da Unidade/Oficinas, portando ferramentas.
