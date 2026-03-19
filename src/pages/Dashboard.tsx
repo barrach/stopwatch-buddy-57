@@ -976,7 +976,7 @@ export default function Dashboard() {
         byTimeDiaSemana: computeTimeData("diasemana"),
         byTimeMes: computeTimeData("mes"),
         nonprodCausas,
-        externalCausas,
+        externalCausas: externalCausas.filter((c: any) => c.name !== "Aguardando Liberação de PT"),
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
