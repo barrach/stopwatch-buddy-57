@@ -148,11 +148,50 @@ Estrutura obrigatória:
 - Recomende: "A redução combinada de atividades suplementares e não produtivas poderia elevar o índice de produtividade global para patamares próximos de X%."
 
 ===PARETO===
-Análise do Pareto por categorias. Identifique obrigatoriamente:
-- 1ª principal causa e seu % de impacto
-- 2ª causa e seu %
-- 3ª causa e seu %
-Interprete o impacto operacional de cada causa e sugira ações corretivas específicas.
+Análise do Pareto por categorias — CADA CAUSA DEVE SER UM BLOCO SEPARADO com a estrutura abaixo.
+Identifique obrigatoriamente as 3 principais causas de perda e apresente cada uma como bloco individual:
+
+Formato OBRIGATÓRIO para cada causa:
+
+1ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto objetivo explicando o que os dados mostram sobre esta causa.]
+
+Interpretação Operacional:
+[Explicação do impacto real no campo e na produção. O que essa causa significa operacionalmente.]
+
+Ação Recomendada:
+[Ação prática, direta e aplicável para mitigar ou eliminar essa causa.]
+
+2ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto objetivo.]
+
+Interpretação Operacional:
+[Impacto operacional.]
+
+Ação Recomendada:
+[Ação prática.]
+
+3ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto objetivo.]
+
+Interpretação Operacional:
+[Impacto operacional.]
+
+Ação Recomendada:
+[Ação prática.]
+
+REGRAS:
+- NUNCA gerar texto corrido misturando múltiplas causas no mesmo parágrafo.
+- SEMPRE inserir quebra de linha após "Diagnóstico:", "Interpretação Operacional:" e "Ação Recomendada:".
+- SEMPRE separar cada causa com uma linha em branco.
+- Manter linguagem técnica e executiva.
+- NUNCA usar números absolutos de amostras, apenas percentuais.
 
 ===PARETO_ESPECIALIDADE===
 Análise do Pareto por especialidades. Compare cada especialidade pelo % de produtividade em relação à média geral. Identifique gargalos e motores de produtividade.
