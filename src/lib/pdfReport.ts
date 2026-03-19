@@ -737,12 +737,18 @@ export function generatePDFReport(data: PDFReportData) {
   renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
   renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
 
+  // Force new page for Conclusions to avoid orphan headers
+  newPage();
   sectionHeader("Conclusões e Recomendações");
   if (recommendations.length) {
     recommendations.forEach((item, index) => {
       const title = item.title || `Problema ${index + 1}`;
+      const bodyText = buildRecommendationText(item);
+      const bodyH = bodyText.trim() ? measureAnalysisBox(bodyText) : 0;
+      // Keep each problem block indivisible (header + body on same page)
+      ensureSpace(10 + bodyH);
       subHeader(`Problema Crítico ${index + 1} — ${title}`);
-      drawAnalysisBox(buildRecommendationText(item));
+      drawAnalysisBox(bodyText);
     });
   } else {
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
