@@ -308,26 +308,37 @@ Problema 2 — [Nome curto]
 
 IMPORTANTE: Ordenar os problemas do MAIOR impacto na produtividade para o menor. Cada bloco DEVE ser claramente separado com "Problema N — Título".
 
-IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
+IMPORTANTE: Cada seção deve ter análise substantiva (3-6 frases). Use linguagem técnica e profissional de engenharia industrial. Foque SEMPRE em PERCENTUAIS. NUNCA mencione "amostras", "registros" ou "ocorrências".
+NUNCA use emojis ou caracteres especiais. Use SOMENTE texto puro para classificações.
+Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
+NUNCA use variações como "Recomende:", "Interpretação:", "Ações:", "Análise do impacto operacionalizado:".
+"Trabalhando" e "Planejando" NAO sao causas de parada no Pareto.` : `INÍCIO OBRIGATÓRIO — Antes de qualquer seção, apresente o DIAGNÓSTICO COMPARATIVO com a tabela de referência:
 
 ## Diagnóstico Comparativo (Real vs Ideal)
-- **Produtivo**: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) → classificação
-- **Suplementar**: X% (Ideal: ≤32%) → classificação
-- **Não Produtivo**: X% (Ideal: ≤3%) → classificação
-- **NPE (Externo)**: X% (Ideal: 0%) → classificação
+- Produtivo: X% (Ideal: 65% = Trabalhando 60% + Planejando 5%) - classificação
+- Suplementar: X% (Ideal: 32% max) - classificação
+- Não Produtivo: X% (Ideal: 3% max) - classificação
+- NPE (Externo): X% (Ideal: 0%) - classificação
 
-Classificações: ✅ Dentro do ideal | ⚠️ Acima/Abaixo do ideal | 🔴 Crítico
+Classificações (SEM EMOJI, texto puro): Dentro do ideal | Acima do ideal | Abaixo do ideal | Crítico
 
 Depois do diagnóstico, estruture o relatório com:
 1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
 2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
-3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
+3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação Operacional + Ação Recomendada)
 4. **Análise por Especialidade** (use EXATAMENTE os % fornecidos em "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. Formato: Melhor especialidade: / Especialidade intermediária: / Especialidade crítica:)
 5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
 6. **Causas Externas** (impacto % do NPE e ações de mitigação)
-7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
+7. **Recomendações** (5 ações no formato: Problema - Causa - Ação - Responsável - Impacto esperado)
 
-REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação operacional + Ação recomendada.`}
+REGRAS DE FORMATAÇÃO OBRIGATÓRIAS:
+- NUNCA use emojis ou caracteres especiais. Use SOMENTE texto puro.
+- SEMPRE coloque espaço após ":" e quebra de linha entre blocos.
+- Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
+- NUNCA use variações como "Recomende:", "Interpretação:", "Ações:".
+- "Trabalhando" e "Planejando" NAO sao causas de parada no Pareto.
+
+REGRA CRÍTICA: Cada categoria DEVE ser analisada INDIVIDUALMENTE. PROIBIDO agrupar (ex: "Produtivo + Suplementar"). NUNCA mencione "amostras", "registros" ou "ocorrências". Use SOMENTE percentuais. Cada análise deve ter: Diagnóstico + Interpretação Operacional + Ação Recomendada.`}
 
 Use linguagem técnica, objetiva e profissional de engenharia industrial. Seja preciso com os percentuais. Não invente dados. SEMPRE priorize a análise por % de produtividade. NUNCA mencione números absolutos de amostras. Cada análise deve conter obrigatoriamente: Diagnóstico + Interpretação operacional + Ação recomendada.`;
 
