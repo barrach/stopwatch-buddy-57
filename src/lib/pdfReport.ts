@@ -606,8 +606,10 @@ export async function generatePDFReport(data: PDFReportData) {
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  const renderParetoBlock = (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
+  const renderParetoBlock = async (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
     if (!image && !analysisText?.trim()) return;
+    await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, CONTENT_W) : 0;
     const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
     ensureSpace(12 + chartH + 3 + analysisH);
