@@ -343,7 +343,7 @@ Depois do diagnóstico, estruture o relatório com:
 1. **Interpretação do Cenário** (o que o diagnóstico significa operacionalmente — 3-4 frases)
 2. **Indicadores Principais** (produtividade%, suplementar%, não produtivo%, NPE% — cada um comparado à faixa ideal)
 3. **Pontos de Atenção** (problemas por baixo % de produtividade — com Diagnóstico + Interpretação + Ação)
-4. **Análise por Especialidade** (use EXATAMENTE os % fornecidos em "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. Formato: Melhor especialidade: / Especialidade intermediária: / Especialidade crítica:)
+4. **Análise por Especialidade** (use EXATAMENTE os % fornecidos em "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. Cada especialidade em BLOCO SEPARADO: "Melhor especialidade:" / "Especialidade intermediária:" / "Especialidade crítica:" seguidos de Diagnóstico: + Interpretação Operacional: + Ação Recomendada: em linhas separadas. PROIBIDO colchetes ou texto inline.)
 5. **Causas de Não Produtividade** (ranking de causas por % com plano de ação)
 6. **Causas Externas** (impacto % do NPE e ações de mitigação)
 7. **Recomendações** (5 ações no formato: Problema → Causa → Ação → Responsável → Impacto esperado)
