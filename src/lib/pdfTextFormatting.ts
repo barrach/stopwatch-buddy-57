@@ -222,5 +222,12 @@ export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number):
 }
 
 export function countStyledPdfLines(blocks: StyledPdfLine[]): number {
-  return blocks.reduce((total, block) => total + Math.max(1, block.lines.length || 0), 0);
+  return blocks.reduce((total, block) => {
+    let lines = Math.max(1, block.lines.length || 0);
+    // Account for extra spacing before specialty-level labels
+    if (block.prefix && /^(Melhor especialidade|Especialidade (crítica|intermediária)):/i.test(block.prefix)) {
+      lines += 1; // ~3mm extra ≈ 1 line equivalent
+    }
+    return total + lines;
+  }, 0);
 }
