@@ -128,6 +128,12 @@ export function normalizePdfParagraphs(text: string): string[] {
 
 export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number): StyledPdfLine[] {
   return normalizePdfParagraphs(text).map((paragraph) => {
+    // Pareto cause title — render entirely as bold prefix on its own line
+    const paretoMatch = paragraph.match(PARETO_CAUSE_RE);
+    if (paretoMatch) {
+      return { prefix: paragraph, lines: [""] };
+    }
+
     const match = paragraph.match(LABEL_LINE_RE);
     if (!match) {
       return { lines: wrapTextByWords(doc, paragraph, maxWidth) };
