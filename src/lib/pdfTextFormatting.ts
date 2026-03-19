@@ -29,7 +29,9 @@ const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/Especialidade\s*\n\s*intermedi[aá]ria:/gi, "Especialidade intermediária:"],
   [/Melhor\s*\n\s*especialidade:/gi, "Melhor especialidade:"],
   [/Recomenda[çc][õo]es:/gi, "Recomendações:"],
-  [/(\d+[ªº°.]?)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
+  [/(\d+[ªº°.])\s*[Pp]rincipal\s*\n\s*[Cc]ausa\s+de\s+[Pp]erda:/gi, "$1 Principal Causa de Perda:"],
+  [/(\d+[ªº°.]?\s*)[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*([A-ZÀ-Ú])/g, "$1 Principal Causa de Perda: $2"],
+  [/(\d+[ªº°.])\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
   [/([A-ZÀ-Úa-zà-ú0-9]+)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,3}:)/g, "$1 $2"],
 ];
 
