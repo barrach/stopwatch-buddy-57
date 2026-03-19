@@ -782,10 +782,7 @@ export default function Dashboard() {
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
-
+    weightedRecords.forEach((r: any) => {
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
 
@@ -819,7 +816,7 @@ export default function Dashboard() {
       }
       return row;
     });
-  }, [records, isExternalRecord, timeViewMode]);
+  }, [weightedRecords, timeViewMode]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
