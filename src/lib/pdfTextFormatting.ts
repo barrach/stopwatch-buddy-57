@@ -23,8 +23,35 @@ function sanitizeText(text: string): string {
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
     // Remove isolated non-printable / control chars but keep accented chars
     .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u024F\u1E00-\u1EFF\n\r\t]/g, "")
+    // Remove brackets wrapping analysis text: [Diagnóstico: ...] → Diagnóstico: ...
+    .replace(/\[([^\]]{10,})\]/g, "$1")
     // Clean up leftover double spaces from removals
     .replace(/ {2,}/g, " ");
+}
+
+/**
+ * Pre-process specialty analysis text to enforce structured block layout.
+ * Ensures "Melhor especialidade:", "Especialidade intermediária:", "Especialidade crítica:",
+ * "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:" each start on their own line.
+ */
+function enforceSpecialtyStructure(text: string): string {
+  let result = text;
+
+  // Force line break before specialty labels and analysis labels when they appear inline
+  const forceBreakBefore = [
+    /([^\n])(Melhor\s+especialidade\s*:)/gi,
+    /([^\n])(Especialidade\s+intermedi[aá]ria\s*:)/gi,
+    /([^\n])(Especialidade\s+cr[ií]tica\s*:)/gi,
+    /([^\n])(Diagn[oó]stico\s*:)/gi,
+    /([^\n])(Interpreta[çc][ãa]o\s*(?:[Oo]peracional)?\s*:)/gi,
+    /([^\n])(A[çc][ãa]o\s*[Rr]ecomendada\s*:)/gi,
+  ];
+
+  for (const pattern of forceBreakBefore) {
+    result = result.replace(pattern, "$1\n$2");
+  }
+
+  return result;
 }
 
 // ── Label standardization ─────────────────────────────────────
