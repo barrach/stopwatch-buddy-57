@@ -111,25 +111,21 @@ export function generateSavedReportPDF(report: SavedReport) {
 
     for (const block of blocks) {
       if (block.prefix) {
+        // Render label on its own line
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...PDF_OCEAN_RGB);
         doc.text(block.prefix, x, drawY);
-
-        const firstLine = block.lines[0] || "";
-        if (firstLine) {
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...C.textDark);
-          doc.text(firstLine, x + doc.getTextWidth(block.prefix) + 3, drawY);
-        }
-
         drawY += 4.5;
-        for (const continuation of block.lines.slice(1)) {
+
+        // Render body lines below the label
+        for (const line of block.lines) {
+          if (!line) continue; // skip empty placeholder lines
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
-          doc.text(continuation, x, drawY);
+          doc.text(line, x, drawY);
           drawY += 4.5;
         }
-        drawY += 0.8;
+        drawY += 1.5; // extra spacing between blocks
         continue;
       }
 

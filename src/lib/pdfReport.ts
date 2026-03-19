@@ -481,25 +481,21 @@ export function generatePDFReport(data: PDFReportData) {
 
     for (const block of blocks) {
       if (block.prefix) {
+        // Render label on its own line
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...C.blue);
         doc.text(block.prefix, MARGIN + 6, textY);
-
-        const firstLine = block.lines[0] || "";
-        if (firstLine) {
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...C.textDark);
-          doc.text(firstLine, MARGIN + 6 + doc.getTextWidth(block.prefix) + 1.5, textY);
-        }
-
         textY += ANALYSIS_LINE_H;
-        for (const continuation of block.lines.slice(1)) {
+
+        // Render body lines below the label
+        for (const line of block.lines) {
+          if (!line) continue; // skip empty placeholder lines
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...C.textDark);
-          doc.text(continuation, MARGIN + 6, textY);
+          doc.text(line, MARGIN + 6, textY);
           textY += ANALYSIS_LINE_H;
         }
-        textY += 0.8;
+        textY += 1.5; // extra spacing between blocks
         continue;
       }
 
