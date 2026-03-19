@@ -1215,7 +1215,7 @@ export default function Dashboard() {
     const causasExternas = Object.entries(byCat)
       .filter(([nome]) => {
         // Only external descriptions
-        return records.some((r: any) => r.descricao === nome && isExternalRecord(r));
+        return weightedRecords.some((r: any) => r.descricao === nome && isExternalRecord(r));
       })
       .sort(([, a], [, b]) => b - a)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`)
