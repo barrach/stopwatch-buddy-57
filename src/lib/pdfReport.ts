@@ -574,7 +574,7 @@ export async function generatePDFReport(data: PDFReportData) {
 
   const drawStackedChart = (chartData: StackedBarData[], xKey: string, legend: LegendItem[], hasLegend: boolean) => {
     const chartWidth = hasLegend ? CHART_W : CONTENT_W;
-    drawStackedBarChart(doc, chartData, MARGIN, curY, chartWidth, CHART_H, xKey, [...STACK_ORDER_FULL]);
+    drawStackedBarChart(doc, chartData, xKey, [...STACK_ORDER_FULL], MARGIN, curY, chartWidth, CHART_H);
     const legendH = hasLegend ? drawLegend(legend, MARGIN + CHART_W, curY) : 0;
     curY += Math.max(CHART_H, legendH) + 3;
   };
