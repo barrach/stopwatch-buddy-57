@@ -558,8 +558,8 @@ export default function Dashboard() {
   }, [baseRecords, crossFilters, getParentCatName]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
-  const externalCount = useMemo(
+  const totalSamplesRaw = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const externalCountRaw = useMemo(
     () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, isExternalRecord]
   );
@@ -575,6 +575,65 @@ export default function Dashboard() {
     () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
     [records, getParentCatName]
   );
+
+  // ── NPE Weighted Calculation ──────────────────────────────────
+  // Group records by period (date+horario), classify each period as NPE or valid
+  // media_dia = average samples per valid (non-NPE) period
+  // weighted NPE = media_dia × number of NPE periods
+  const { externalCount, totalSamples } = useMemo(() => {
+    // Group records by period key (date + horario)
+    const periodMap: Record<string, { npe: number; nonNpe: number; total: number }> = {};
+    records.forEach((r: any) => {
+      const key = `${r.data}_${r.horario}`;
+      if (!periodMap[key]) periodMap[key] = { npe: 0, nonNpe: 0, total: 0 };
+      const qty = r.quantidade || 0;
+      periodMap[key].total += qty;
+      if (isExternalRecord(r)) {
+        periodMap[key].npe += qty;
+      } else {
+        periodMap[key].nonNpe += qty;
+      }
+    });
+
+    // Classify periods: a period is "NPE" if ALL its samples are NPE
+    // A period is "valid" if it has any non-NPE samples
+    let validPeriodCount = 0;
+    let validPeriodSamples = 0;
+    let npePeriodCount = 0;
+
+    Object.values(periodMap).forEach((p) => {
+      if (p.nonNpe > 0) {
+        // Valid period (has non-NPE production)
+        validPeriodCount++;
+        validPeriodSamples += p.nonNpe;
+      } else if (p.npe > 0) {
+        // Pure NPE period
+        npePeriodCount++;
+      }
+    });
+
+    // Calculate media_dia (average samples per valid period)
+    let mediaDia: number;
+    if (validPeriodCount > 0) {
+      mediaDia = validPeriodSamples / validPeriodCount;
+    } else {
+      // Fallback: no valid periods — use raw NPE count (prevents division by zero)
+      mediaDia = externalCountRaw > 0 && npePeriodCount > 0 ? externalCountRaw / npePeriodCount : 0;
+    }
+
+    // Weighted NPE = average non-NPE period samples × number of NPE periods
+    const weightedNpe = Math.round(mediaDia * npePeriodCount);
+
+    // Total samples = non-NPE raw + weighted NPE
+    const nonNpeRaw = totalSamplesRaw - externalCountRaw;
+    const adjustedTotal = nonNpeRaw + weightedNpe;
+
+    return {
+      externalCount: weightedNpe,
+      totalSamples: adjustedTotal > 0 ? adjustedTotal : totalSamplesRaw,
+    };
+  }, [records, isExternalRecord, totalSamplesRaw, externalCountRaw]);
+
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
@@ -1488,7 +1547,7 @@ export default function Dashboard() {
 
         {/* 7) Strategic KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-6 md:mb-8">
-          <StatCard title="Total de Amostras" value={totalSamples} icon={Users} />
+          <StatCard title="Total de Amostras" value={totalSamplesRaw} icon={Users} />
           <StatCard title="Produtividade" value={`${productivePercent}%`} icon={TrendingUp} variant="success" />
           <StatCard title="Suplementar" value={`${supplementaryPercent}%`} icon={Clock} variant="warning" />
           <StatCard title="Não Produtivo" value={`${unproductivePercent}%`} icon={AlertTriangle} variant="danger" />
