@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
+import { computeNpeWeights, buildWeightedRecords } from "@/lib/npeEngine";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -576,63 +577,18 @@ export default function Dashboard() {
     [records, getParentCatName]
   );
 
-  // ── NPE Weighted Calculation ──────────────────────────────────
-  // Group records by period (date+horario), classify each period as NPE or valid
-  // media_dia = average samples per valid (non-NPE) period
-  // weighted NPE = media_dia × number of NPE periods
-  const { externalCount, totalSamples } = useMemo(() => {
-    // Group records by period key (date + horario)
-    const periodMap: Record<string, { npe: number; nonNpe: number; total: number }> = {};
-    records.forEach((r: any) => {
-      const key = `${r.data}_${r.horario}`;
-      if (!periodMap[key]) periodMap[key] = { npe: 0, nonNpe: 0, total: 0 };
-      const qty = r.quantidade || 0;
-      periodMap[key].total += qty;
-      if (isExternalRecord(r)) {
-        periodMap[key].npe += qty;
-      } else {
-        periodMap[key].nonNpe += qty;
-      }
-    });
+  // ── NPE Weighted Calculation (centralized engine) ───────────
+  const npeResult = useMemo(
+    () => computeNpeWeights(records, isExternalRecord),
+    [records, isExternalRecord]
+  );
+  const { weightedNpe: externalCount, adjustedTotal: totalSamples } = npeResult;
 
-    // Classify periods: a period is "NPE" if ALL its samples are NPE
-    // A period is "valid" if it has any non-NPE samples
-    let validPeriodCount = 0;
-    let validPeriodSamples = 0;
-    let npePeriodCount = 0;
-
-    Object.values(periodMap).forEach((p) => {
-      if (p.nonNpe > 0) {
-        // Valid period (has non-NPE production)
-        validPeriodCount++;
-        validPeriodSamples += p.nonNpe;
-      } else if (p.npe > 0) {
-        // Pure NPE period
-        npePeriodCount++;
-      }
-    });
-
-    // Calculate media_dia (average samples per valid period)
-    let mediaDia: number;
-    if (validPeriodCount > 0) {
-      mediaDia = validPeriodSamples / validPeriodCount;
-    } else {
-      // Fallback: no valid periods — use raw NPE count (prevents division by zero)
-      mediaDia = externalCountRaw > 0 && npePeriodCount > 0 ? externalCountRaw / npePeriodCount : 0;
-    }
-
-    // Weighted NPE = average non-NPE period samples × number of NPE periods
-    const weightedNpe = Math.round(mediaDia * npePeriodCount);
-
-    // Total samples = non-NPE raw + weighted NPE
-    const nonNpeRaw = totalSamplesRaw - externalCountRaw;
-    const adjustedTotal = nonNpeRaw + weightedNpe;
-
-    return {
-      externalCount: weightedNpe,
-      totalSamples: adjustedTotal > 0 ? adjustedTotal : totalSamplesRaw,
-    };
-  }, [records, isExternalRecord, totalSamplesRaw, externalCountRaw]);
+  // Build virtual records with weighted NPE quantities for all charts
+  const weightedRecords = useMemo(
+    () => buildWeightedRecords(records, isExternalRecord),
+    [records, isExternalRecord]
+  );
 
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
@@ -656,12 +612,12 @@ export default function Dashboard() {
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
     });
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [records, getParentCatName]);
+  }, [weightedRecords, getParentCatName]);
 
   // External causes chart data — includes NPE + "Aguardando Liberação de PT" (Suplementar, shown for operational visibility)
   const externalCausas = useMemo(() => {
@@ -669,7 +625,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = {};
     const hoursSet: Record<string, Set<string>> = {};
     const totalHoursSet = new Set<string>();
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
@@ -689,13 +645,13 @@ export default function Dashboard() {
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
       _totalHours: totalHoursSet.size,
     }));
-  }, [records, isExternalRecord]);
+  }, [weightedRecords, isExternalRecord]);
 
 
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
   const nonprodCausas = useMemo(() => {
     const totals: Record<string, { value: number; cat: string }> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (cat !== "Não Produtivo" && cat !== "Suplementar") return;
       const desc = r.descricao || "Sem descrição";
@@ -715,12 +671,12 @@ export default function Dashboard() {
         cumPercent: total > 0 ? +((cumulative / total) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, getParentCatName]);
+  }, [weightedRecords, getParentCatName]);
 
   // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = canonicalDescription(r.descricao || "Sem descrição");
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -737,7 +693,7 @@ export default function Dashboard() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, totalSamples]);
+  }, [weightedRecords, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
@@ -751,7 +707,7 @@ export default function Dashboard() {
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) {
         result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -778,7 +734,7 @@ export default function Dashboard() {
         const bProd = b["Trabalhando"] || 0;
         return bProd - aProd;
       });
-  }, [records]);
+  }, [weightedRecords]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
@@ -796,9 +752,7 @@ export default function Dashboard() {
   // By Specialty — description-level breakdown, sorted by "Trabalhando" (productivity) desc
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
+    weightedRecords.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
@@ -822,16 +776,13 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
+  }, [weightedRecords]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
   const byTimeGrouped = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
-
+    weightedRecords.forEach((r: any) => {
       const key = getTimeBucketLabel(r, timeViewMode);
       if (!key) return;
 
@@ -865,7 +816,7 @@ export default function Dashboard() {
       }
       return row;
     });
-  }, [records, isExternalRecord, timeViewMode]);
+  }, [weightedRecords, timeViewMode]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
@@ -978,7 +929,7 @@ export default function Dashboard() {
       // Compute time data for all 3 modes for PDF legends
       const computeTimeData = (mode: "horario" | "diasemana" | "mes") => {
         const result: Record<string, Record<string, number>> = {};
-        records.forEach((r: any) => {
+        weightedRecords.forEach((r: any) => {
           const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
           if (isExternalRecord(r) && !["Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
@@ -1148,7 +1099,7 @@ export default function Dashboard() {
     const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const qty = r.quantidade || 0;
       total += qty;
       const cat = getParentCatName(r);
@@ -1216,7 +1167,7 @@ export default function Dashboard() {
     // Each specialty row has description-level % (e.g. "Trabalhando": 25.5)
     // We derive Produtivo = Trabalhando + Planejando, matching the chart exactly
     const espChartData: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = r.quantidade || 0;
@@ -1252,7 +1203,7 @@ export default function Dashboard() {
 
     // topCategorias excludes NPE descriptions for the AI report
     const controlDescriptions: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       controlDescriptions[desc] = (controlDescriptions[desc] || 0) + (r.quantidade || 0);
@@ -1264,7 +1215,7 @@ export default function Dashboard() {
     const causasExternas = Object.entries(byCat)
       .filter(([nome]) => {
         // Only external descriptions
-        return records.some((r: any) => r.descricao === nome && isExternalRecord(r));
+        return weightedRecords.some((r: any) => r.descricao === nome && isExternalRecord(r));
       })
       .sort(([, a], [, b]) => b - a)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`)
