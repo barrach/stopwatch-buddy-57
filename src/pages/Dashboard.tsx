@@ -676,7 +676,7 @@ export default function Dashboard() {
   // Pareto data — percentages over TOTAL samples (including NPE) for consistency with KPIs
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = canonicalDescription(r.descricao || "Sem descrição");
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -693,7 +693,7 @@ export default function Dashboard() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, totalSamples]);
+  }, [weightedRecords, totalSamples]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
