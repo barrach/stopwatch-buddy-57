@@ -45,6 +45,7 @@ function enforceSpecialtyStructure(text: string): string {
     /([^\n])(Diagn[oó]stico\s*:)/gi,
     /([^\n])(Interpreta[çc][ãa]o\s*(?:[Oo]peracional)?\s*:)/gi,
     /([^\n])(A[çc][ãa]o\s*[Rr]ecomendada\s*:)/gi,
+    /([^\n])(Recomenda[çc][ãa]o\s*:)/gi,
   ];
 
   for (const pattern of forceBreakBefore) {
@@ -61,6 +62,7 @@ const LABEL_ALIASES: Array<[RegExp, string]> = [
   [/^Interpreta[çc][ãa]o\s*(?:operacional)?\s*:/i, "Interpretação Operacional:"],
   [/^A[çc][ãa]o\s*(?:recomendada)?\s*:/i, "Ação Recomendada:"],
   [/^Recomend[ae]\s*:/i, "Ação Recomendada:"],
+  [/^Recomenda[çc][ãa]o\s*:/i, "Ação Recomendada:"],
   [/^Melhor\s*especialidade\s*:/i, "Melhor especialidade:"],
   [/^Especialidade\s*cr[ií]tica\s*:/i, "Especialidade crítica:"],
   [/^Especialidade\s*intermedi[aá]ria\s*:/i, "Especialidade intermediária:"],
@@ -76,7 +78,7 @@ function standardizeLabel(label: string): string {
 
 // ── Label detection regex ─────────────────────────────────────
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:(?:Diagn[oó]stico|Interpreta[çc][ãa]o\s*[Oo]peracional|A[çc][ãa]o\s*[Rr]ecomendada|Recomend[ae]|Melhor\s*especialidade|Especialidade\s*(?:cr[ií]tica|intermedi[aá]ria)|Recomenda[çc][õo]es|[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}))\s*:)\s*(.*)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:(?:Diagn[oó]stico|Interpreta[çc][ãa]o\s*[Oo]peracional|A[çc][ãa]o\s*[Rr]ecomendada|Recomenda[çc][ãa]o|Recomend[ae]|Melhor\s*especialidade|Especialidade\s*(?:cr[ií]tica|intermedi[aá]ria)|Recomenda[çc][õo]es|[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}))\s*:)\s*(.*)$/;
 
 // ── Broken label repairs ──────────────────────────────────────
 
@@ -220,5 +222,12 @@ export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number):
 }
 
 export function countStyledPdfLines(blocks: StyledPdfLine[]): number {
-  return blocks.reduce((total, block) => total + Math.max(1, block.lines.length || 0), 0);
+  return blocks.reduce((total, block) => {
+    let lines = Math.max(1, block.lines.length || 0);
+    // Account for extra spacing before specialty-level labels
+    if (block.prefix && /^(Melhor especialidade|Especialidade (crítica|intermediária)):/i.test(block.prefix)) {
+      lines += 1; // ~3mm extra ≈ 1 line equivalent
+    }
+    return total + lines;
+  }, 0);
 }
