@@ -1,7 +1,8 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import type { ChartImages, ChartDimensions } from "./chartCapture";
 import { PDF_OCEAN_RGB, buildStyledPdfLines, countStyledPdfLines, wrapTextByWords } from "./pdfTextFormatting";
+import { drawStackedBarChart, drawDonutChart, drawParetoChart, drawPieChart } from "./pdfChartRenderer";
+import type { StackedBarData, DonutData, ParetoData } from "./pdfChartRenderer";
 
 export interface PDFReportData {
   periodo: string;
@@ -26,8 +27,7 @@ export interface PDFReportData {
   externalCausas: Array<{ name: string; value: number; percent: number }>;
   categoryTotals: Array<{ name: string; value: number }>;
   aiAnalysis: string;
-  chartImages?: ChartImages;
-  chartDimensions?: ChartDimensions;
+  onProgress?: (step: string) => void;
 }
 
 type RGB = [number, number, number];
@@ -113,11 +113,11 @@ const MAX_Y = PAGE_H - BOTTOM_MARGIN;
 const CHART_RATIO = 0.7;
 const CHART_W = CONTENT_W * CHART_RATIO;
 const LEGEND_W = CONTENT_W - CHART_W;
-const MAX_CHART_H = 108;
 const LEGEND_FONT_PT = 9;
 const LEGEND_LINE_H = 4.2;
 const LEGEND_ITEM_GAP = 3;
 const ANALYSIS_LINE_H = 4.5;
+const CHART_H = 70; // Fixed height for drawn charts
 
 function hexToRgb(hex: string): RGB {
   const value = hex.replace("#", "");
@@ -156,15 +156,12 @@ function stripTags(text: string): string {
     })
     .replace(/\*\*/g, "")
     .replace(/<[^>]+>/g, "")
-    // Strip emoji/special unicode that jsPDF cannot render
     .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
     .replace(/[\u{2600}-\u{27BF}]/gu, "")
     .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
     .replace(/[\u{200D}]/gu, "")
-    // Fix encoding artifacts
     .replace(/Ø=Ý4/g, "Crítico")
     .replace(/[&]\s*þ/g, "Acima do ideal")
-    // Ensure space after colons
     .replace(/:([A-ZÀ-Úa-zà-ú])/g, ": $1")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -399,19 +396,12 @@ function computeSimpleLegendItems(
     .filter((item) => keepZero || item.percent > 0);
 }
 
-function estimateChartHeight(dimensions: ChartDimensions, dimKey: string, width: number): number {
-  const dim = dimensions[dimKey];
-  if (!dim?.width || !dim?.height) return Math.min(width * 0.58, MAX_CHART_H);
-  return Math.min(width * (dim.height / dim.width), MAX_CHART_H);
-}
-
 export async function generatePDFReport(data: PDFReportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const images = data.chartImages || {};
-  const dimensions = data.chartDimensions || {};
   const analysis = parseAnalysis(data.aiAnalysis);
   const dateStr = format(new Date(), "dd/MM/yyyy HH:mm");
   const recommendations = parseRecommendations(analysis.RECOMENDACOES || analysis.GERAL || "");
+  const progress = data.onProgress || (() => {});
 
   const contractLegend = computeLegendItems(data.byObra, LEGEND_ORDER_FULL, STACK_ORDER_FULL, true);
   const specialtyLegend = computeLegendItems(data.bySpecialty, LEGEND_ORDER, STACK_ORDER, true);
@@ -427,7 +417,6 @@ export async function generatePDFReport(data: PDFReportData) {
   let curY = MARGIN;
   let sectionCount = 0;
 
-  // Yield to main thread periodically to prevent UI freeze
   const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
 
   const newPage = () => {
@@ -581,59 +570,55 @@ export async function generatePDFReport(data: PDFReportData) {
     return height;
   };
 
-  const drawChart = (image: string | undefined, dimKey: string, width: number, x = MARGIN): number => {
-    if (!image) return 0;
-    const height = estimateChartHeight(dimensions, dimKey, width);
-    doc.addImage(image, "PNG", x, curY, width, height);
-    return height;
+  // ── Native chart drawing (replaces html2canvas) ──
+
+  const drawStackedChart = (chartData: StackedBarData[], xKey: string, legend: LegendItem[], hasLegend: boolean) => {
+    const chartWidth = hasLegend ? CHART_W : CONTENT_W;
+    drawStackedBarChart(doc, chartData, MARGIN, curY, chartWidth, CHART_H, xKey, [...STACK_ORDER_FULL]);
+    const legendH = hasLegend ? drawLegend(legend, MARGIN + CHART_W, curY) : 0;
+    curY += Math.max(CHART_H, legendH) + 3;
   };
 
-  const renderStandardBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+  const drawDonut = (donutData: DonutData[], legend: LegendItem[]) => {
+    const cx = MARGIN + CHART_W / 2;
+    const cy = curY + CHART_H / 2;
+    drawDonutChart(doc, donutData, cx, cy, 28, 14);
+    drawLegend(legend, MARGIN + CHART_W, curY);
+    curY += CHART_H + 3;
+  };
+
+  const drawPareto = (paretoData: ParetoData[]) => {
+    const h = Math.min(paretoData.length * 11 + 4, 90);
+    drawParetoChart(doc, paretoData, MARGIN, curY, CONTENT_W, h);
+    curY += h + 3;
+  };
+
+  const drawExternalPie = (pieData: Array<{ name: string; value: number; percent: number }>, legend: LegendItem[]) => {
+    const cx = MARGIN + CHART_W / 2;
+    const cy = curY + CHART_H / 2;
+    drawPieChart(doc, pieData, cx, cy, 25);
+    drawLegend(legend, MARGIN + CHART_W, curY);
+    curY += CHART_H + 3;
+  };
+
+  const renderStandardBlock = async (title: string, drawFn: () => void, analysisText?: string) => {
     sectionCount++;
     if (sectionCount % 2 === 0) await yieldToMain();
 
-    const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
-    const legendH = legend.length ? measureLegendH(legend) : 0;
-    const rowH = Math.max(chartH, legendH);
     const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
-    ensureSpace(12 + rowH + 3 + analysisH);
+    ensureSpace(12 + CHART_H + 3 + analysisH);
 
     sectionHeader(title);
-    const rowStart = curY;
-    const drawnChartH = image ? drawChart(image, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
-    const drawnLegendH = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
-    curY = rowStart + Math.max(drawnChartH, drawnLegendH) + 3;
+    drawFn();
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  const renderParetoBlock = async (title: string, image: string | undefined, dimKey: string, analysisText?: string) => {
-    if (!image && !analysisText?.trim()) return;
+  const renderTimedBlock = async (title: string, drawFn: () => void, blocks: TimedBlock[]) => {
     await yieldToMain();
-
-    const chartH = image ? estimateChartHeight(dimensions, dimKey, CONTENT_W) : 0;
-    const analysisH = analysisText?.trim() ? measureAnalysisBox(analysisText) : 0;
-    ensureSpace(12 + chartH + 3 + analysisH);
+    ensureSpace(12 + CHART_H + 3);
 
     sectionHeader(title);
-    if (image) {
-      const drawnChartH = drawChart(image, dimKey, CONTENT_W);
-      curY += drawnChartH + 3;
-    }
-    if (analysisText?.trim()) drawAnalysisBox(analysisText);
-  };
-
-  const renderTimedBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
-    await yieldToMain();
-
-    const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
-    const legendH = legend.length ? measureLegendH(legend) : 0;
-    ensureSpace(12 + Math.max(chartH, legendH) + 3);
-
-    sectionHeader(title);
-    const rowStart = curY;
-    const drawnChartH = image ? drawChart(image, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
-    const drawnLegendH = legend.length ? drawLegend(legend, MARGIN + CHART_W, rowStart) : 0;
-    curY = rowStart + Math.max(drawnChartH, drawnLegendH) + 3;
+    drawFn();
 
     for (const block of blocks) {
       const headerH = block.label ? 10 : 0;
@@ -656,6 +641,14 @@ export async function generatePDFReport(data: PDFReportData) {
     return lines.join("\n");
   };
 
+  // ══════════════════════════════════════════════════════════
+  // ██  PDF CONSTRUCTION — No DOM, no html2canvas           ██
+  // ══════════════════════════════════════════════════════════
+
+  progress("Gerando dados...");
+  await yieldToMain();
+
+  // ── Cover ──
   doc.setFillColor(...C.pageBg);
   doc.rect(0, 0, PAGE_W, PAGE_H, "F");
   doc.setFillColor(...C.headerBg);
@@ -673,6 +666,8 @@ export async function generatePDFReport(data: PDFReportData) {
   doc.text(`Data de geração: ${dateStr}`, PAGE_W - MARGIN, 47, { align: "right" });
   curY = 58;
 
+  // ── KPIs ──
+  progress("Montando indicadores...");
   sectionHeader("Indicadores Principais");
   const kpis = [
     { label: "Total de Amostras", value: `${data.totalAmostras}`, color: C.blue },
@@ -684,34 +679,90 @@ export async function generatePDFReport(data: PDFReportData) {
   const kpiGap = 3;
   const kpiWidth = (CONTENT_W - kpiGap * 4) / 5;
   kpis.forEach((kpi, index) => {
-    const x = MARGIN + index * (kpiWidth + kpiGap);
+    const kx = MARGIN + index * (kpiWidth + kpiGap);
     doc.setFillColor(...C.cardBg);
     doc.setDrawColor(...C.border);
-    doc.roundedRect(x, curY, kpiWidth, 22, 1.2, 1.2, "FD");
+    doc.roundedRect(kx, curY, kpiWidth, 22, 1.2, 1.2, "FD");
     doc.setFillColor(...kpi.color);
-    doc.rect(x, curY, kpiWidth, 1.5, "F");
+    doc.rect(kx, curY, kpiWidth, 1.5, "F");
     doc.setTextColor(...kpi.color);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
-    doc.text(kpi.value, x + 3.5, curY + 10.5);
+    doc.text(kpi.value, kx + 3.5, curY + 10.5);
     doc.setTextColor(...C.textMuted);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.2);
-    doc.text(kpi.label, x + 3.5, curY + 17.5);
+    doc.text(kpi.label, kx + 3.5, curY + 17.5);
   });
   curY += 25;
   drawAnalysisBox(analysis.RESUMO || analysis.GERAL || "Diagnóstico geral indisponível para este período.");
 
-  await renderStandardBlock("Visão Geral por Contrato", images.contrato, "contrato", contractLegend, analysis.CONTRATO);
-  await renderStandardBlock("Distribuição por Categoria", images.categoria, "categoria", categoryLegend, analysis.CATEGORIA);
-  await renderParetoBlock("Top Causas — Pareto por Categorias", images.paretoCategoria, "paretoCategoria", analysis.PARETO);
-  
-  await renderStandardBlock("Produtividade por Especialidade", images.especialidade, "especialidade", specialtyLegend, analysis.ESPECIALIDADE);
-  await renderStandardBlock("Causas Externas de Parada (NPE)", images.externas, "externas", npeLegend, analysis.EXTERNO);
-  await renderTimedBlock("Produtividade por Horário", images.tempoHorario, "tempoHorario", hourLegend, hourBlocks);
-  await renderTimedBlock("Produtividade por Dia da Semana", images.tempoDiaSemana, "tempoDiaSemana", weekLegend, weekdayBlocks);
-  await renderTimedBlock("Produtividade por Mês", images.tempoMes, "tempoMes", monthLegend, monthBlocks);
+  // ── Chart sections (all drawn natively, no DOM capture) ──
+  progress("Desenhando gráficos...");
 
+  await renderStandardBlock(
+    "Visão Geral por Contrato",
+    () => drawStackedChart(data.byObra as StackedBarData[], "name", contractLegend, true),
+    analysis.CONTRATO,
+  );
+
+  await renderStandardBlock(
+    "Distribuição por Categoria",
+    () => drawDonut(data.categoryTotals as DonutData[], categoryLegend),
+    analysis.CATEGORIA,
+  );
+
+  // Pareto
+  progress("Desenhando Pareto...");
+  await yieldToMain();
+  {
+    const paretoItems: ParetoData[] = data.nonprodCausas
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10)
+      .map((c) => ({ name: c.name, percent: c.percent }));
+    const analysisH = analysis.PARETO?.trim() ? measureAnalysisBox(analysis.PARETO) : 0;
+    const paretoH = Math.min(paretoItems.length * 11 + 4, 90);
+    ensureSpace(12 + paretoH + 3 + analysisH);
+    sectionHeader("Top Causas — Pareto por Categorias");
+    drawPareto(paretoItems);
+    if (analysis.PARETO?.trim()) drawAnalysisBox(analysis.PARETO);
+  }
+
+  progress("Desenhando especialidades...");
+  await renderStandardBlock(
+    "Produtividade por Especialidade",
+    () => drawStackedChart(data.bySpecialty as StackedBarData[], "name", specialtyLegend, true),
+    analysis.ESPECIALIDADE,
+  );
+
+  await renderStandardBlock(
+    "Causas Externas de Parada (NPE)",
+    () => drawExternalPie(data.externalCausas, npeLegend),
+    analysis.EXTERNO,
+  );
+
+  progress("Desenhando análise temporal...");
+  await renderTimedBlock(
+    "Produtividade por Horário",
+    () => drawStackedChart((data.byTimeHorario || []) as StackedBarData[], "time", hourLegend, true),
+    hourBlocks,
+  );
+
+  await renderTimedBlock(
+    "Produtividade por Dia da Semana",
+    () => drawStackedChart((data.byTimeDiaSemana || []) as StackedBarData[], "time", weekLegend, true),
+    weekdayBlocks,
+  );
+
+  await renderTimedBlock(
+    "Produtividade por Mês",
+    () => drawStackedChart((data.byTimeMes || []) as StackedBarData[], "time", monthLegend, true),
+    monthBlocks,
+  );
+
+  // ── Recommendations ──
+  progress("Finalizando PDF...");
+  await yieldToMain();
   sectionHeader("Conclusões e Recomendações");
   if (recommendations.length) {
     recommendations.forEach((item, index) => drawAnalysisBox(buildRecommendationText(item, index)));
@@ -719,6 +770,7 @@ export async function generatePDFReport(data: PDFReportData) {
     drawAnalysisBox(analysis.RECOMENDACOES || analysis.GERAL || "Sem recomendações estruturadas para este período.");
   }
 
+  // ── Page numbers ──
   const totalPages = doc.getNumberOfPages();
   for (let page = 1; page <= totalPages; page += 1) {
     doc.setPage(page);
