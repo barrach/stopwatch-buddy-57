@@ -112,7 +112,9 @@ export function normalizePdfParagraphs(text: string): string[] {
     }
 
     const startsLabeledBlock = LABEL_LINE_RE.test(line);
-    if (startsLabeledBlock && current) {
+    const isParetoCause = PARETO_CAUSE_RE.test(line);
+
+    if ((startsLabeledBlock || isParetoCause) && current) {
       paragraphs.push(current.trim());
       current = line;
     } else {
