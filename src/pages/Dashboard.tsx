@@ -1203,7 +1203,7 @@ export default function Dashboard() {
 
     // topCategorias excludes NPE descriptions for the AI report
     const controlDescriptions: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       controlDescriptions[desc] = (controlDescriptions[desc] || 0) + (r.quantidade || 0);
