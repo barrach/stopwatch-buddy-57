@@ -89,7 +89,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 const C = {
   headerBg: [15, 23, 42] as RGB,
   sectionBg: [...PDF_OCEAN_RGB] as RGB,
-  sectionBgDark: [22, 59, 92] as RGB,
   white: [255, 255, 255] as RGB,
   pageBg: [255, 255, 255] as RGB,
   textDark: [31, 41, 55] as RGB,
