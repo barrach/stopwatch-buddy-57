@@ -622,7 +622,9 @@ export async function generatePDFReport(data: PDFReportData) {
     if (analysisText?.trim()) drawAnalysisBox(analysisText);
   };
 
-  const renderTimedBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
+  const renderTimedBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], blocks: TimedBlock[]) => {
+    await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
     const legendH = legend.length ? measureLegendH(legend) : 0;
     ensureSpace(12 + Math.max(chartH, legendH) + 3);
