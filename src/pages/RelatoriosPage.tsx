@@ -172,7 +172,7 @@ export default function RelatoriosPage() {
 
   const byObra = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const oName = (r.obras as any)?.nome || "Sem contrato";
       if (!result[oName]) result[oName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
@@ -184,11 +184,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [weightedRecords]);
 
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
@@ -202,11 +202,11 @@ export default function RelatoriosPage() {
         for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
         return row;
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [weightedRecords]);
 
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "horario");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -219,11 +219,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [records]);
+  }, [weightedRecords]);
 
   const byDiaSemana = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "diasemana");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -236,11 +236,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [records]);
+  }, [weightedRecords]);
 
   const byMes = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "mes");
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
@@ -253,11 +253,11 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [records]);
+  }, [weightedRecords]);
 
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const key = r.descricao || "Sem descrição";
       totals[key] = (totals[key] || 0) + (r.quantidade || 0);
     });
@@ -271,11 +271,11 @@ export default function RelatoriosPage() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, totalSamples]);
+  }, [weightedRecords, totalSamples]);
 
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
@@ -286,7 +286,7 @@ export default function RelatoriosPage() {
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
     }));
-  }, [records, isExternalRecord]);
+  }, [weightedRecords, isExternalRecord]);
 
   // ── Validation & generation ──
   const handleGenerate = () => {
