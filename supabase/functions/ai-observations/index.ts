@@ -129,10 +129,17 @@ FÓRMULAS DE CÁLCULO:
 - NPE% = NPE / Total × 100
 - A soma das 4 categorias deve ser 100% do total.
 
-ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes:
-1. **Diagnóstico**: O que o gráfico mostra (dados percentuais reais da obra).
-2. **Interpretação operacional**: O que isso significa na prática da obra industrial. Cite o que cada subcategoria significa operacionalmente. Compare se os valores estão dentro do esperado ou se há desvios preocupantes, SEM citar os benchmarks numéricos.
-3. **Ação recomendada**: O que deve ser feito para melhorar o indicador. Foque em ações concretas e práticas.
+ESTRUTURA OBRIGATÓRIA DE CADA ANÁLISE — Cada seção deve conter 3 partes SEMPRE separadas por quebra de linha:
+1. Diagnóstico: (seguido de quebra de linha) O que o gráfico mostra (dados percentuais reais da obra).
+2. Interpretação Operacional: (seguido de quebra de linha) O que isso significa na prática da obra industrial.
+3. Ação Recomendada: (seguido de quebra de linha) O que deve ser feito para melhorar o indicador.
+
+REGRA DE FORMATAÇÃO OBRIGATÓRIA:
+- SEMPRE coloque um espaço após os dois pontos (":") antes do texto.
+- SEMPRE use quebra de linha após cada rótulo (Diagnóstico:, Interpretação Operacional:, Ação Recomendada:).
+- Use EXATAMENTE estes rótulos: "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
+- NUNCA use variações como "Recomende:", "Interpretação:", "Ações:", "Análise do impacto operacionalizado:".
+- NUNCA cole o texto diretamente após ":" sem espaço. ERRADO: "Diagnóstico:O contrato...". CORRETO: "Diagnóstico: O contrato...".
 
 REGRA: NÃO cite os benchmarks diretamente (ex: "meta de 60%", "benchmark de 16%"). Em vez disso, use expressões qualitativas: "acima do esperado", "dentro do padrão para obras bem gerenciadas", "significativamente abaixo do ideal", "há margem expressiva de melhoria".
 
