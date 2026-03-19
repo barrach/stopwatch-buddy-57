@@ -604,16 +604,17 @@ export default function Dashboard() {
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
 
-  // External causes chart data — NPE only (pie chart) + PT as informational legend
-  const AG_PT = "Aguardando Liberação de PT";
-
+  // External causes chart data — includes NPE + "Aguardando Liberação de PT" (Suplementar, shown for operational visibility)
   const externalCausas = useMemo(() => {
+    const AG_PT = "Aguardando Liberação de PT";
     const totals: Record<string, number> = {};
     const hoursSet: Record<string, Set<string>> = {};
     const totalHoursSet = new Set<string>();
     records.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (!isExternalRecord(r)) return; // only true NPE records
+      const isNPE = isExternalRecord(r);
+      const isAgPT = desc === AG_PT;
+      if (!isNPE && !isAgPT) return;
       totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
       if (!hoursSet[desc]) hoursSet[desc] = new Set();
       const key = `${r.data}_${r.horario}`;
@@ -630,21 +631,6 @@ export default function Dashboard() {
       _totalHours: totalHoursSet.size,
     }));
   }, [records, isExternalRecord]);
-
-  // "Aguardando Liberação de PT" — informational item (not in pie, uses global %)
-  const agPtInfo = useMemo(() => {
-    let value = 0;
-    records.forEach((r: any) => {
-      const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc === AG_PT) value += r.quantidade || 0;
-    });
-    if (value === 0) return null;
-    return {
-      name: AG_PT,
-      value,
-      percent: totalSamples > 0 ? +((value / totalSamples) * 100).toFixed(1) : 0,
-    };
-  }, [records, totalSamples]);
 
 
   // 5) Causas de Não Produtividade — includes Suplementar + Não Produtivo
@@ -990,7 +976,7 @@ export default function Dashboard() {
         byTimeDiaSemana: computeTimeData("diasemana"),
         byTimeMes: computeTimeData("mes"),
         nonprodCausas,
-        externalCausas,
+        externalCausas: externalCausas.filter((c: any) => c.name !== "Aguardando Liberação de PT"),
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
@@ -1075,7 +1061,7 @@ export default function Dashboard() {
         byObra,
         bySpecialty,
         nonprodCausas,
-        externalCausas,
+        externalCausas: externalCausas.filter((c: any) => c.name !== "Aguardando Liberação de PT"),
         categoryTotals,
         aiAnalysis: aiText,
         chartImages,
@@ -1837,24 +1823,17 @@ export default function Dashboard() {
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              {externalCausas.map((causa: any) => (
-                <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
+              {externalCausas.map((causa: any) => {
+                return (
+                  <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {agPtInfo && (
-                <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border border-dashed border-border">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(agPtInfo.name) }} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{agPtInfo.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{agPtInfo.percent}% <span className="italic">(base global)</span></p>
-                  </div>
-                </div>
-              )}
+                );
+              })}
             </div>
 
             <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
