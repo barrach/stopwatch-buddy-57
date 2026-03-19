@@ -159,13 +159,50 @@ Estrutura obrigatória:
 - Recomende: "A redução combinada de atividades suplementares e não produtivas poderia elevar o índice de produtividade global para patamares próximos de X%."
 
 ===PARETO===
-Análise do Pareto por categorias. Identifique obrigatoriamente:
-- 1ª principal causa de perda e seu % de impacto
-- 2ª causa de perda e seu %
-- 3ª causa de perda e seu %
-REGRA ABSOLUTA: "Trabalhando" e "Planejando" NAO sao causas de parada. NUNCA inclua categorias produtivas como causas no Pareto.
+Análise do Pareto por categorias. REGRA ABSOLUTA: "Trabalhando" e "Planejando" NAO sao causas de parada. NUNCA inclua categorias produtivas como causas no Pareto.
 Foque APENAS em causas de perda: Ocioso, Pessoal, Aguardando..., Transitando..., Fatores Climaticos, Interferencias Operacionais.
-Interprete o impacto operacional de cada causa e sugira ações corretivas específicas.
+
+FORMATO OBRIGATÓRIO — Cada causa DEVE ser um bloco separado com EXATAMENTE esta estrutura:
+
+1ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto explicando o problema identificado nos dados.]
+
+Interpretação Operacional:
+[Texto explicando o impacto prático na obra.]
+
+Ação Recomendada:
+[Ação concreta e específica para mitigar esta causa.]
+
+2ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto.]
+
+Interpretação Operacional:
+[Texto.]
+
+Ação Recomendada:
+[Texto.]
+
+3ª Principal Causa de Perda: [NOME DA CAUSA] ([X%] do total)
+
+Diagnóstico:
+[Texto.]
+
+Interpretação Operacional:
+[Texto.]
+
+Ação Recomendada:
+[Texto.]
+
+REGRAS DE FORMATAÇÃO DO PARETO:
+- CADA causa deve ser um bloco SEPARADO, nunca juntar múltiplas causas no mesmo parágrafo.
+- SEMPRE inserir linha em branco entre cada bloco.
+- SEMPRE usar quebra de linha após "Diagnóstico:", "Interpretação Operacional:", "Ação Recomendada:".
+- NUNCA escrever texto na mesma linha do título da causa.
+- Mínimo 3 causas, máximo 5 causas.
 
 ===PARETO_ESPECIALIDADE===
 Análise do Pareto por especialidades. Compare cada especialidade pelo % de produtividade em relação à média geral. Identifique gargalos e motores de produtividade.
