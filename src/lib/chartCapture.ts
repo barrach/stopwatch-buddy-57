@@ -98,12 +98,12 @@ async function captureElement(cardEl: HTMLElement): Promise<{ data: string; widt
   // Temporarily clean the card wrapper and parent styles
   const restoreCard = applyCleanStyles(cardEl);
 
-  // Wait for chart animations/renders to fully settle (500ms as specified)
-  await new Promise((r) => setTimeout(r, 500));
+  // Wait for chart animations/renders to settle (reduced from 500ms)
+  await new Promise((r) => setTimeout(r, 300));
 
   const canvas = await html2canvas(chartEl, {
     backgroundColor: "#FFFFFF",
-    scale: 4,
+    scale: 2, // Reduced from 4 to prevent memory/CPU spikes
     logging: false,
     useCORS: true,
     allowTaint: true,
@@ -118,8 +118,10 @@ async function captureElement(cardEl: HTMLElement): Promise<{ data: string; widt
   // Restore original styles
   restoreCard();
 
-  // Apply light compression (quality 0.95)
-  const data = canvas.toDataURL("image/png", 0.95);
+  // Yield to main thread before heavy toDataURL
+  await new Promise((r) => setTimeout(r, 0));
+
+  const data = canvas.toDataURL("image/png", 0.85);
 
   return {
     data,
