@@ -612,12 +612,12 @@ export default function Dashboard() {
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const cat = getParentCatName(r);
       if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
     });
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [records, getParentCatName]);
+  }, [weightedRecords, getParentCatName]);
 
   // External causes chart data — includes NPE + "Aguardando Liberação de PT" (Suplementar, shown for operational visibility)
   const externalCausas = useMemo(() => {
