@@ -464,7 +464,8 @@ export function generatePDFReport(data: PDFReportData) {
   const measureAnalysisBox = (text: string): number => {
     const blocks = getAnalysisBlocks(text, CONTENT_W - 12);
     const lineCount = countStyledPdfLines(blocks);
-    return lineCount > 0 ? Math.max(16, lineCount * ANALYSIS_LINE_H + 8) + 2 : 0;
+    const blockGaps = blocks.length * 1.2;
+    return lineCount > 0 ? Math.max(16, lineCount * ANALYSIS_LINE_H + blockGaps + 10) + 3 : 0;
   };
 
   const drawAnalysisBox = (text: string) => {
