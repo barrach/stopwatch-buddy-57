@@ -156,6 +156,10 @@ function stripTags(text: string): string {
     })
     .replace(/\*\*/g, "")
     .replace(/<[^>]+>/g, "")
+    // Ensure space after colon when followed by letter/number
+    .replace(/:([A-Za-zÀ-ú0-9])/g, ": $1")
+    // Ensure each "- " bullet starts on its own line
+    .replace(/([^\n])\s+- /g, "$1\n- ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
