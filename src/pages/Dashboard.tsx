@@ -1099,7 +1099,7 @@ export default function Dashboard() {
     const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    records.forEach((r: any) => {
+    weightedRecords.forEach((r: any) => {
       const qty = r.quantidade || 0;
       total += qty;
       const cat = getParentCatName(r);
