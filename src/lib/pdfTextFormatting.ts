@@ -8,7 +8,10 @@ export interface StyledPdfLine {
   lines: string[];
 }
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,6})\s*:)\s*(.*)$/;
+
+/** Matches Pareto cause titles like "1ª Principal Causa de Perda: NPE (48%)" */
+const PARETO_CAUSE_RE = /^(\d+[ªº°.]\s*[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*.+)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação Operacional:"],
