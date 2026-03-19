@@ -35,7 +35,7 @@ export type ObservationCategory = keyof typeof OBSERVATION_CATEGORIES;
 export const ROUTES = ["Rota 1", "Rota 2", "Rota 3", "Rota 4"] as const;
 export type Route = (typeof ROUTES)[number];
 
-export const TIME_SLOTS = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"] as const;
+export const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"] as const;
 
 export const COMPANIES = ["MEGASTEAM"] as const;
 export const OBRAS = ["MEGASTEAM - Cubatão", "MEGASTEAM - Bahia", "MEGASTEAM - Santo André"] as const;
