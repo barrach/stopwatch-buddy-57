@@ -61,6 +61,7 @@ const LABEL_ALIASES: Array<[RegExp, string]> = [
   [/^Interpreta[çc][ãa]o\s*(?:operacional)?\s*:/i, "Interpretação Operacional:"],
   [/^A[çc][ãa]o\s*(?:recomendada)?\s*:/i, "Ação Recomendada:"],
   [/^Recomend[ae]\s*:/i, "Ação Recomendada:"],
+  [/^Recomenda[çc][ãa]o\s*:/i, "Ação Recomendada:"],
   [/^Melhor\s*especialidade\s*:/i, "Melhor especialidade:"],
   [/^Especialidade\s*cr[ií]tica\s*:/i, "Especialidade crítica:"],
   [/^Especialidade\s*intermedi[aá]ria\s*:/i, "Especialidade intermediária:"],
