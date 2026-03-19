@@ -163,11 +163,45 @@ Análise do Pareto por funções. Compare cada função pelo % de produtividade.
 ===ESPECIALIDADE===
 Compare as especialidades pelo % de produtividade EXATAMENTE como fornecido nos dados (valores do gráfico).
 REGRA ABSOLUTA: Use os percentuais EXATOS fornecidos na seção "PRODUTIVIDADE POR ESPECIALIDADE". NÃO recalcule. NÃO invente valores.
-Estrutura obrigatória:
-Melhor especialidade: [nome], com [X,X%] de produtividade (Trabalhando X% + Planejando X%). [Diagnóstico + Interpretação + Ação].
-Especialidade intermediária: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
-Especialidade crítica: [nome], com [X,X%] de produtividade. [Diagnóstico + Interpretação + Ação].
-PROIBIDO: usar formatos como "**Nome (X%)**". Use APENAS o formato "Melhor especialidade:", "Especialidade intermediária:", "Especialidade crítica:".
+
+FORMATO OBRIGATÓRIO — Cada especialidade deve ser um BLOCO SEPARADO com quebras de linha entre cada parte.
+PROIBIDO: colchetes [], texto inline, "Interpretação:" simples, "Ação:" simples.
+Use EXATAMENTE esta estrutura (cada item em linha separada):
+
+Melhor especialidade: [nome] ([X,X%])
+
+Diagnóstico:
+[texto do diagnóstico em parágrafo separado]
+
+Interpretação Operacional:
+[texto da interpretação em parágrafo separado]
+
+Ação Recomendada:
+[texto da ação em parágrafo separado]
+
+Especialidade intermediária: [nome] ([X,X%])
+
+Diagnóstico:
+[texto]
+
+Interpretação Operacional:
+[texto]
+
+Ação Recomendada:
+[texto]
+
+Especialidade crítica: [nome] ([X,X%])
+
+Diagnóstico:
+[texto]
+
+Interpretação Operacional:
+[texto]
+
+Ação Recomendada:
+[texto]
+
+NUNCA coloque Diagnóstico, Interpretação e Ação na MESMA LINHA. Cada um DEVE estar em linha separada com quebra de linha após o título.
 
 ===FUNCAO===
 Destaque obrigatoriamente:

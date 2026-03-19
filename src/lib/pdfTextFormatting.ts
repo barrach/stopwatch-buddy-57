@@ -153,6 +153,9 @@ export function normalizePdfParagraphs(text: string): string[] {
     .replace(/\s*\|\s*/g, "\n")
     .trim();
 
+  // Step 1b: Enforce specialty block structure (line breaks before labels)
+  normalized = enforceSpecialtyStructure(normalized);
+
   // Step 2: Repair broken labels
   normalized = repairBrokenLabels(normalized);
 
