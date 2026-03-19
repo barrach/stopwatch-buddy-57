@@ -588,7 +588,10 @@ export async function generatePDFReport(data: PDFReportData) {
     return height;
   };
 
-  const renderStandardBlock = (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+  const renderStandardBlock = async (title: string, image: string | undefined, dimKey: string, legend: LegendItem[], analysisText?: string) => {
+    sectionCount++;
+    if (sectionCount % 2 === 0) await yieldToMain();
+
     const chartH = image ? estimateChartHeight(dimensions, dimKey, legend.length ? CHART_W : CONTENT_W) : 0;
     const legendH = legend.length ? measureLegendH(legend) : 0;
     const rowH = Math.max(chartH, legendH);
