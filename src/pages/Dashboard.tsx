@@ -870,11 +870,11 @@ export default function Dashboard() {
     setIsGeneratingPDF(true);
     toast({ title: "Gerando análise IA...", description: "Aguarde enquanto a IA analisa os dados." });
 
-    // Timeout safety: cancel after 60s
+    // Timeout safety: cancel after 30s (text-only PDF is fast)
     const timeoutId = setTimeout(() => {
       setIsGeneratingPDF(false);
       toast({ title: "Tempo esgotado", description: "A geração do PDF demorou demais. Tente novamente com menos dados.", variant: "destructive" });
-    }, 60000);
+    }, 30000);
 
     try {
       // 1) Generate AI analysis (no DOM capture needed)
