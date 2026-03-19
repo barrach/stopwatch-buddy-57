@@ -160,9 +160,11 @@ Estrutura obrigatória:
 
 ===PARETO===
 Análise do Pareto por categorias. Identifique obrigatoriamente:
-- 1ª principal causa e seu % de impacto
-- 2ª causa e seu %
-- 3ª causa e seu %
+- 1ª principal causa de perda e seu % de impacto
+- 2ª causa de perda e seu %
+- 3ª causa de perda e seu %
+REGRA ABSOLUTA: "Trabalhando" e "Planejando" NAO sao causas de parada. NUNCA inclua categorias produtivas como causas no Pareto.
+Foque APENAS em causas de perda: Ocioso, Pessoal, Aguardando..., Transitando..., Fatores Climaticos, Interferencias Operacionais.
 Interprete o impacto operacional de cada causa e sugira ações corretivas específicas.
 
 ===PARETO_ESPECIALIDADE===
