@@ -8,10 +8,7 @@ export interface StyledPdfLine {
   lines: string[];
 }
 
-const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,6})\s*:)\s*(.*)$/;
-
-/** Matches Pareto cause titles like "1ª Principal Causa de Perda: NPE (48%)" */
-const PARETO_CAUSE_RE = /^(\d+[ªº°.]\s*[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*.+)$/;
+const LABEL_LINE_RE = /^((?:\d+[ªº°.]?\s*)?(?:[A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4})\s*:)\s*(.*)$/;
 
 const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/Interpreta[çc][ãa]o\s*\n\s*operacional:/gi, "Interpretação Operacional:"],
@@ -29,9 +26,7 @@ const BROKEN_LABEL_REPAIRS: Array<[RegExp, string]> = [
   [/Especialidade\s*\n\s*intermedi[aá]ria:/gi, "Especialidade intermediária:"],
   [/Melhor\s*\n\s*especialidade:/gi, "Melhor especialidade:"],
   [/Recomenda[çc][õo]es:/gi, "Recomendações:"],
-  [/(\d+[ªº°.])\s*[Pp]rincipal\s*\n\s*[Cc]ausa\s+de\s+[Pp]erda:/gi, "$1 Principal Causa de Perda:"],
-  [/(\d+[ªº°.]?\s*)[Pp]rincipal\s+[Cc]ausa\s+de\s+[Pp]erda\s*:\s*([A-ZÀ-Ú])/g, "$1 Principal Causa de Perda: $2"],
-  [/(\d+[ªº°.])\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
+  [/(\d+[ªº°.]?)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,4}:)/g, "$1 $2"],
   [/([A-ZÀ-Úa-zà-ú0-9]+)\s*\n\s*([A-ZÀ-Ú][A-Za-zÀ-ú0-9]+(?:\s+[A-ZÀ-Úa-zà-ú0-9]+){0,3}:)/g, "$1 $2"],
 ];
 
@@ -114,9 +109,7 @@ export function normalizePdfParagraphs(text: string): string[] {
     }
 
     const startsLabeledBlock = LABEL_LINE_RE.test(line);
-    const isParetoCause = PARETO_CAUSE_RE.test(line);
-
-    if ((startsLabeledBlock || isParetoCause) && current) {
+    if (startsLabeledBlock && current) {
       paragraphs.push(current.trim());
       current = line;
     } else {
@@ -130,12 +123,6 @@ export function normalizePdfParagraphs(text: string): string[] {
 
 export function buildStyledPdfLines(doc: jsPDF, text: string, maxWidth: number): StyledPdfLine[] {
   return normalizePdfParagraphs(text).map((paragraph) => {
-    // Pareto cause title — render entirely as bold prefix on its own line
-    const paretoMatch = paragraph.match(PARETO_CAUSE_RE);
-    if (paretoMatch) {
-      return { prefix: paragraph, lines: [""] };
-    }
-
     const match = paragraph.match(LABEL_LINE_RE);
     if (!match) {
       return { lines: wrapTextByWords(doc, paragraph, maxWidth) };

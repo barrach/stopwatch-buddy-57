@@ -1,30 +1,7 @@
 import PptxGenJS from "pptxgenjs";
 import { format } from "date-fns";
+import type { PDFReportData } from "./pdfReport";
 import type { ChartImages, ChartDimensions } from "./chartCapture";
-
-export interface PPTXReportData {
-  periodo: string;
-  obra: string;
-  totalAmostras: number;
-  totalControlaveis: number;
-  produtivo: number;
-  suplementar: number;
-  naoProdutivo: number;
-  externo: number;
-  produtivoPct: number;
-  suplementarPct: number;
-  naoProdutivoPct: number;
-  externoPct: number;
-  byObra: Array<{ name: string; total: number; [key: string]: any }>;
-  bySpecialty: Array<{ name: string; total: number; [key: string]: any }>;
-  byFunction?: Array<{ name: string; total: number; [key: string]: any }>;
-  nonprodCausas: Array<{ name: string; value: number; percent: number; cat: string }>;
-  externalCausas: Array<{ name: string; value: number; percent: number }>;
-  categoryTotals: Array<{ name: string; value: number }>;
-  aiAnalysis: string;
-  chartImages?: ChartImages;
-  chartDimensions?: ChartDimensions;
-}
 
 const T = {
   bg: "0F172A",
@@ -236,7 +213,7 @@ function addChartSlide(
   slides.push(slide);
 }
 
-export function generatePPTXReport(data: PPTXReportData) {
+export function generatePPTXReport(data: PDFReportData) {
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "MEGASTEAM";
