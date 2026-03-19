@@ -1837,17 +1837,24 @@ export default function Dashboard() {
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              {externalCausas.map((causa: any) => {
-                return (
-                  <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
-                    </div>
+              {externalCausas.map((causa: any) => (
+                <div key={causa.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(causa.name) }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{causa.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{causa.percent}%</p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
+              {agPtInfo && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border border-dashed border-border">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getDescColor(agPtInfo.name) }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{agPtInfo.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{agPtInfo.percent}% <span className="italic">(base global)</span></p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <ResponsiveContainer width="100%" height={isMobileView ? 220 : 280}>
