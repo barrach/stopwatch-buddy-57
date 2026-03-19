@@ -957,7 +957,8 @@ export default function Dashboard() {
         });
       };
 
-      generatePDFReport({
+      toast({ title: "Montando PDF...", description: "Gerando o documento final." });
+      await generatePDFReport({
         periodo: aiStats.periodo,
         obra: aiStats.obra,
         totalAmostras: aiStats.totalAmostras,
