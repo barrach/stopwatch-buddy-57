@@ -170,6 +170,7 @@ FÓRMULAS DE CÁLCULO:
 - Existem 4 categorias: Produtivo, Suplementar, Não Produtivo e Não Produtivo Externo (NPE).
 - NPE são eventos fora do controle da equipe (Fatores Climáticos e Consequências, Interferências Operacionais).
 - IMPORTANTE: O NPE ENTRA na conta da produtividade global. O denominador é o TOTAL BRUTO (incluindo NPE).
+- IMPORTANTE: Os valores de NPE que você recebe já foram REPROCESSADOS dinamicamente. Para cada (data, especialidade), o sistema calcula a média de amostras por hora dos registros NÃO-NPE e substitui a quantidade do NPE por essa média. Isso garante proporcionalidade real com a operação do dia. Nunca questione ou recalcule esses valores — eles já refletem o peso correto.
 - Produtividade = Produtivo / Total × 100
 - A soma das 4 categorias deve ser 100% do total.
 
