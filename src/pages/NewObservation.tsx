@@ -440,6 +440,22 @@ export default function NewObservation() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantidade de Amostras *</Label>
+
+                  {/* PT toggle: show when PT is selected but NOT NPE */}
+                  {isPtDescription && !isNpeCategory && (
+                    <div className="mt-2 mb-2 flex items-center gap-2">
+                      <Switch
+                        id="dinamico-toggle"
+                        checked={isDinamicoToggle}
+                        onCheckedChange={setIsDinamicoToggle}
+                        className="scale-75"
+                      />
+                      <Label htmlFor="dinamico-toggle" className="text-xs text-muted-foreground cursor-pointer">
+                        Usar cálculo automático (Observação Dinâmica)
+                      </Label>
+                    </div>
+                  )}
+
                   {isDynamicObservation ? (
                     <div className="mt-1 flex items-center gap-2">
                       <Input id="qty" type="number" value="1" disabled className="mt-0 bg-muted cursor-not-allowed" />
