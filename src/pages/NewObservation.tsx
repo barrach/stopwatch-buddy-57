@@ -171,6 +171,8 @@ export default function NewObservation() {
       return;
     }
 
+    const isDinamico = isNpeCategory || (isPtDescription && isDinamicoToggle);
+
     for (const slot of slots) {
       saveObservation({
         data: date,
@@ -183,8 +185,9 @@ export default function NewObservation() {
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
-        quantidade: isDynamicObservation ? 1 : parseInt(quantity, 10),
+        quantidade: isDinamico ? 1 : parseInt(quantity, 10),
         notas: notes || null,
+        is_dinamico: isDinamico,
       });
     }
   };
