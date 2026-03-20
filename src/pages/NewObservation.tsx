@@ -430,18 +430,18 @@ export default function NewObservation() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantidade de Amostras *</Label>
-                  {isNpeCategory ? (
+                  {isDynamicObservation ? (
                     <div className="mt-1 flex items-center gap-2">
                       <Input id="qty" type="number" value="1" disabled className="mt-0 bg-muted cursor-not-allowed" />
                       <span className="text-xs text-warning font-medium whitespace-nowrap flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
-                        Dinâmico
+                        Observação Dinâmica
                       </span>
                     </div>
                   ) : (
                     <Input id="qty" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1" />
                   )}
-                  {isNpeCategory && (
+                  {isDynamicObservation && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Quantidade calculada automaticamente pela média da especialidade no dia.
                     </p>
