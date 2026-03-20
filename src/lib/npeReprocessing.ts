@@ -67,6 +67,7 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
 
   for (const r of records) {
     if (isNpeRecord(r, info)) continue;
+    if (isExcludedFromAverage(r)) continue;
     const key = `${r.data}|${r.especialidade_id}`;
     let hourMap = groupMap.get(key);
     if (!hourMap) {
