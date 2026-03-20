@@ -429,7 +429,7 @@ export default function NewObservation() {
 
               <div>
                 <Label className="text-xs text-muted-foreground">Descrição *</Label>
-                <Select value={descricao} onValueChange={setDescricao} disabled={!categoriaId}>
+                <Select value={descricao} onValueChange={(v) => { setDescricao(v); setIsDinamicoToggle(true); }} disabled={!categoriaId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder={categoriaId ? "Selecione a descrição..." : "Selecione a categoria primeiro"} /></SelectTrigger>
                   <SelectContent>
                     {subcategorias.map((s) => <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>)}
