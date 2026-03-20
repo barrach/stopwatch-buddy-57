@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
+import { normalizeTime } from "@/lib/chartConstants";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -365,7 +366,7 @@ const timeIndex = (t: string) => {
 };
 
 const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
-  if (mode === "horario") return record.horario || "";
+  if (mode === "horario") return normalizeTime(record.horario || "");
   const d = new Date(`${record.data}T12:00:00`);
   if (mode === "diasemana") return WEEKDAY_NAMES[d.getDay()] || "";
   return MONTH_NAMES[d.getMonth()] || "";
@@ -931,7 +932,7 @@ export default function Dashboard() {
           if (isExternalRecord(r) && !["Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
           if (mode === "horario") {
-            key = r.horario || "";
+            key = normalizeTime(r.horario || "");
           } else if (mode === "diasemana") {
             const d = new Date(r.data + "T12:00:00");
             key = WEEKDAY_NAMES[d.getDay()];
@@ -1127,7 +1128,7 @@ export default function Dashboard() {
 
 
       // Per hour
-      const h = r.horario || "";
+      const h = normalizeTime(r.horario || "");
       if (!byHour[h]) byHour[h] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
       byHour[h].total += qty;
       if (isExt) byHour[h].npe += qty;
