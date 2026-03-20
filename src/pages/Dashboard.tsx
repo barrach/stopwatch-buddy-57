@@ -932,7 +932,7 @@ export default function Dashboard() {
           if (isExternalRecord(r) && !["Interferências Operacionais", "Fatores Climáticos e Consequências"].includes(normalizedDesc)) return;
           let key = "";
           if (mode === "horario") {
-            key = r.horario || "";
+            key = normalizeTime(r.horario || "");
           } else if (mode === "diasemana") {
             const d = new Date(r.data + "T12:00:00");
             key = WEEKDAY_NAMES[d.getDay()];
