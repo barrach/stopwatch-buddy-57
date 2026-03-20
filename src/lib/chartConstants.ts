@@ -124,6 +124,14 @@ export const GRID_COLOR = "#374151";
 export const WEEKDAY_NAMES = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 export const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+/** Normalize a time string like "8:00" → "08:00" */
+export const normalizeTime = (t: string): string => {
+  if (!t) return "";
+  const parts = t.split(":");
+  if (parts.length < 2) return t;
+  return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`;
+};
+
 export const timeIndex = (t: string) => {
   const parts = t.split(":");
   if (parts.length < 2) return 9999;
@@ -131,7 +139,7 @@ export const timeIndex = (t: string) => {
 };
 
 export const getTimeBucketLabel = (record: any, mode: "horario" | "diasemana" | "mes") => {
-  if (mode === "horario") return record.horario || "";
+  if (mode === "horario") return normalizeTime(record.horario || "");
   const d = new Date(`${record.data}T12:00:00`);
   if (mode === "diasemana") return WEEKDAY_NAMES[d.getDay()] || "";
   return MONTH_NAMES[d.getMonth()] || "";
