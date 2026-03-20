@@ -68,8 +68,8 @@ export default function NewObservation() {
     [{ column: "status", value: "Ativo" }], "nome"
   );
 
-  const { data: categorias = [] } = useOfflineQuery<{ id: string; nome: string; categoria_pai_id: string | null; status: string }>(
-    ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
+  const { data: categorias = [] } = useOfflineQuery<{ id: string; nome: string; categoria_pai_id: string | null; status: string; impacta_produtividade: boolean }>(
+    ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status, impacta_produtividade"
   );
 
 
@@ -77,6 +77,13 @@ export default function NewObservation() {
     () => categorias.filter((c) => !c.categoria_pai_id && c.status === "Ativo"),
     [categorias]
   );
+
+  // Detect if selected parent category is NPE (impacta_produtividade === false)
+  const isNpeCategory = useMemo(() => {
+    if (!categoriaId) return false;
+    const parent = categorias.find((c) => c.id === categoriaId);
+    return parent ? (parent as any).impacta_produtividade === false : false;
+  }, [categorias, categoriaId]);
 
   const subcategorias = useMemo(
     () => categoriaId
@@ -162,7 +169,7 @@ export default function NewObservation() {
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
-        quantidade: parseInt(quantity, 10),
+        quantidade: isNpeCategory ? 1 : parseInt(quantity, 10),
         notas: notes || null,
       });
     }
@@ -416,7 +423,22 @@ export default function NewObservation() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantidade de Amostras *</Label>
-                  <Input id="qty" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1" />
+                  {isNpeCategory ? (
+                    <div className="mt-1 flex items-center gap-2">
+                      <Input id="qty" type="number" value="1" disabled className="mt-0 bg-muted cursor-not-allowed" />
+                      <span className="text-xs text-warning font-medium whitespace-nowrap flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Dinâmico
+                      </span>
+                    </div>
+                  ) : (
+                    <Input id="qty" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1" />
+                  )}
+                  {isNpeCategory && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Quantidade calculada automaticamente pela média da especialidade no dia.
+                    </p>
+                  )}
                 </div>
               </div>
 
