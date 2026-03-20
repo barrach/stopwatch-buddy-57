@@ -86,12 +86,18 @@ export default function NewObservation() {
     return parent ? (parent as any).impacta_produtividade === false : false;
   }, [categorias, categoriaId]);
 
-  // Detect if description is "Aguardando Liberação de PT" (also dynamic)
-  const isDynamicObservation = useMemo(() => {
-    if (isNpeCategory) return true;
+  // Detect if description is "Aguardando Liberação de PT"
+  const isPtDescription = useMemo(() => {
     if (!descricao) return false;
     return normalizeDescriptionName(descricao) === "Aguardando Liberação de PT";
-  }, [isNpeCategory, descricao]);
+  }, [descricao]);
+
+  // NPE is always dynamic; PT is dynamic only if toggle is ON
+  const isDynamicObservation = useMemo(() => {
+    if (isNpeCategory) return true;
+    if (isPtDescription && isDinamicoToggle) return true;
+    return false;
+  }, [isNpeCategory, isPtDescription, isDinamicoToggle]);
 
   const subcategorias = useMemo(
     () => categoriaId
