@@ -33,9 +33,10 @@ import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils"
 const PAGE_SIZE = 50;
 
 const categoryBadgeVariant: Record<string, string> = {
-  Produtivo: "bg-success/15 text-success border-success/30",
-  Suplementar: "bg-primary/15 text-primary border-primary/30",
+  Produtivo: "bg-[hsl(220,70%,55%)]/15 text-[hsl(220,70%,45%)] border-[hsl(220,70%,55%)]/30",
+  Suplementar: "bg-[hsl(142,70%,45%)]/15 text-[hsl(142,70%,30%)] border-[hsl(142,70%,45%)]/30",
   "Não Produtivo": "bg-destructive/15 text-destructive border-destructive/30",
+  "Não Produtivo Externo": "bg-[hsl(30,40%,80%)]/30 text-[hsl(30,40%,25%)] border-[hsl(30,40%,60%)]/40",
 };
 
 export default function Records() {
