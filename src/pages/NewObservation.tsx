@@ -37,6 +37,7 @@ export default function NewObservation() {
   const [time, setTime] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [isRangeMode, setIsRangeMode] = useState(false);
+  const [isDinamicoToggle, setIsDinamicoToggle] = useState(true);
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
