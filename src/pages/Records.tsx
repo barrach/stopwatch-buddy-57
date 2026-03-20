@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
