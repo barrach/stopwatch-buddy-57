@@ -68,8 +68,8 @@ export default function NewObservation() {
     [{ column: "status", value: "Ativo" }], "nome"
   );
 
-  const { data: categorias = [] } = useOfflineQuery<{ id: string; nome: string; categoria_pai_id: string | null; status: string }>(
-    ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status"
+  const { data: categorias = [] } = useOfflineQuery<{ id: string; nome: string; categoria_pai_id: string | null; status: string; impacta_produtividade: boolean }>(
+    ["categorias_observacao", "all"], "categorias_observacao", "id, nome, categoria_pai_id, status, impacta_produtividade"
   );
 
 
