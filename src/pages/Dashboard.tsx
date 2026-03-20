@@ -366,7 +366,7 @@ const timeIndex = (t: string) => {
 };
 
 const getTimeBucketLabel = (record: any, mode: TimeViewMode) => {
-  if (mode === "horario") return record.horario || "";
+  if (mode === "horario") return normalizeTime(record.horario || "");
   const d = new Date(`${record.data}T12:00:00`);
   if (mode === "diasemana") return WEEKDAY_NAMES[d.getDay()] || "";
   return MONTH_NAMES[d.getMonth()] || "";
