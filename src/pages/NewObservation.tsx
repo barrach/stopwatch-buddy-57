@@ -112,13 +112,13 @@ export default function NewObservation() {
       data: string; horario: string; rota_id: string; obra_id: string;
       contrato_id: string | null; especialidade_id: string; funcao_id: string | null;
       categoria_id: string; descricao: string; empresa: string;
-      quantidade: number; notas: string | null;
+      quantidade: number; notas: string | null; is_dinamico: boolean;
     }) => {
       if (!navigator.onLine) {
         await addToQueue({ table: "observacoes", operation: "insert", payload });
         return;
       }
-      const { error } = await supabase.from("observacoes").insert([payload]);
+      const { error } = await supabase.from("observacoes").insert([payload as any]);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
