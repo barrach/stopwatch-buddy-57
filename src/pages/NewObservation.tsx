@@ -78,6 +78,13 @@ export default function NewObservation() {
     [categorias]
   );
 
+  // Detect if selected parent category is NPE (impacta_produtividade === false)
+  const isNpeCategory = useMemo(() => {
+    if (!categoriaId) return false;
+    const parent = categorias.find((c) => c.id === categoriaId);
+    return parent ? (parent as any).impacta_produtividade === false : false;
+  }, [categorias, categoriaId]);
+
   const subcategorias = useMemo(
     () => categoriaId
       ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
