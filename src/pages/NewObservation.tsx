@@ -37,6 +37,7 @@ export default function NewObservation() {
   const [time, setTime] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [isRangeMode, setIsRangeMode] = useState(false);
+  const [isDinamicoToggle, setIsDinamicoToggle] = useState(true);
   const [rotaId, setRotaId] = useState("");
   const [obraId, setObraId] = useState("");
   const [especialidadeId, setEspecialidadeId] = useState("");
@@ -85,12 +86,18 @@ export default function NewObservation() {
     return parent ? (parent as any).impacta_produtividade === false : false;
   }, [categorias, categoriaId]);
 
-  // Detect if description is "Aguardando Liberação de PT" (also dynamic)
-  const isDynamicObservation = useMemo(() => {
-    if (isNpeCategory) return true;
+  // Detect if description is "Aguardando Liberação de PT"
+  const isPtDescription = useMemo(() => {
     if (!descricao) return false;
     return normalizeDescriptionName(descricao) === "Aguardando Liberação de PT";
-  }, [isNpeCategory, descricao]);
+  }, [descricao]);
+
+  // NPE is always dynamic; PT is dynamic only if toggle is ON
+  const isDynamicObservation = useMemo(() => {
+    if (isNpeCategory) return true;
+    if (isPtDescription && isDinamicoToggle) return true;
+    return false;
+  }, [isNpeCategory, isPtDescription, isDinamicoToggle]);
 
   const subcategorias = useMemo(
     () => categoriaId
@@ -105,13 +112,13 @@ export default function NewObservation() {
       data: string; horario: string; rota_id: string; obra_id: string;
       contrato_id: string | null; especialidade_id: string; funcao_id: string | null;
       categoria_id: string; descricao: string; empresa: string;
-      quantidade: number; notas: string | null;
+      quantidade: number; notas: string | null; is_dinamico: boolean;
     }) => {
       if (!navigator.onLine) {
         await addToQueue({ table: "observacoes", operation: "insert", payload });
         return;
       }
-      const { error } = await supabase.from("observacoes").insert([payload]);
+      const { error } = await supabase.from("observacoes").insert([payload as any]);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -164,6 +171,8 @@ export default function NewObservation() {
       return;
     }
 
+    const isDinamico = isNpeCategory || (isPtDescription && isDinamicoToggle);
+
     for (const slot of slots) {
       saveObservation({
         data: date,
@@ -176,8 +185,9 @@ export default function NewObservation() {
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
-        quantidade: isDynamicObservation ? 1 : parseInt(quantity, 10),
+        quantidade: isDinamico ? 1 : parseInt(quantity, 10),
         notas: notes || null,
+        is_dinamico: isDinamico,
       });
     }
   };
@@ -419,7 +429,7 @@ export default function NewObservation() {
 
               <div>
                 <Label className="text-xs text-muted-foreground">Descrição *</Label>
-                <Select value={descricao} onValueChange={setDescricao} disabled={!categoriaId}>
+                <Select value={descricao} onValueChange={(v) => { setDescricao(v); setIsDinamicoToggle(true); }} disabled={!categoriaId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder={categoriaId ? "Selecione a descrição..." : "Selecione a categoria primeiro"} /></SelectTrigger>
                   <SelectContent>
                     {subcategorias.map((s) => <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>)}
@@ -430,6 +440,22 @@ export default function NewObservation() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantidade de Amostras *</Label>
+
+                  {/* PT toggle: show when PT is selected but NOT NPE */}
+                  {isPtDescription && !isNpeCategory && (
+                    <div className="mt-2 mb-2 flex items-center gap-2">
+                      <Switch
+                        id="dinamico-toggle"
+                        checked={isDinamicoToggle}
+                        onCheckedChange={setIsDinamicoToggle}
+                        className="scale-75"
+                      />
+                      <Label htmlFor="dinamico-toggle" className="text-xs text-muted-foreground cursor-pointer">
+                        Usar cálculo automático (Observação Dinâmica)
+                      </Label>
+                    </div>
+                  )}
+
                   {isDynamicObservation ? (
                     <div className="mt-1 flex items-center gap-2">
                       <Input id="qty" type="number" value="1" disabled className="mt-0 bg-muted cursor-not-allowed" />

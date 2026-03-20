@@ -88,8 +88,17 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
 
   // Step 3: return records with NPE or PT quantities replaced
   return records.map((r) => {
-    const shouldReplace = isNpeRecord(r, info) || isExcludedFromAverage(r);
-    if (!shouldReplace) return r;
+    const isNpe = isNpeRecord(r, info);
+    const isPt = isExcludedFromAverage(r);
+    if (!isNpe && !isPt) return r;
+
+    // NPE is always dynamic. PT is dynamic only if is_dinamico === true
+    // For legacy records (is_dinamico === null/undefined), NPE is always reprocessed,
+    // PT keeps its DB value (already batch-corrected).
+    if (isPt && !isNpe) {
+      if (r.is_dinamico !== true) return r;
+    }
+
     const key = `${r.data}|${r.especialidade_id}`;
     const avg = avgMap.get(key);
     // If no valid data exists for that day/specialty, keep original (fallback)

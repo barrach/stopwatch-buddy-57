@@ -248,6 +248,7 @@ export type Database = {
           funcao_id: string | null
           horario: string
           id: string
+          is_dinamico: boolean | null
           notas: string | null
           obra_id: string
           quantidade: number
@@ -270,6 +271,7 @@ export type Database = {
           funcao_id?: string | null
           horario: string
           id?: string
+          is_dinamico?: boolean | null
           notas?: string | null
           obra_id: string
           quantidade?: number
@@ -292,6 +294,7 @@ export type Database = {
           funcao_id?: string | null
           horario?: string
           id?: string
+          is_dinamico?: boolean | null
           notas?: string | null
           obra_id?: string
           quantidade?: number

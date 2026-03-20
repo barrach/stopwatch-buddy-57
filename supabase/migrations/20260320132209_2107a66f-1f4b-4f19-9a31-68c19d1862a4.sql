@@ -1,0 +1,1 @@
+ALTER TABLE public.observacoes ADD COLUMN is_dinamico boolean DEFAULT NULL;
