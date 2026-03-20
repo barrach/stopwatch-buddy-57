@@ -176,7 +176,7 @@ export default function NewObservation() {
         categoria_id: categoriaId,
         descricao,
         empresa: "MEGASTEAM",
-        quantidade: isNpeCategory ? 1 : parseInt(quantity, 10),
+        quantidade: isDynamicObservation ? 1 : parseInt(quantity, 10),
         notas: notes || null,
       });
     }
