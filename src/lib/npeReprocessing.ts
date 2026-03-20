@@ -86,12 +86,13 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
     avgMap.set(key, numHours > 0 ? totalQty / numHours : 0);
   }
 
-  // Step 3: return records with NPE quantities replaced
+  // Step 3: return records with NPE or PT quantities replaced
   return records.map((r) => {
-    if (!isNpeRecord(r, info)) return r;
+    const shouldReplace = isNpeRecord(r, info) || isExcludedFromAverage(r);
+    if (!shouldReplace) return r;
     const key = `${r.data}|${r.especialidade_id}`;
     const avg = avgMap.get(key);
-    // If no non-NPE data exists for that day/specialty, keep original (fallback)
+    // If no valid data exists for that day/specialty, keep original (fallback)
     if (avg === undefined || avg === 0) return r;
     return { ...r, quantidade: Math.round(avg) };
   });

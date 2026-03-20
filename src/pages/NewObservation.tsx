@@ -85,6 +85,13 @@ export default function NewObservation() {
     return parent ? (parent as any).impacta_produtividade === false : false;
   }, [categorias, categoriaId]);
 
+  // Detect if description is "Aguardando Liberação de PT" (also dynamic)
+  const isDynamicObservation = useMemo(() => {
+    if (isNpeCategory) return true;
+    if (!descricao) return false;
+    return normalizeDescriptionName(descricao) === "Aguardando Liberação de PT";
+  }, [isNpeCategory, descricao]);
+
   const subcategorias = useMemo(
     () => categoriaId
       ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
