@@ -21,6 +21,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
@@ -120,10 +121,16 @@ export default function RelatoriosPage() {
     return false;
   }, [parentCatImpactMap, npeDescriptions]);
 
+  // ── NPE Reprocessing (dynamic weighted quantities) ──
+  const reprocessedRecords = useMemo(
+    () => reprocessNpeQuantities(allRecords, parentCats as any),
+    [allRecords, parentCats]
+  );
+
   // ── Filtered records ──
   const records = useMemo(() => {
     if (!generated) return [];
-    return allRecords.filter((r: any) => {
+    return reprocessedRecords.filter((r: any) => {
       if (dateMode === "single") {
         if (r.data !== date) return false;
       } else {
@@ -133,7 +140,7 @@ export default function RelatoriosPage() {
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
       return true;
     });
-  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
+  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, reprocessedRecords]);
 
   // ── Summary ──
   const summary = useMemo(() => {
