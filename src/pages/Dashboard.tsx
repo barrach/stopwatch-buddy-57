@@ -1128,7 +1128,7 @@ export default function Dashboard() {
 
 
       // Per hour
-      const h = r.horario || "";
+      const h = normalizeTime(r.horario || "");
       if (!byHour[h]) byHour[h] = { prod: 0, supl: 0, naoProd: 0, npe: 0, total: 0 };
       byHour[h].total += qty;
       if (isExt) byHour[h].npe += qty;
