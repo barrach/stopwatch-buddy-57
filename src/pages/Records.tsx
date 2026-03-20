@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
@@ -121,12 +122,21 @@ export default function Records() {
 
   const profileMap = new Map(profiles.map((p) => [p.user_id, p.nome || p.email || p.user_id.substring(0, 8)]));
 
-  const { data: records = [] } = useQuery({
+  const { data: parentCats = [] } = useQuery({
+    queryKey: ["categorias_observacao", "parents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categorias_observacao").select("id, nome, impacta_produtividade").is("categoria_pai_id", null);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: rawRecords = [] } = useQuery({
     queryKey: ["observacoes"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
+        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)")
         .is("deleted_at", null)
         .order("data", { ascending: false })
         .order("horario", { ascending: false });
@@ -134,6 +144,12 @@ export default function Records() {
       return data;
     },
   });
+
+  // Apply NPE dynamic reprocessing so table shows same values as Dashboard/Charts
+  const records = useMemo(
+    () => reprocessNpeQuantities(rawRecords, parentCats as any),
+    [rawRecords, parentCats]
+  );
 
   const { mutate: deleteRecord } = useMutation({
     mutationFn: async (id: string) => {
