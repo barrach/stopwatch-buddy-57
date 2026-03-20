@@ -9,6 +9,8 @@
  * NEVER on description text.
  */
 
+import { normalizeDescriptionName } from "@/lib/categoryNormalization";
+
 export interface NpeParentInfo {
   /** Map of category ID → impacta_produtividade of its PARENT (or itself if root) */
   impactMap: Record<string, boolean>;
@@ -26,6 +28,15 @@ function isNpeRecord(r: any, info: NpeParentInfo): boolean {
   // Check parent category flag
   if (cat.categoria_pai_id && info.impactMap[cat.categoria_pai_id] === false) return true;
   return false;
+}
+
+/**
+ * "Aguardando Liberação de PT" must be excluded from the average calculation
+ * even though it is Suplementar, per operational rules.
+ */
+function isExcludedFromAverage(r: any): boolean {
+  const normalized = normalizeDescriptionName(r.descricao);
+  return normalized === "Aguardando Liberação de PT";
 }
 
 /**
