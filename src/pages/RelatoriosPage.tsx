@@ -21,6 +21,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {

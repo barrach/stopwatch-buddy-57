@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
+import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
