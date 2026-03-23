@@ -739,34 +739,30 @@ export default function Dashboard() {
 
   // By Specialty — description-level breakdown, sorted by "Trabalhando" (productivity) desc
   const bySpecialty = useMemo(() => {
-    const result: Record<string, Record<string, number>> = {};
+    // Group records by specialty
+    const grouped: Record<string, any[]> = {};
     records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!result[sName]) {
-        result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
-      }
-      const desc = canonicalDescription(r.descricao || "Sem descrição");
-      const qty = r.quantidade || 0;
-      if (desc in result[sName]) {
-        result[sName][desc] = (result[sName][desc] || 0) + qty;
-      }
+      if (!grouped[sName]) grouped[sName] = [];
+      grouped[sName].push(r);
     });
-    return Object.entries(result)
-      .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
-      .map(([name, descs]) => {
-        const total = Object.values(descs).reduce((s, v) => s + v, 0);
+
+    return Object.entries(grouped)
+      .filter(([_, recs]) => recs.reduce((s, r) => s + (r.quantidade || 0), 0) > 0)
+      .map(([name, recs]) => {
+        const total = recs.reduce((s, r) => s + (r.quantidade || 0), 0);
+        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
         const row: any = { name, total };
         for (const desc of CANONICAL_ORDER_FULL) {
-          const qty = descs[desc] || 0;
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
+          row[desc] = pcts[desc] || 0;
+          let rawQty = 0;
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
+          row[`raw_${desc}`] = rawQty;
         }
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
+  }, [records]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
@@ -789,27 +785,16 @@ export default function Dashboard() {
       entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
     }
 
-    // For diasemana and mes, apply hourly-average logic; for horario, use volume-based (each bar IS one hour)
-    const useHourlyAvg = timeViewMode !== "horario";
-
+    // Apply hourly-average logic for ALL time views (including horario for consolidated special categories)
     return entries.map(([label, recs]) => {
       const total = recs.reduce((s, r) => s + (r.quantidade || 0), 0);
+      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
-      if (useHourlyAvg) {
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
-        for (const desc of CANONICAL_ORDER_FULL) {
-          row[desc] = pcts[desc] || 0;
-          let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
-          row[`raw_${desc}`] = rawQty;
-        }
-      } else {
-        for (const desc of CANONICAL_ORDER_FULL) {
-          let qty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += r.quantidade || 0; });
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
-        }
+      for (const desc of CANONICAL_ORDER_FULL) {
+        row[desc] = pcts[desc] || 0;
+        let rawQty = 0;
+        recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
+        row[`raw_${desc}`] = rawQty;
       }
       return row;
     });
