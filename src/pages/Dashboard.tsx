@@ -785,27 +785,16 @@ export default function Dashboard() {
       entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
     }
 
-    // For diasemana and mes, apply hourly-average logic; for horario, use volume-based (each bar IS one hour)
-    const useHourlyAvg = timeViewMode !== "horario";
-
+    // Apply hourly-average logic for ALL time views (including horario for consolidated special categories)
     return entries.map(([label, recs]) => {
       const total = recs.reduce((s, r) => s + (r.quantidade || 0), 0);
+      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
-      if (useHourlyAvg) {
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
-        for (const desc of CANONICAL_ORDER_FULL) {
-          row[desc] = pcts[desc] || 0;
-          let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
-          row[`raw_${desc}`] = rawQty;
-        }
-      } else {
-        for (const desc of CANONICAL_ORDER_FULL) {
-          let qty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += r.quantidade || 0; });
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
-        }
+      for (const desc of CANONICAL_ORDER_FULL) {
+        row[desc] = pcts[desc] || 0;
+        let rawQty = 0;
+        recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
+        row[`raw_${desc}`] = rawQty;
       }
       return row;
     });
