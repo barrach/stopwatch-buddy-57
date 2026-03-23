@@ -453,8 +453,14 @@ ${c.porFuncao || "Não disponível"}
 PRODUTIVIDADE POR HORÁRIO (excluindo NPE):
 ${c.porHorario || "Não disponível"}
 
-TODAS AS DESCRIÇÕES (ranking por volume):
+TODAS AS DESCRIÇÕES (ranking por volume — % sobre total geral):
 ${c.topCategorias || "Não disponível"}
+
+DETALHAMENTO POR SUBCATEGORIA (% sobre total geral):
+${c.porSubcategoria || "Não disponível"}
+
+OBSERVAÇÕES QUALITATIVAS DO AMOSTRADOR (campo "Notas"):
+${c.observacoesQualitativas || "Nenhuma observação qualitativa registrada no período."}
 
 CAUSAS EXTERNAS (NPE):
 ${c.causasExternas || "Nenhuma registrada"}
