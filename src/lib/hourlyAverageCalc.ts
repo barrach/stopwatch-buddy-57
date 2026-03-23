@@ -43,36 +43,50 @@ export function computeHourlyAdjustedPercentages(
     return Object.fromEntries(descriptions.map(d => [d, 0]));
   }
 
-  // Step 1: Group records by normalized hour
-  const byHour: Record<string, Record<string, number>> = {};
+  // Step 1: Group records by hour → specialty → description
+  const byHourSpec: Record<string, Record<string, Record<string, number>>> = {};
 
   for (const r of groupRecords) {
     const hour = normalizeTime(r.horario || "");
     if (!hour) continue;
-    if (!byHour[hour]) byHour[hour] = {};
+    const spec = r.especialidade_id || r.especialidade || "_default";
     const desc = canonicalDescription(r.descricao || "Sem descrição");
-    byHour[hour][desc] = (byHour[hour][desc] || 0) + (r.quantidade || 0);
+    if (!byHourSpec[hour]) byHourSpec[hour] = {};
+    if (!byHourSpec[hour][spec]) byHourSpec[hour][spec] = {};
+    byHourSpec[hour][spec][desc] = (byHourSpec[hour][spec][desc] || 0) + (r.quantidade || 0);
   }
 
-  const hours = Object.keys(byHour);
+  const hours = Object.keys(byHourSpec);
   if (hours.length === 0) {
     return Object.fromEntries(descriptions.map(d => [d, 0]));
   }
 
-  // Step 2: For special categories, compute average of hourly percentages
+  // Step 2: For special categories, 3-level calculation:
+  // Level 1: % per specialty within hour
+  // Level 2: avg across specialties per hour
+  // Level 3: avg across hours
   const specialAvgs: Record<string, number> = {};
   for (const desc of descriptions) {
     if (!isHourlyAvgDescription(desc)) continue;
-    let sumPct = 0;
+    let sumHourPct = 0;
     let countHours = 0;
     for (const hour of hours) {
-      const hourTotal = Object.values(byHour[hour]).reduce((a, b) => a + b, 0);
-      if (hourTotal <= 0) continue;
-      const descQty = byHour[hour][desc] || 0;
-      sumPct += (descQty / hourTotal) * 100;
-      countHours++;
+      const specs = byHourSpec[hour];
+      let sumSpecPct = 0;
+      let countSpecs = 0;
+      for (const [, descMap] of Object.entries(specs)) {
+        const specTotal = Object.values(descMap).reduce((a, b) => a + b, 0);
+        if (specTotal <= 0) continue;
+        const descQty = descMap[desc] || 0;
+        sumSpecPct += (descQty / specTotal) * 100;
+        countSpecs++;
+      }
+      if (countSpecs > 0) {
+        sumHourPct += sumSpecPct / countSpecs;
+        countHours++;
+      }
     }
-    specialAvgs[desc] = countHours > 0 ? sumPct / countHours : 0;
+    specialAvgs[desc] = countHours > 0 ? sumHourPct / countHours : 0;
   }
 
   // Step 3: For normal categories, compute volume-based percentage
