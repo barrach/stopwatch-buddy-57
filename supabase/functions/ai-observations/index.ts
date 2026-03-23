@@ -177,6 +177,22 @@ CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 REGRA DE CLASSIFICAÇÃO POR CATEGORIA (NÃO POR TEXTO):
 A classificação de cada observação em Produtivo/Suplementar/Não Produtivo/NPE é determinada pela CATEGORIA PAI vinculada no banco de dados, e NÃO pelo texto da descrição. Todas as descrições vinculadas a uma categoria pai entram automaticamente no cálculo daquela categoria, independentemente de variações na escrita do nome. Os dados percentuais que você recebe já estão calculados com base nessa regra.
 
+ANÁLISE DE OBSERVAÇÕES QUALITATIVAS (CAMPO "NOTAS"):
+O amostrador pode registrar observações de texto livre no campo "Notas" de cada registro.
+Quando observações estiverem disponíveis, a IA DEVE:
+1. Analisar semanticamente o conteúdo das notas
+2. Correlacionar com os dados quantitativos (ex: nota "chuva forte" → NPE/Fatores Climáticos)
+3. Identificar padrões recorrentes nas observações
+4. Usar as notas como evidência qualitativa para reforçar ou explicar desvios nos indicadores
+5. Incluir insights das notas na seção de Diagnóstico quando relevantes
+
+EXEMPLOS DE CORRELAÇÃO:
+- "chuva forte interrompeu atividades" → correlacionar com NPE (Fatores Climáticos)
+- "falta de material" → correlacionar com Suplementar (Aguardando Ferramenta ou Material)
+- "equipe parada aguardando liberação" → correlacionar com Suplementar (Aguardando Liberação de PT)
+- "pessoal no café" → correlacionar com Não Produtivo (Ocioso)
+REGRA: Se não houver notas, não mencionar. Apenas usar quando disponíveis e relevantes.
+
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
 - Todas as análises devem ser baseadas EXCLUSIVAMENTE em PERCENTUAIS (%).
