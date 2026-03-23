@@ -78,6 +78,8 @@ export default function RelatorioIA() {
     let prod = 0, supl = 0, naoProd = 0, npe = 0;
     const byEspDesc: Record<string, Record<string, number>> = {};
     const byCat: Record<string, number> = {};
+    const bySubcategoria: Record<string, { cat: string; qty: number }> = {};
+    const notasList: string[] = [];
 
     const NPE_CATS = ["Não Produtivo Externo"];
     const isNpe = (cat: string) => NPE_CATS.includes(cat);
@@ -97,18 +99,28 @@ export default function RelatorioIA() {
       byEspDesc[espName][desc] = (byEspDesc[espName][desc] || 0) + qty;
 
       byCat[r.descricao || "Sem descrição"] = (byCat[r.descricao || "Sem descrição"] || 0) + qty;
+
+      // Subcategory breakdown
+      const descNorm = r.descricao || "Sem descrição";
+      if (!bySubcategoria[descNorm]) bySubcategoria[descNorm] = { cat, qty: 0 };
+      bySubcategoria[descNorm].qty += qty;
+
+      // Collect qualitative notes
+      if (r.notas && r.notas.trim()) {
+        notasList.push(`[${r.data} ${r.horario}] ${espName}: ${r.notas.trim()}`);
+      }
     });
 
     const porEspecialidade = Object.entries(byEspDesc)
       .sort(([, a], [, b]) => b.total - a.total)
       .slice(0, 8)
       .map(([nome, v]) => {
-        const total = v.total || 0;
+        const espTotal = v.total || 0;
         const trabalhando = v["Trabalhando"] || 0;
         const planejando = v["Planejando"] || 0;
-        const prodPct = total > 0 ? +((trabalhando / total) * 100).toFixed(1) : 0;
-        const planPct = total > 0 ? +((planejando / total) * 100).toFixed(1) : 0;
-        const prodTotal = total > 0 ? +(((trabalhando + planejando) / total) * 100).toFixed(1) : 0;
+        const prodPct = espTotal > 0 ? +((trabalhando / espTotal) * 100).toFixed(1) : 0;
+        const planPct = espTotal > 0 ? +((planejando / espTotal) * 100).toFixed(1) : 0;
+        const prodTotal = espTotal > 0 ? +(((trabalhando + planejando) / espTotal) * 100).toFixed(1) : 0;
         return `${nome}: Produtividade ${prodTotal}% (Trabalhando ${prodPct}% + Planejando ${planPct}%)`;
       })
       .join("\n");
@@ -116,8 +128,23 @@ export default function RelatorioIA() {
     const topCategorias = Object.entries(byCat)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8)
-      .map(([nome, qty]) => `${nome}: ${qty} amostras`)
+      .map(([nome, qty]) => {
+        const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+        return `${nome}: ${pct}%`;
+      })
       .join("\n");
+
+    const porSubcategoria = Object.entries(bySubcategoria)
+      .sort(([, a], [, b]) => b.qty - a.qty)
+      .map(([nome, { cat, qty }]) => {
+        const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : "0";
+        return `${nome} (${cat}): ${pct}%`;
+      })
+      .join("\n");
+
+    const observacoesQualitativas = notasList.length > 0
+      ? notasList.slice(0, 30).join("\n")
+      : "";
 
     const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
 
@@ -135,6 +162,8 @@ export default function RelatorioIA() {
       obra: obraName,
       porEspecialidade,
       topCategorias,
+      porSubcategoria,
+      observacoesQualitativas,
     };
   }, [filteredRecords, parentCatMap, obraFilter, obras]);
 
