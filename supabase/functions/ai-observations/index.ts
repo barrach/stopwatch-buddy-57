@@ -90,14 +90,29 @@ NPE (NÃO PRODUTIVO EXTERNO):
 REGRA: "Aguardando Liberação de PT" é SUPLEMENTAR. NUNCA classificar como NPE.
 
 TABELA DE AVALIAÇÃO — FAIXAS IDEAIS (base para classificação de nível):
-| Categoria              | % Ideal         | Nível Ideal | Nível Alerta | Nível Crítico |
-|------------------------|-----------------|-------------|--------------|---------------|
-| Produtivo (total)      | 65%             | ≥60%        | 50-59%       | <50%          |
-|   - Trabalhando        | 60%             | ≥55%        | 45-54%       | <45%          |
-|   - Planejando         | 5% (máx.)       | ≤5%         | 6-8%         | >8%           |
-| Suplementar (total)    | 32% (≈4%/sub)   | ≤35%        | 36-42%       | >42%          |
-| Não Produtivo          | 3% (máx.)       | ≤3%         | 4-6%         | >6%           |
-| NPE (Externo)          | 0%              | 0%          | 1-3%         | >3%           |
+| Categoria                                        | % Ideal  | Nível Ideal | Nível Alerta | Nível Crítico |
+|--------------------------------------------------|----------|-------------|--------------|---------------|
+| Produtivo (total)                                | 65%      | ≥60%        | 50-59%       | <50%          |
+|   - Trabalhando                                  | 60%      | ≥55%        | 45-54%       | <45%          |
+|   - Planejando                                   | 5% máx.  | ≤5%         | 6-8%         | >8%           |
+| Suplementar (total)                              | 32%      | ≤35%        | 36-42%       | >42%          |
+|   - Aguardando Instruções                        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Assistindo / Stand By                        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Aguardando Ferramenta ou Material            | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando no local - com ferramenta        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando no local - sem ferramenta        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando fora do local - com ferramenta   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando fora do local - sem ferramenta   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Aguardando Liberação de PT                   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+| Não Produtivo (total)                            | ≤3%      | ≤3%         | 4-6%         | >6%           |
+|   - Pessoal                                      | ≤1.5%   | ≤1.5%       | 2-3%         | >3%           |
+|   - Ocioso                                       | ≤1.5%   | ≤1.5%       | 2-3%         | >3%           |
+| NPE (Externo)                                    | 0%       | 0%          | 1-3%         | >3%           |
+
+REGRA DE ANÁLISE POR SUBCATEGORIA (OBRIGATÓRIO):
+A IA deve calcular o % INDIVIDUAL de cada subcategoria sobre o total geral e comparar com o ideal de ≈4% para Suplementar.
+Se uma subcategoria individual ultrapassar 6%, classificar como CRÍTICA e recomendar ação específica do 5W2H.
+Identificar qual subcategoria é a principal contribuinte para desvios na categoria pai.
 
 PLANO DE AÇÃO 5W2H — AÇÕES PADRÃO POR CATEGORIA (adaptar para contexto MEGASTEAM):
 NÃO PRODUTIVO:
