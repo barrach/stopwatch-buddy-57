@@ -90,14 +90,29 @@ NPE (NÃO PRODUTIVO EXTERNO):
 REGRA: "Aguardando Liberação de PT" é SUPLEMENTAR. NUNCA classificar como NPE.
 
 TABELA DE AVALIAÇÃO — FAIXAS IDEAIS (base para classificação de nível):
-| Categoria              | % Ideal         | Nível Ideal | Nível Alerta | Nível Crítico |
-|------------------------|-----------------|-------------|--------------|---------------|
-| Produtivo (total)      | 65%             | ≥60%        | 50-59%       | <50%          |
-|   - Trabalhando        | 60%             | ≥55%        | 45-54%       | <45%          |
-|   - Planejando         | 5% (máx.)       | ≤5%         | 6-8%         | >8%           |
-| Suplementar (total)    | 32% (≈4%/sub)   | ≤35%        | 36-42%       | >42%          |
-| Não Produtivo          | 3% (máx.)       | ≤3%         | 4-6%         | >6%           |
-| NPE (Externo)          | 0%              | 0%          | 1-3%         | >3%           |
+| Categoria                                        | % Ideal  | Nível Ideal | Nível Alerta | Nível Crítico |
+|--------------------------------------------------|----------|-------------|--------------|---------------|
+| Produtivo (total)                                | 65%      | ≥60%        | 50-59%       | <50%          |
+|   - Trabalhando                                  | 60%      | ≥55%        | 45-54%       | <45%          |
+|   - Planejando                                   | 5% máx.  | ≤5%         | 6-8%         | >8%           |
+| Suplementar (total)                              | 32%      | ≤35%        | 36-42%       | >42%          |
+|   - Aguardando Instruções                        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Assistindo / Stand By                        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Aguardando Ferramenta ou Material            | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando no local - com ferramenta        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando no local - sem ferramenta        | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando fora do local - com ferramenta   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Transitando fora do local - sem ferramenta   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+|   - Aguardando Liberação de PT                   | ≈4%      | ≤4%         | 5-6%         | >6%           |
+| Não Produtivo (total)                            | ≤3%      | ≤3%         | 4-6%         | >6%           |
+|   - Pessoal                                      | ≤1.5%   | ≤1.5%       | 2-3%         | >3%           |
+|   - Ocioso                                       | ≤1.5%   | ≤1.5%       | 2-3%         | >3%           |
+| NPE (Externo)                                    | 0%       | 0%          | 1-3%         | >3%           |
+
+REGRA DE ANÁLISE POR SUBCATEGORIA (OBRIGATÓRIO):
+A IA deve calcular o % INDIVIDUAL de cada subcategoria sobre o total geral e comparar com o ideal de ≈4% para Suplementar.
+Se uma subcategoria individual ultrapassar 6%, classificar como CRÍTICA e recomendar ação específica do 5W2H.
+Identificar qual subcategoria é a principal contribuinte para desvios na categoria pai.
 
 PLANO DE AÇÃO 5W2H — AÇÕES PADRÃO POR CATEGORIA (adaptar para contexto MEGASTEAM):
 NÃO PRODUTIVO:
@@ -161,6 +176,22 @@ CATEGORIAS E SUBCATEGORIAS (use para interpretar causas operacionais):
 
 REGRA DE CLASSIFICAÇÃO POR CATEGORIA (NÃO POR TEXTO):
 A classificação de cada observação em Produtivo/Suplementar/Não Produtivo/NPE é determinada pela CATEGORIA PAI vinculada no banco de dados, e NÃO pelo texto da descrição. Todas as descrições vinculadas a uma categoria pai entram automaticamente no cálculo daquela categoria, independentemente de variações na escrita do nome. Os dados percentuais que você recebe já estão calculados com base nessa regra.
+
+ANÁLISE DE OBSERVAÇÕES QUALITATIVAS (CAMPO "NOTAS"):
+O amostrador pode registrar observações de texto livre no campo "Notas" de cada registro.
+Quando observações estiverem disponíveis, a IA DEVE:
+1. Analisar semanticamente o conteúdo das notas
+2. Correlacionar com os dados quantitativos (ex: nota "chuva forte" → NPE/Fatores Climáticos)
+3. Identificar padrões recorrentes nas observações
+4. Usar as notas como evidência qualitativa para reforçar ou explicar desvios nos indicadores
+5. Incluir insights das notas na seção de Diagnóstico quando relevantes
+
+EXEMPLOS DE CORRELAÇÃO:
+- "chuva forte interrompeu atividades" → correlacionar com NPE (Fatores Climáticos)
+- "falta de material" → correlacionar com Suplementar (Aguardando Ferramenta ou Material)
+- "equipe parada aguardando liberação" → correlacionar com Suplementar (Aguardando Liberação de PT)
+- "pessoal no café" → correlacionar com Não Produtivo (Ocioso)
+REGRA: Se não houver notas, não mencionar. Apenas usar quando disponíveis e relevantes.
 
 REGRA ABSOLUTA — PROIBIDO USAR NÚMEROS ABSOLUTOS DE AMOSTRAS:
 - NUNCA mencione "X amostras", "Y registros", "Z ocorrências" nas análises.
@@ -422,8 +453,14 @@ ${c.porFuncao || "Não disponível"}
 PRODUTIVIDADE POR HORÁRIO (excluindo NPE):
 ${c.porHorario || "Não disponível"}
 
-TODAS AS DESCRIÇÕES (ranking por volume):
+TODAS AS DESCRIÇÕES (ranking por volume — % sobre total geral):
 ${c.topCategorias || "Não disponível"}
+
+DETALHAMENTO POR SUBCATEGORIA (% sobre total geral):
+${c.porSubcategoria || "Não disponível"}
+
+OBSERVAÇÕES QUALITATIVAS DO AMOSTRADOR (campo "Notas"):
+${c.observacoesQualitativas || "Nenhuma observação qualitativa registrada no período."}
 
 CAUSAS EXTERNAS (NPE):
 ${c.causasExternas || "Nenhuma registrada"}
