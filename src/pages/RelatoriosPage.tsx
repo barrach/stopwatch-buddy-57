@@ -219,35 +219,35 @@ export default function RelatoriosPage() {
   }, [records]);
 
   const byDiaSemana = useMemo(() => {
-    const result: Record<string, Record<string, number>> = {};
+    const grouped: Record<string, any[]> = {};
     records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "diasemana");
       if (!key) return;
-      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
-      const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(r);
     });
-    return Object.entries(result).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, descs]) => {
-      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+    return Object.entries(grouped).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, recs]) => {
+      const total = recs.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
       return row;
     });
   }, [records]);
 
   const byMes = useMemo(() => {
-    const result: Record<string, Record<string, number>> = {};
+    const grouped: Record<string, any[]> = {};
     records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "mes");
       if (!key) return;
-      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
-      const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(r);
     });
-    return Object.entries(result).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, descs]) => {
-      const total = Object.values(descs).reduce((s, v) => s + v, 0);
+    return Object.entries(grouped).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, recs]) => {
+      const total = recs.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
       return row;
     });
   }, [records]);
