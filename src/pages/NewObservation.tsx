@@ -53,6 +53,8 @@ export default function NewObservation() {
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [duracaoHoras, setDuracaoHoras] = useState(0);
+  const [duracaoMinutos, setDuracaoMinutos] = useState(0);
   const [notes, setNotes] = useState("");
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [lastObs, setLastObs] = useState<LastObservation | null>(null);
