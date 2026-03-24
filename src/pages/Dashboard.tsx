@@ -1209,13 +1209,28 @@ export default function Dashboard() {
       .sort(([, a], [, b]) => b - a).slice(0, 10)
       .map(([nome, qty]) => `${nome}: ${qty} amostras`).join("\n");
 
+    // Compute HH perdido for special categories
+    const hhDescriptions = ["Aguardando Liberação de PT", "Fatores Climáticos e Consequências", "Interferências Operacionais"];
+    const hhPerdido: Record<string, number> = {};
+    records.forEach((r: any) => {
+      const desc = canonicalDescription(r.descricao || "");
+      if (hhDescriptions.includes(desc)) {
+        const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
+        const hh = (r.quantidade || 0) * duracao;
+        hhPerdido[desc] = (hhPerdido[desc] || 0) + hh;
+      }
+    });
+    const hhTotal = Object.values(hhPerdido).reduce((a, b) => a + b, 0);
+
     const causasExternas = Object.entries(byCat)
       .filter(([nome]) => {
-        // Only external descriptions
         return records.some((r: any) => r.descricao === nome && isExternalRecord(r));
       })
       .sort(([, a], [, b]) => b - a)
-      .map(([nome, qty]) => `${nome}: ${qty} amostras`)
+      .map(([nome, qty]) => {
+        const hh = hhPerdido[nome];
+        return hh ? `${nome}: ${qty} amostras, ${hh.toFixed(1)} HH perdido` : `${nome}: ${qty} amostras`;
+      })
       .join("\n");
 
     const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
