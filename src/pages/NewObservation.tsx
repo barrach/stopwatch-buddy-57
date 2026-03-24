@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange } from "lucide-react";
+import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange, Timer } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,15 @@ import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/cat
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
   categoriaId: string; descricao: string; quantity: string; notes: string;
+  duracaoHoras: number; duracaoMinutos: number;
 }
+
+/** Descriptions that use the HH (man-hours) model — require duration input */
+const HH_MODEL_DESCRIPTIONS = new Set([
+  "Aguardando Liberação de PT",
+  "Fatores Climáticos e Consequências",
+  "Interferências Operacionais",
+]);
 
 export default function NewObservation() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
