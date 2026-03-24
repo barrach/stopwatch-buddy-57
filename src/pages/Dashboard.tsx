@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -567,21 +567,21 @@ export default function Dashboard() {
   }, [baseRecords, crossFilters, getParentCatName]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getRecordHH(r), 0), [records]);
   const externalCount = useMemo(
-    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + getRecordHH(r), 0),
     [records, isExternalRecord]
   );
   const productiveCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + getRecordHH(r), 0),
     [records, getParentCatName]
   );
   const supplementaryCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Suplementar").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    () => records.filter((r: any) => getParentCatName(r) === "Suplementar").reduce((s: number, r: any) => s + getRecordHH(r), 0),
     [records, getParentCatName]
   );
   const unproductiveCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + (r.quantidade || 0), 0),
+    () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + getRecordHH(r), 0),
     [records, getParentCatName]
   );
   // Global productivity: NPE included in denominator
@@ -608,7 +608,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = { Produtivo: 0, Suplementar: 0, "Não Produtivo": 0, "Não Produtivo Externo": 0 };
     records.forEach((r: any) => {
       const cat = getParentCatName(r);
-      if (totals[cat] !== undefined) totals[cat] += r.quantidade || 0;
+      if (totals[cat] !== undefined) totals[cat] += getRecordHH(r);
     });
     return Object.entries(totals).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value }));
   }, [records, getParentCatName]);
@@ -624,7 +624,7 @@ export default function Dashboard() {
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
       if (!isNPE && !isAgPT) return;
-      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+      totals[desc] = (totals[desc] || 0) + getRecordHH(r);
       if (!hoursSet[desc]) hoursSet[desc] = new Set();
       const key = `${r.data}_${r.horario}`;
       hoursSet[desc].add(key);
@@ -650,7 +650,7 @@ export default function Dashboard() {
       if (cat !== "Não Produtivo" && cat !== "Suplementar") return;
       const desc = r.descricao || "Sem descrição";
       if (!totals[desc]) totals[desc] = { value: 0, cat };
-      totals[desc].value += r.quantidade || 0;
+      totals[desc].value += getRecordHH(r);
     });
     const sorted = Object.entries(totals)
       .map(([name, { value, cat }]) => ({ name, value, cat }))
@@ -672,7 +672,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       const key = canonicalDescription(r.descricao || "Sem descrição");
-      totals[key] = (totals[key] || 0) + (r.quantidade || 0);
+      totals[key] = (totals[key] || 0) + getRecordHH(r);
     });
     const sorted = Object.entries(totals)
       .map(([name, value]) => ({ name, value }))
@@ -709,14 +709,14 @@ export default function Dashboard() {
     });
     return Object.entries(grouped)
       .map(([name, recs]) => {
-        const total = recs.reduce((s, r) => s + (r.quantidade || 0), 0);
+        const total = recs.reduce((s, r) => s + getRecordHH(r), 0);
         const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
         const row: any = { name, total };
         for (const desc of CANONICAL_ORDER_FULL) {
           row[desc] = pcts[desc] || 0;
           // raw counts for tooltip
           let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getRecordHH(r); });
           row[`raw_${desc}`] = rawQty;
         }
         return row;
@@ -748,7 +748,7 @@ export default function Dashboard() {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
       }
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      const qty = r.quantidade || 0;
+      const qty = getRecordHH(r);
       if (desc in result[sName]) {
         result[sName][desc] = (result[sName][desc] || 0) + qty;
       }
@@ -793,20 +793,20 @@ export default function Dashboard() {
     const useHourlyAvg = timeViewMode !== "horario";
 
     return entries.map(([label, recs]) => {
-      const total = recs.reduce((s, r) => s + (r.quantidade || 0), 0);
+      const total = recs.reduce((s, r) => s + getRecordHH(r), 0);
       const row: any = { time: label, total };
       if (useHourlyAvg) {
         const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
         for (const desc of CANONICAL_ORDER_FULL) {
           row[desc] = pcts[desc] || 0;
           let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += r.quantidade || 0; });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getRecordHH(r); });
           row[`raw_${desc}`] = rawQty;
         }
       } else {
         for (const desc of CANONICAL_ORDER_FULL) {
           let qty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += r.quantidade || 0; });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getRecordHH(r); });
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
