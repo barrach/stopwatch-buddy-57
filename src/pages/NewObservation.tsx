@@ -225,6 +225,8 @@ export default function NewObservation() {
     setEspecialidadeId(lastObs.especialidadeId);
     setCategoriaId(lastObs.categoriaId);
     setQuantity(lastObs.quantity);
+    setDuracaoHoras(lastObs.duracaoHoras);
+    setDuracaoMinutos(lastObs.duracaoMinutos);
     setNotes(lastObs.notes);
     // Defer rotaId and descricao so dependent memos recompute first
     setTimeout(() => {
