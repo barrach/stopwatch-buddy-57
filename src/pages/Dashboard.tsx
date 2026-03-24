@@ -745,13 +745,12 @@ export default function Dashboard() {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
         result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
       }
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      const qty = getRecordHH(r);
+      const qty = hhVal(r);
       if (desc in result[sName]) {
         result[sName][desc] = (result[sName][desc] || 0) + qty;
       }
@@ -769,7 +768,7 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
+  }, [records, isExternalRecord, dailyHHMedio]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
@@ -796,27 +795,27 @@ export default function Dashboard() {
     const useHourlyAvg = timeViewMode !== "horario";
 
     return entries.map(([label, recs]) => {
-      const total = recs.reduce((s, r) => s + getRecordHH(r), 0);
+      const total = recs.reduce((s, r) => s + hhVal(r), 0);
       const row: any = { time: label, total };
       if (useHourlyAvg) {
         const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
         for (const desc of CANONICAL_ORDER_FULL) {
           row[desc] = pcts[desc] || 0;
           let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getRecordHH(r); });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += hhVal(r); });
           row[`raw_${desc}`] = rawQty;
         }
       } else {
         for (const desc of CANONICAL_ORDER_FULL) {
           let qty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getRecordHH(r); });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += hhVal(r); });
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
         }
       }
       return row;
     });
-  }, [records, timeViewMode]);
+  }, [records, timeViewMode, dailyHHMedio]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
