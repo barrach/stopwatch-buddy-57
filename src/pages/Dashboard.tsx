@@ -1271,6 +1271,7 @@ export default function Dashboard() {
         }).join("\n") || "Não disponível",
       topCategorias,
       causasExternas,
+      hhPerdidoTotal: hhTotal > 0 ? `Total HH perdido (NPE + PT): ${hhTotal.toFixed(1)} HH` : "",
     };
   }, [records, getParentCatName, isExternalRecord, obraFilter, obras, dateMode, selectedDate, startDate, endDate]);
 
