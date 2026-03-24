@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, getRecordHH, getRecordHHNormalized, computeDailyHHMedio } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
