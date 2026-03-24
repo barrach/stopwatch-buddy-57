@@ -243,6 +243,7 @@ export type Database = {
           deleted_by: string | null
           deleted_reason: string | null
           descricao: string
+          duracao_horas: number | null
           empresa: string
           especialidade_id: string
           funcao_id: string | null
@@ -266,6 +267,7 @@ export type Database = {
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao: string
+          duracao_horas?: number | null
           empresa?: string
           especialidade_id: string
           funcao_id?: string | null
@@ -289,6 +291,7 @@ export type Database = {
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao?: string
+          duracao_horas?: number | null
           empresa?: string
           especialidade_id?: string
           funcao_id?: string | null

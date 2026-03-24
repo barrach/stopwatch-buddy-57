@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_SLOTS } from "@/data/mockData";
-import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange } from "lucide-react";
+import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange, Timer } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,15 @@ import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/cat
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
   categoriaId: string; descricao: string; quantity: string; notes: string;
+  duracaoHoras: number; duracaoMinutos: number;
 }
+
+/** Descriptions that use the HH (man-hours) model — require duration input */
+const HH_MODEL_DESCRIPTIONS = new Set([
+  "Aguardando Liberação de PT",
+  "Fatores Climáticos e Consequências",
+  "Interferências Operacionais",
+]);
 
 export default function NewObservation() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
@@ -45,6 +53,8 @@ export default function NewObservation() {
   const [categoriaId, setCategoriaId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [duracaoHoras, setDuracaoHoras] = useState(0);
+  const [duracaoMinutos, setDuracaoMinutos] = useState(0);
   const [notes, setNotes] = useState("");
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [lastObs, setLastObs] = useState<LastObservation | null>(null);
@@ -99,6 +109,12 @@ export default function NewObservation() {
     return false;
   }, [isNpeCategory, isPtDescription, isDinamicoToggle]);
 
+  // Detect if description uses HH model (requires duration input)
+  const isHhModel = useMemo(() => {
+    if (!descricao) return false;
+    return HH_MODEL_DESCRIPTIONS.has(normalizeDescriptionName(descricao));
+  }, [descricao]);
+
   const subcategorias = useMemo(
     () => categoriaId
       ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
@@ -113,6 +129,7 @@ export default function NewObservation() {
       contrato_id: string | null; especialidade_id: string; funcao_id: string | null;
       categoria_id: string; descricao: string; empresa: string;
       quantidade: number; notas: string | null; is_dinamico: boolean;
+      duracao_horas: number | null;
     }) => {
       if (!navigator.onLine) {
         await addToQueue({ table: "observacoes", operation: "insert", payload });
@@ -128,6 +145,7 @@ export default function NewObservation() {
       // Save last observation for repeat
       setLastObs({
         time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
+        duracaoHoras, duracaoMinutos,
       });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
@@ -140,6 +158,8 @@ export default function NewObservation() {
       setTime("");
       setTimeEnd("");
       setQuantity("1");
+      setDuracaoHoras(0);
+      setDuracaoMinutos(0);
       setNotes("");
     },
     onError: (err: any) => {
@@ -172,6 +192,7 @@ export default function NewObservation() {
     }
 
     const isDinamico = isNpeCategory || (isPtDescription && isDinamicoToggle);
+    const duracaoDecimal = isHhModel ? duracaoHoras + (duracaoMinutos / 60) : null;
 
     for (const slot of slots) {
       saveObservation({
@@ -188,6 +209,7 @@ export default function NewObservation() {
         quantidade: isDinamico ? 1 : parseInt(quantity, 10),
         notas: notes || null,
         is_dinamico: isDinamico,
+        duracao_horas: duracaoDecimal,
       });
     }
   };
@@ -203,6 +225,8 @@ export default function NewObservation() {
     setEspecialidadeId(lastObs.especialidadeId);
     setCategoriaId(lastObs.categoriaId);
     setQuantity(lastObs.quantity);
+    setDuracaoHoras(lastObs.duracaoHoras);
+    setDuracaoMinutos(lastObs.duracaoMinutos);
     setNotes(lastObs.notes);
     // Defer rotaId and descricao so dependent memos recompute first
     setTimeout(() => {
@@ -473,6 +497,45 @@ export default function NewObservation() {
                     </p>
                   )}
                 </div>
+
+                {/* Duration field for HH model categories */}
+                {isHhModel && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Timer className="w-3 h-3" />
+                      Duração do evento *
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="24"
+                          value={duracaoHoras}
+                          onChange={(e) => setDuracaoHoras(Math.max(0, parseInt(e.target.value) || 0))}
+                          className="w-16 text-center"
+                        />
+                        <span className="text-xs text-muted-foreground">h</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Select value={String(duracaoMinutos)} onValueChange={(v) => setDuracaoMinutos(parseInt(v))}>
+                          <SelectTrigger className="w-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                              <SelectItem key={m} value={String(m)}>{String(m).padStart(2, "0")}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-xs text-muted-foreground">min</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Informe a duração real do evento para cálculo de HH perdido.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>

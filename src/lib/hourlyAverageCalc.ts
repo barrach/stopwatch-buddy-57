@@ -6,8 +6,9 @@
  * 1. For each hour, calculate the % of that category within that hour
  * 2. Average those hourly percentages across all hours
  * 
- * This prevents distortion when a single hour has 100% of a special category
- * but other hours have none.
+ * Additionally, these categories use a HH (man-hours) model:
+ * HH_perdido = quantidade × duracao_horas
+ * Records without duracao_horas default to 1.0 hour.
  */
 
 import { canonicalDescription, normalizeTime } from "@/lib/chartConstants";
@@ -23,17 +24,25 @@ export function isHourlyAvgDescription(desc: string): boolean {
   return HOURLY_AVG_DESCRIPTIONS.has(desc);
 }
 
+/** Get the effective HH value for a record. For HH-model descriptions, uses qty × duration. */
+export function getRecordHH(r: any): number {
+  const desc = canonicalDescription(r.descricao || "Sem descrição");
+  const qty = r.quantidade || 0;
+  if (HOURLY_AVG_DESCRIPTIONS.has(desc)) {
+    const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
+    return qty * duracao;
+  }
+  return qty;
+}
+
 /**
  * Given raw records belonging to a single chart group (e.g. one contract, one weekday),
  * compute the percentage for each description using:
- * - Hourly-average method for special categories
+ * - Hourly-average method for special categories (using HH values)
  * - Volume-based method for normal categories
  * 
  * Returns an object: { [description]: percentValue }
  * All percentages are normalized so the total = 100%.
- * 
- * @param groupRecords - records already filtered to the chart group
- * @param descriptions - the canonical description list
  */
 export function computeHourlyAdjustedPercentages(
   groupRecords: any[],
@@ -51,7 +60,9 @@ export function computeHourlyAdjustedPercentages(
     if (!hour) continue;
     if (!byHour[hour]) byHour[hour] = {};
     const desc = canonicalDescription(r.descricao || "Sem descrição");
-    byHour[hour][desc] = (byHour[hour][desc] || 0) + (r.quantidade || 0);
+    // For HH-model descriptions, use HH value; for others, use quantity
+    const value = getRecordHH(r);
+    byHour[hour][desc] = (byHour[hour][desc] || 0) + value;
   }
 
   const hours = Object.keys(byHour);

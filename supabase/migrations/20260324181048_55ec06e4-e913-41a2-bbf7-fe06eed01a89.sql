@@ -1,0 +1,1 @@
+ALTER TABLE public.observacoes ADD COLUMN duracao_horas numeric(5,2) DEFAULT 1.0;
