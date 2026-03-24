@@ -497,6 +497,45 @@ export default function NewObservation() {
                     </p>
                   )}
                 </div>
+
+                {/* Duration field for HH model categories */}
+                {isHhModel && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Timer className="w-3 h-3" />
+                      Duração do evento *
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="24"
+                          value={duracaoHoras}
+                          onChange={(e) => setDuracaoHoras(Math.max(0, parseInt(e.target.value) || 0))}
+                          className="w-16 text-center"
+                        />
+                        <span className="text-xs text-muted-foreground">h</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Select value={String(duracaoMinutos)} onValueChange={(v) => setDuracaoMinutos(parseInt(v))}>
+                          <SelectTrigger className="w-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                              <SelectItem key={m} value={String(m)}>{String(m).padStart(2, "0")}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-xs text-muted-foreground">min</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Informe a duração real do evento para cálculo de HH perdido.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
