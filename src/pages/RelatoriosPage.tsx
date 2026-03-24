@@ -151,7 +151,7 @@ export default function RelatoriosPage() {
     records.forEach((r: any) => {
       dates.add(r.data);
       times.add(r.horario);
-      totalMeasurements += r.quantidade || 0;
+      totalMeasurements += getRecordHH(r);
     });
     const sortedTimes = Array.from(times).sort((a, b) => timeIndex(a) - timeIndex(b));
     const sortedDates = Array.from(dates).sort();
