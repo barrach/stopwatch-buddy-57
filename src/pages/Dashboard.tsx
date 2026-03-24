@@ -676,7 +676,7 @@ export default function Dashboard() {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       const key = canonicalDescription(r.descricao || "Sem descrição");
-      totals[key] = (totals[key] || 0) + getRecordHH(r);
+      totals[key] = (totals[key] || 0) + hhVal(r);
     });
     const sorted = Object.entries(totals)
       .map(([name, value]) => ({ name, value }))
@@ -691,7 +691,7 @@ export default function Dashboard() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, totalSamples]);
+  }, [records, totalSamples, dailyHHMedio]);
 
   // By Contrato — description-level breakdown
   // Descriptions for non-external charts (exclude all NPE descriptions)
@@ -713,20 +713,19 @@ export default function Dashboard() {
     });
     return Object.entries(grouped)
       .map(([name, recs]) => {
-        const total = recs.reduce((s, r) => s + getRecordHH(r), 0);
+        const total = recs.reduce((s, r) => s + hhVal(r), 0);
         const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
         const row: any = { name, total };
         for (const desc of CANONICAL_ORDER_FULL) {
           row[desc] = pcts[desc] || 0;
-          // raw counts for tooltip
           let rawQty = 0;
-          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getRecordHH(r); });
+          recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += hhVal(r); });
           row[`raw_${desc}`] = rawQty;
         }
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
