@@ -192,6 +192,7 @@ export default function NewObservation() {
     }
 
     const isDinamico = isNpeCategory || (isPtDescription && isDinamicoToggle);
+    const duracaoDecimal = isHhModel ? duracaoHoras + (duracaoMinutos / 60) : null;
 
     for (const slot of slots) {
       saveObservation({
@@ -208,6 +209,7 @@ export default function NewObservation() {
         quantidade: isDinamico ? 1 : parseInt(quantity, 10),
         notas: notes || null,
         is_dinamico: isDinamico,
+        duracao_horas: duracaoDecimal,
       });
     }
   };
