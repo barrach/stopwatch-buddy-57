@@ -148,6 +148,19 @@ export default function RelatorioIA() {
 
     const obraName = obraFilter === "all" ? "Todos os contratos" : obras.find(o => o.id === obraFilter)?.nome || "";
 
+    // Compute HH perdido for special categories
+    const hhDescriptions = ["Aguardando Liberação de PT", "Fatores Climáticos e Consequências", "Interferências Operacionais"];
+    const hhPerdido: Record<string, number> = {};
+    filteredRecords.forEach((r: any) => {
+      const desc = r.descricao || "";
+      if (hhDescriptions.includes(desc)) {
+        const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
+        const hh = (r.quantidade || 0) * duracao;
+        hhPerdido[desc] = (hhPerdido[desc] || 0) + hh;
+      }
+    });
+    const hhTotal = Object.values(hhPerdido).reduce((a, b) => a + b, 0);
+
     return {
       totalAmostras: total,
       produtivo: prod,
@@ -164,6 +177,7 @@ export default function RelatorioIA() {
       topCategorias,
       porSubcategoria,
       observacoesQualitativas,
+      hhPerdidoTotal: hhTotal > 0 ? `Total HH perdido (NPE + PT): ${hhTotal.toFixed(1)} HH` : "",
     };
   }, [filteredRecords, parentCatMap, obraFilter, obras]);
 
