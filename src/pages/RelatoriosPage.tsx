@@ -17,7 +17,7 @@ import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
 } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -165,7 +165,7 @@ export default function RelatoriosPage() {
   }, [records]);
 
   // ── Chart Data ──
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + (r.quantidade || 0), 0), [records]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getRecordHH(r), 0), [records]);
 
   const byObra = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -175,7 +175,7 @@ export default function RelatoriosPage() {
       grouped[oName].push(r);
     });
     return Object.entries(grouped).map(([name, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { name, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
@@ -189,7 +189,7 @@ export default function RelatoriosPage() {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[sName]) result[sName][desc] += r.quantidade || 0;
+      if (desc in result[sName]) result[sName][desc] += getRecordHH(r);
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
@@ -208,7 +208,7 @@ export default function RelatoriosPage() {
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[key]) result[key][desc] += r.quantidade || 0;
+      if (desc in result[key]) result[key][desc] += getRecordHH(r);
     });
     return Object.entries(result).sort(([a], [b]) => timeIndex(a) - timeIndex(b)).map(([label, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
@@ -227,7 +227,7 @@ export default function RelatoriosPage() {
       grouped[key].push(r);
     });
     return Object.entries(grouped).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
@@ -244,7 +244,7 @@ export default function RelatoriosPage() {
       grouped[key].push(r);
     });
     return Object.entries(grouped).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + (r.quantidade || 0), 0);
+      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
@@ -256,7 +256,7 @@ export default function RelatoriosPage() {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       const key = r.descricao || "Sem descrição";
-      totals[key] = (totals[key] || 0) + (r.quantidade || 0);
+      totals[key] = (totals[key] || 0) + getRecordHH(r);
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     let cumulative = 0;
@@ -275,7 +275,7 @@ export default function RelatoriosPage() {
     records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
-      totals[desc] = (totals[desc] || 0) + (r.quantidade || 0);
+      totals[desc] = (totals[desc] || 0) + getRecordHH(r);
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     const total = sorted.reduce((s, c) => s + c.value, 0);
