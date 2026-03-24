@@ -109,6 +109,12 @@ export default function NewObservation() {
     return false;
   }, [isNpeCategory, isPtDescription, isDinamicoToggle]);
 
+  // Detect if description uses HH model (requires duration input)
+  const isHhModel = useMemo(() => {
+    if (!descricao) return false;
+    return HH_MODEL_DESCRIPTIONS.has(normalizeDescriptionName(descricao));
+  }, [descricao]);
+
   const subcategorias = useMemo(
     () => categoriaId
       ? normalizeDescriptionOptions(categorias.filter((c) => c.categoria_pai_id === categoriaId && c.status === "Ativo"))
@@ -123,6 +129,7 @@ export default function NewObservation() {
       contrato_id: string | null; especialidade_id: string; funcao_id: string | null;
       categoria_id: string; descricao: string; empresa: string;
       quantidade: number; notas: string | null; is_dinamico: boolean;
+      duracao_horas: number | null;
     }) => {
       if (!navigator.onLine) {
         await addToQueue({ table: "observacoes", operation: "insert", payload });
@@ -138,6 +145,7 @@ export default function NewObservation() {
       // Save last observation for repeat
       setLastObs({
         time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
+        duracaoHoras, duracaoMinutos,
       });
       const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
       const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
@@ -150,6 +158,8 @@ export default function NewObservation() {
       setTime("");
       setTimeEnd("");
       setQuantity("1");
+      setDuracaoHoras(0);
+      setDuracaoMinutos(0);
       setNotes("");
     },
     onError: (err: any) => {
