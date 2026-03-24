@@ -202,6 +202,15 @@ FÓRMULAS DE CÁLCULO:
 - NPE são eventos fora do controle da equipe (Fatores Climáticos e Consequências, Interferências Operacionais).
 - IMPORTANTE: O NPE ENTRA na conta da produtividade global. O denominador é o TOTAL BRUTO (incluindo NPE).
 - IMPORTANTE: Os valores de NPE que você recebe já foram REPROCESSADOS dinamicamente. Para cada (data, especialidade), o sistema calcula a média de amostras por hora dos registros NÃO-NPE e substitui a quantidade do NPE por essa média. Isso garante proporcionalidade real com a operação do dia. Nunca questione ou recalcule esses valores — eles já refletem o peso correto.
+- MODELO HH (HOMEM-HORA) PARA CATEGORIAS ESPECIAIS:
+  As seguintes categorias usam cálculo por HH perdido em vez de contagem de amostras:
+  - "Aguardando Liberação de PT" (Suplementar)
+  - "Fatores Climáticos e Consequências" (NPE)
+  - "Interferências Operacionais" (NPE)
+  Para essas categorias: HH_perdido = Quantidade (efetivo) × Duração do evento (horas).
+  Os dados "hhPerdidoTotal" nos dados de contexto representam o total de HH perdido.
+  Use essa informação para avaliar o impacto real dessas categorias na produtividade.
+  Eventos longos com grande efetivo devem ser destacados como tendo maior impacto.
 - Produtividade = Produtivo / Total × 100
 - A soma das 4 categorias deve ser 100% do total.
 
