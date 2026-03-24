@@ -17,7 +17,7 @@ import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
 } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, getRecordHH, getRecordHHNormalized, computeDailyHHMedio } from "@/lib/hourlyAverageCalc";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -143,6 +143,10 @@ export default function RelatoriosPage() {
     });
   }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, reprocessedRecords]);
 
+  // ── Daily HH normalization ──
+  const dailyHHMedio = useMemo(() => computeDailyHHMedio(records), [records]);
+  const hhVal = (r: any) => getRecordHHNormalized(r, dailyHHMedio);
+
   // ── Summary ──
   const summary = useMemo(() => {
     const dates = new Set<string>();
@@ -151,7 +155,7 @@ export default function RelatoriosPage() {
     records.forEach((r: any) => {
       dates.add(r.data);
       times.add(r.horario);
-      totalMeasurements += getRecordHH(r);
+      totalMeasurements += hhVal(r);
     });
     const sortedTimes = Array.from(times).sort((a, b) => timeIndex(a) - timeIndex(b));
     const sortedDates = Array.from(dates).sort();
@@ -162,10 +166,10 @@ export default function RelatoriosPage() {
       dateStart: sortedDates[0] || "",
       dateEnd: sortedDates[sortedDates.length - 1] || "",
     };
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   // ── Chart Data ──
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getRecordHH(r), 0), [records]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + hhVal(r), 0), [records, dailyHHMedio]);
 
   const byObra = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -175,13 +179,13 @@ export default function RelatoriosPage() {
       grouped[oName].push(r);
     });
     return Object.entries(grouped).map(([name, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
+      const total = recs.reduce((s: number, r: any) => s + hhVal(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { name, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
       return row;
     }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
@@ -189,7 +193,7 @@ export default function RelatoriosPage() {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[sName]) result[sName][desc] += getRecordHH(r);
+      if (desc in result[sName]) result[sName][desc] += hhVal(r);
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
@@ -199,7 +203,7 @@ export default function RelatoriosPage() {
         for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
         return row;
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
@@ -208,7 +212,7 @@ export default function RelatoriosPage() {
       if (!key) return;
       if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[key]) result[key][desc] += getRecordHH(r);
+      if (desc in result[key]) result[key][desc] += hhVal(r);
     });
     return Object.entries(result).sort(([a], [b]) => timeIndex(a) - timeIndex(b)).map(([label, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
@@ -216,7 +220,7 @@ export default function RelatoriosPage() {
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
       return row;
     });
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   const byDiaSemana = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -227,13 +231,13 @@ export default function RelatoriosPage() {
       grouped[key].push(r);
     });
     return Object.entries(grouped).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
+      const total = recs.reduce((s: number, r: any) => s + hhVal(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
       return row;
     });
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   const byMes = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -244,19 +248,19 @@ export default function RelatoriosPage() {
       grouped[key].push(r);
     });
     return Object.entries(grouped).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, recs]) => {
-      const total = recs.reduce((s: number, r: any) => s + getRecordHH(r), 0);
+      const total = recs.reduce((s: number, r: any) => s + hhVal(r), 0);
       const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
       const row: any = { time: label, total };
       for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
       return row;
     });
-  }, [records]);
+  }, [records, dailyHHMedio]);
 
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       const key = r.descricao || "Sem descrição";
-      totals[key] = (totals[key] || 0) + getRecordHH(r);
+      totals[key] = (totals[key] || 0) + hhVal(r);
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     let cumulative = 0;
@@ -268,14 +272,14 @@ export default function RelatoriosPage() {
         cumPercent: totalSamples > 0 ? +((cumulative / totalSamples) * 100).toFixed(1) : 0,
       };
     });
-  }, [records, totalSamples]);
+  }, [records, totalSamples, dailyHHMedio]);
 
   const externalCausas = useMemo(() => {
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       if (!isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
-      totals[desc] = (totals[desc] || 0) + getRecordHH(r);
+      totals[desc] = (totals[desc] || 0) + hhVal(r);
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     const total = sorted.reduce((s, c) => s + c.value, 0);
@@ -283,7 +287,7 @@ export default function RelatoriosPage() {
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
     }));
-  }, [records, isExternalRecord]);
+  }, [records, isExternalRecord, dailyHHMedio]);
 
   // ── Validation & generation ──
   const handleGenerate = () => {
