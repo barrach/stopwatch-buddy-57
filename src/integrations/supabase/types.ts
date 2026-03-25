@@ -497,6 +497,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      recalculate_dynamic_observations: {
+        Args: { p_date: string; p_obra_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "coordenador" | "cobrador"
