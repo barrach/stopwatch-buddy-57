@@ -134,12 +134,13 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
                 <div className="text-sm">
                   <span className="font-medium text-foreground">{valA.toFixed(1)}%</span>
                   <span className="text-muted-foreground mx-1">→</span>
-                  <span className="font-medium text-foreground">{(prodB[cat] || 0).toFixed(1)}%</span>
+                  <span className="font-medium text-foreground">{valB.toFixed(1)}%</span>
                 </div>
-                <DeltaIndicator valueA={prodA[cat] || 0} valueB={prodB[cat] || 0} />
+                <DeltaIndicator valueA={valA} valueB={valB} />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {/* Full breakdown */}
         <div className="mt-4 space-y-1">
