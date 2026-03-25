@@ -50,22 +50,56 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
   const prodA = useMemo(() => getProductivity(sA), [sA]);
   const prodB = useMemo(() => getProductivity(sB), [sB]);
 
-  // Group descriptions into 4 executive categories
+  // Group descriptions into 4 executive categories (per official taxonomy)
   const groupMap: Record<string, string[]> = {
     "Produtivo": ["Trabalhando"],
-    "Suplementar": ["Planejando", "Aguardando Ferramenta ou Material", "Assistindo / Stand By", "Aguardando Liberação de PT"],
-    "Não Produtivo": [
+    "Suplementar": [
+      "Planejando",
+      "Aguardando Ferramenta ou Material",
+      "Assistindo / Stand By",
+      "Aguardando Liberação de PT",
       "Transitando no local de trabalho - com ferramenta",
       "Transitando no local de trabalho - sem ferramenta",
       "Transitando fora do local de trabalho - com ferramenta",
       "Transitando fora do local de trabalho - sem ferramenta",
-      "Pessoal", "Ocioso",
     ],
+    "Não Produtivo": ["Pessoal", "Ocioso"],
     "Não Produtivo Externo": ["Interferências Operacionais", "Fatores Climáticos e Consequências"],
   };
 
   const sumGroup = (prod: Record<string, number>, descs: string[]) =>
     descs.reduce((s, d) => s + (prod[d] || 0), 0);
+
+  // Compute grouped values and normalize to 100% via Largest Remainder Method
+  const computeGrouped = (prod: Record<string, number>) => {
+    const raw: Record<string, number> = {};
+    for (const [group, descs] of Object.entries(groupMap)) {
+      raw[group] = sumGroup(prod, descs);
+    }
+    const total = Object.values(raw).reduce((s, v) => s + v, 0);
+    if (total <= 0) return raw;
+
+    // Largest Remainder Method
+    const scaled = Object.entries(raw).map(([k, v]) => ({
+      key: k,
+      exact: (v / total) * 100,
+      floored: Math.floor((v / total) * 100 * 10) / 10,
+    }));
+    const flooredSum = scaled.reduce((s, e) => s + Math.round(e.floored * 10), 0);
+    const remainder = 1000 - flooredSum; // target 100.0% = 1000 tenths
+    const sorted = [...scaled].sort((a, b) => (b.exact - b.floored) - (a.exact - a.floored));
+    for (let i = 0; i < remainder && i < sorted.length; i++) {
+      sorted[i].floored = Math.round((sorted[i].floored + 0.1) * 10) / 10;
+    }
+    const result: Record<string, number> = {};
+    for (const e of scaled) {
+      result[e.key] = e.floored;
+    }
+    return result;
+  };
+
+  const groupedA = useMemo(() => computeGrouped(prodA), [prodA]);
+  const groupedB = useMemo(() => computeGrouped(prodB), [prodB]);
 
   const mainCategories = Object.keys(groupMap);
 
