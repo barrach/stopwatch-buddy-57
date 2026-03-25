@@ -92,9 +92,8 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
 
     if (hhTotal <= 0 || qtyTotal <= 0) return r;
 
-     const hhRegistro = recordHH(r);
-     const proportion = hhRegistro / hhTotal;
-    const newQty = Math.round(proportion * qtyTotal * 100) / 100;
+    // Dynamic records: quantidade = HH real (qtd_base × duração)
+    const newQty = Math.round(recordHH(r) * 100) / 100;
 
     return { ...r, quantidade: newQty > 0.01 ? newQty : 0.01 };
   });
