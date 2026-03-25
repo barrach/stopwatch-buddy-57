@@ -23,7 +23,9 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeOverallConfidence, isLowSample, getAverageDailyObs, IDEAL_DAILY_OBS } from "@/lib/confidenceFactor";
 import { LegendTooltip } from "@/components/LegendTooltip";
+import { Info, ShieldAlert } from "lucide-react";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -606,20 +608,29 @@ export default function Dashboard() {
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
+  // ── Confidence Factor ────────────────────────────────────────────
+  const confidenceFactor = useMemo(() => computeOverallConfidence(records), [records]);
+  const lowSampleWarning = useMemo(() => isLowSample(records), [records]);
+  const avgDailyObs = useMemo(() => getAverageDailyObs(records), [records]);
+  const confidencePercent = useMemo(() => Math.round(confidenceFactor * 100), [confidenceFactor]);
+
   const [productivePercent, supplementaryPercent, unproductivePercent, externalPercent] = useMemo(() => {
     if (totalSamples === 0) return [0, 0, 0, 0];
     const counts = [productiveCount, supplementaryCount, unproductiveCount, externalCount];
     const rawPercents = counts.map(c => (c / totalSamples) * 100);
-    const floored = rawPercents.map(p => Math.floor(p));
-    let remainder = 100 - floored.reduce((a, b) => a + b, 0);
-    const decimals = rawPercents.map((p, i) => ({ i, d: p - floored[i] })).sort((a, b) => b.d - a.d);
+    // Apply confidence factor
+    const adjusted = rawPercents.map(p => p * confidenceFactor);
+    const floored = adjusted.map(p => Math.floor(p));
+    const targetSum = Math.round(adjusted.reduce((a, b) => a + b, 0));
+    let remainder = targetSum - floored.reduce((a, b) => a + b, 0);
+    const decimals = adjusted.map((p, i) => ({ i, d: p - floored[i] })).sort((a, b) => b.d - a.d);
     for (const item of decimals) {
       if (remainder <= 0) break;
       floored[item.i]++;
       remainder--;
     }
     return floored as [number, number, number, number];
-  }, [totalSamples, productiveCount, supplementaryCount, unproductiveCount, externalCount]);
+  }, [totalSamples, productiveCount, supplementaryCount, unproductiveCount, externalCount, confidenceFactor]);
 
   // ── Chart data ─────────────────────────────────────────────────
 
