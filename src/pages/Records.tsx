@@ -29,7 +29,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
-import { getRecordHH, usesDerivedHHValue } from "@/lib/hourlyAverageCalc";
+import { getDisplayQuantity, getRecordValue, usesDerivedHHValue } from "@/lib/hourlyAverageCalc";
 
 const PAGE_SIZE = 50;
 
@@ -178,10 +178,15 @@ export default function Records() {
         "Interferências Operacionais",
       ].includes(normalizeDescriptionName(r.descricao));
 
+      const duracaoHoras = Number(r.duracao_horas ?? 1);
+      const duracaoH = Math.floor(duracaoHoras);
+      const duracaoM = Math.round((duracaoHoras - duracaoH) * 60);
+
       setEditForm({
       data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
       especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: normalizeDescriptionName(r.descricao),
       quantidade: r.quantidade, notas: r.notas || "", is_dinamico: isDynamicRecord,
+      duracao_horas: duracaoH, duracao_minutos: duracaoM,
     });
   };
 
@@ -198,6 +203,11 @@ export default function Records() {
 
         if (!editForm.is_dinamico) {
           payload.quantidade = parseFloat(editForm.quantidade);
+        } else {
+          // For dynamic records, update duration
+          const h = parseInt(editForm.duracao_horas || "0", 10);
+          const m = parseInt(editForm.duracao_minutos || "0", 10);
+          payload.duracao_horas = h + m / 60;
         }
 
         const previousData = editRecord.data;
@@ -347,7 +357,7 @@ export default function Records() {
       Especialidade: (r.especialidades as any)?.nome || "",
       Categoria: (r.categorias_observacao as any)?.nome || "",
       "Descrição": r.descricao || "",
-      Quantidade: usesDerivedHHValue(r) ? getRecordHH(r) : r.quantidade,
+      Quantidade: getDisplayQuantity(r),
       Empresa: r.empresa || "",
       Notas: r.notas || "",
     }));
@@ -619,7 +629,7 @@ export default function Records() {
                 const catNome = (r.categorias_observacao as any)?.nome || "";
                 const isSelected = selectedIds.has(r.id);
                 const userName = r.criado_por ? (profileMap.get(r.criado_por) || r.criado_por.substring(0, 8) + "…") : "—";
-                const displayedQuantity = usesDerivedHHValue(r) ? getRecordHH(r) : r.quantidade;
+                const displayedQuantity = getDisplayQuantity(r);
                 return (
                   <TableRow
                     key={r.id}
@@ -778,13 +788,27 @@ export default function Records() {
                 <SelectContent>{editSubcategorias.map(s => <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Quantidade</Label>
-              <Input type="number" min="1" value={editForm.quantidade || ""} onChange={e => setEditForm((f: any) => ({ ...f, quantidade: e.target.value }))} className="mt-1" disabled={editForm.is_dinamico} />
-              {editForm.is_dinamico && (
-                <p className="text-xs text-muted-foreground mt-1">Valor recalculado automaticamente e exibido conforme salvo no banco.</p>
-              )}
-            </div>
+            {editForm.is_dinamico ? (
+              <div>
+                <Label className="text-xs text-muted-foreground">Duração do Evento</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div>
+                    <Input type="number" min="0" max="23" value={editForm.duracao_horas ?? 0} onChange={e => setEditForm((f: any) => ({ ...f, duracao_horas: e.target.value }))} placeholder="Horas" />
+                    <span className="text-[10px] text-muted-foreground">Horas</span>
+                  </div>
+                  <div>
+                    <Input type="number" min="0" max="59" step="15" value={editForm.duracao_minutos ?? 0} onChange={e => setEditForm((f: any) => ({ ...f, duracao_minutos: e.target.value }))} placeholder="Minutos" />
+                    <span className="text-[10px] text-muted-foreground">Minutos</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">✨ Observação dinâmica — Qtd é calculada automaticamente (HH = qty × duração).</p>
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs text-muted-foreground">Quantidade</Label>
+                <Input type="number" min="1" value={editForm.quantidade || ""} onChange={e => setEditForm((f: any) => ({ ...f, quantidade: e.target.value }))} className="mt-1" />
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground">Observações</Label>
               <Textarea value={editForm.notas || ""} onChange={e => setEditForm((f: any) => ({ ...f, notas: e.target.value }))} className="mt-1" rows={2} />
