@@ -87,6 +87,18 @@ export default function Records() {
     return normalizeDescriptionOptions(allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo"));
   }, [allCategorias, editForm.categoria_id]);
 
+  // Descriptions available for the filter (based on selected parent category)
+  const filterDescricaoOptions = useMemo(() => {
+    const parentId = filterCategoria !== "all" ? filterCategoria : null;
+    const subs = allCategorias.filter(c => {
+      if (!c.categoria_pai_id) return false;
+      if (c.status !== "Ativo") return false;
+      if (parentId && c.categoria_pai_id !== parentId) return false;
+      return true;
+    });
+    return normalizeDescriptionOptions(subs);
+  }, [allCategorias, filterCategoria]);
+
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
     queryFn: async () => {
