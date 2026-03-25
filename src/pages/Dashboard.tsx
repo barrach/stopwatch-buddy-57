@@ -1535,7 +1535,8 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
               Limpar todos
             </Button>
-        </div>
+          </div>
+        )}
 
         {/* Confidence Factor Indicator */}
         {records.length > 0 && (
