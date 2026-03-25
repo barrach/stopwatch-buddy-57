@@ -32,9 +32,14 @@ function isExcludedFromAverage(r: any): boolean {
   return normalized === "Aguardando Liberação de PT";
 }
 
+function getBaseQuantity(r: any): number {
+  if (r.quantidade_base != null) return Number(r.quantidade_base) || 0;
+  return r.quantidade || 0;
+}
+
 /** Get HH value for a record: qty × duration (default 1h) */
 function recordHH(r: any): number {
-  const qty = r.quantidade || 0;
+  const qty = getBaseQuantity(r);
   const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
   return qty * duracao;
 }
@@ -60,9 +65,7 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
     return true;
   };
 
-  // Group by (date, obra_id) to compute HH totals
-  // For dynamic records, weight = duracao_horas (base qty=1)
-  // For non-dynamic records, weight = qty × duracao_horas
+   // Group by (date, obra_id) to compute HH totals using original/base quantity for dynamic rows.
   const hhTotalMap = new Map<string, number>();
   const qtyTotalMap = new Map<string, number>();
 
@@ -70,8 +73,9 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
     const key = `${r.data}|${r.obra_id}`;
     const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
     if (isDynamic(r)) {
-      hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + duracao);
-      qtyTotalMap.set(key, (qtyTotalMap.get(key) || 0) + 1);
+       const baseQty = getBaseQuantity(r);
+       hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + (baseQty * duracao));
+       qtyTotalMap.set(key, (qtyTotalMap.get(key) || 0) + baseQty);
     } else {
       const qty = r.quantidade || 0;
       hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + qty * duracao);
@@ -88,8 +92,8 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
 
     if (hhTotal <= 0 || qtyTotal <= 0) return r;
 
-    const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
-    const proportion = duracao / hhTotal;
+     const hhRegistro = recordHH(r);
+     const proportion = hhRegistro / hhTotal;
     const newQty = Math.round(proportion * qtyTotal * 100) / 100;
 
     return { ...r, quantidade: newQty > 0.01 ? newQty : 0.01 };
