@@ -159,8 +159,8 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
         <h3 className="text-sm font-semibold text-foreground mb-4">Comparação de Indicadores</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {mainCategories.map((cat) => {
-            const valA = sumGroup(prodA, groupMap[cat]);
-            const valB = sumGroup(prodB, groupMap[cat]);
+            const valA = groupedA[cat] || 0;
+            const valB = groupedB[cat] || 0;
             return (
             <div key={cat} className="p-3 rounded-lg bg-muted/50 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1">{cat}</p>
