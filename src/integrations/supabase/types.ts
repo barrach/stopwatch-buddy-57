@@ -500,12 +500,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      recalculate_dynamic_observations:
-        | { Args: { p_date: string; p_obra_id: string }; Returns: undefined }
-        | {
-            Args: { p_contrato_id?: string; p_date: string; p_obra_id: string }
-            Returns: undefined
-          }
+      recalculate_dynamic_observations: {
+        Args: { p_date: string; p_obra_id: string }
+        Returns: undefined
+      }
       reprocess_all_dynamic_observations: { Args: never; Returns: undefined }
     }
     Enums: {
