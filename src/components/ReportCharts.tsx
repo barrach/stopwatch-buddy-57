@@ -94,37 +94,67 @@ interface StackedChartProps {
   title: string;
   xAngle?: number;
   tooltipMap?: Record<string, string>;
+  legendBelow?: boolean;
 }
 
-export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0, tooltipMap }: StackedChartProps) {
+export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xAngle = 0, tooltipMap, legendBelow = false }: StackedChartProps) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const chartHeight = isMobile ? 350 : legendBelow ? 420 : STACKED_CHART_HEIGHT;
+
   return (
     <div className="stat-card animate-fade-in mb-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
-      <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
-        <div className="min-w-0 flex-1">
-          <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : STACKED_CHART_HEIGHT}>
-            <BarChart data={data} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%">
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
-              <XAxis dataKey={dataKeyX} tick={{ fontSize: 9, fill: TICK_COLOR }} angle={xAngle} textAnchor={xAngle ? "end" : "middle"} />
-              <YAxis tick={{ fontSize: 10, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
-              <Tooltip content={<StackedBarTooltip />} shared={false} />
-              {renderStackedBars(descriptions)}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="shrink-0 lg:max-w-[28%]">
-          <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px] overflow-y-auto" style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'none' : STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom }}>
+      {legendBelow ? (
+        <>
+          <div className="min-w-0 w-full">
+            <ResponsiveContainer width="100%" height={chartHeight}>
+              <BarChart data={data} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%">
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                <XAxis dataKey={dataKeyX} tick={{ fontSize: 9, fill: TICK_COLOR }} angle={xAngle} textAnchor={xAngle ? "end" : "middle"} />
+                <YAxis tick={{ fontSize: 10, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
+                <Tooltip content={<StackedBarTooltip />} shared={false} />
+                {renderStackedBars(descriptions)}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-3">
             {[...descriptions].reverse().map((desc) => (
               <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
-                <div className="flex items-center gap-1.5 lg:gap-2">
-                  <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
-                  <span className="text-[11px] lg:text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-[8px] h-[8px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                  <span className="text-[10px] leading-tight whitespace-nowrap" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
                 </div>
               </LegendTooltip>
             ))}
           </div>
+        </>
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+          <div className="min-w-0 flex-1">
+            <ResponsiveContainer width="100%" height={chartHeight}>
+              <BarChart data={data} margin={{ ...STACKED_CHART_MARGIN, left: -10 }} barCategoryGap="14%">
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} opacity={0.3} />
+                <XAxis dataKey={dataKeyX} tick={{ fontSize: 9, fill: TICK_COLOR }} angle={xAngle} textAnchor={xAngle ? "end" : "middle"} />
+                <YAxis tick={{ fontSize: 10, fill: TICK_COLOR }} domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v) => `${v}%`} width={35} />
+                <Tooltip content={<StackedBarTooltip />} shared={false} />
+                {renderStackedBars(descriptions)}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="shrink-0 lg:max-w-[28%]">
+            <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px] overflow-y-auto" style={{ maxHeight: !isMobile && typeof window !== 'undefined' && window.innerWidth >= 1024 ? STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom : undefined }}>
+              {[...descriptions].reverse().map((desc) => (
+                <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
+                  <div className="flex items-center gap-1.5 lg:gap-2">
+                    <span className="w-[10px] h-[10px] rounded-sm shrink-0 border border-border/50" style={{ backgroundColor: getDescColor(desc) }} />
+                    <span className="text-[11px] lg:text-[14px] leading-normal" style={{ color: getLegendTextColor(desc) }}>{displayName(desc)}</span>
+                  </div>
+                </LegendTooltip>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
