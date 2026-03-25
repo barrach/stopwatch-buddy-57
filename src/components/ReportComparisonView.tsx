@@ -50,7 +50,24 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
   const prodA = useMemo(() => getProductivity(sA), [sA]);
   const prodB = useMemo(() => getProductivity(sB), [sB]);
 
-  const mainCategories = ["Trabalhando", "Planejando", "Deslocamento"];
+  // Group descriptions into 4 executive categories
+  const groupMap: Record<string, string[]> = {
+    "Produtivo": ["Trabalhando"],
+    "Suplementar": ["Planejando", "Aguardando Ferramenta ou Material", "Assistindo / Stand By", "Aguardando Liberação de PT"],
+    "Não Produtivo": [
+      "Transitando no local de trabalho - com ferramenta",
+      "Transitando no local de trabalho - sem ferramenta",
+      "Transitando fora do local de trabalho - com ferramenta",
+      "Transitando fora do local de trabalho - sem ferramenta",
+      "Pessoal", "Ocioso",
+    ],
+    "Não Produtivo Externo": ["Interferências Operacionais", "Fatores Climáticos e Consequências"],
+  };
+
+  const sumGroup = (prod: Record<string, number>, descs: string[]) =>
+    descs.reduce((s, d) => s + (prod[d] || 0), 0);
+
+  const mainCategories = Object.keys(groupMap);
 
   const handleExportPDF = () => {
     try {
@@ -106,20 +123,24 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
       {/* Delta KPIs */}
       <div className="stat-card">
         <h3 className="text-sm font-semibold text-foreground mb-4">Comparação de Indicadores</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {mainCategories.map((cat) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {mainCategories.map((cat) => {
+            const valA = sumGroup(prodA, groupMap[cat]);
+            const valB = sumGroup(prodB, groupMap[cat]);
+            return (
             <div key={cat} className="p-3 rounded-lg bg-muted/50 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1">{cat}</p>
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-foreground">{(prodA[cat] || 0).toFixed(1)}%</span>
+                  <span className="font-medium text-foreground">{valA.toFixed(1)}%</span>
                   <span className="text-muted-foreground mx-1">→</span>
-                  <span className="font-medium text-foreground">{(prodB[cat] || 0).toFixed(1)}%</span>
+                  <span className="font-medium text-foreground">{valB.toFixed(1)}%</span>
                 </div>
-                <DeltaIndicator valueA={prodA[cat] || 0} valueB={prodB[cat] || 0} />
+                <DeltaIndicator valueA={valA} valueB={valB} />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {/* Full breakdown */}
         <div className="mt-4 space-y-1">
