@@ -246,7 +246,10 @@ export default function Records() {
 
   const filtered = records.filter((r: any) => {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
-    if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
+    if (filterCategoria !== "all") {
+      const recParentId = (r.categorias_observacao as any)?.categoria_pai_id;
+      if (recParentId !== filterCategoria && r.categoria_id !== filterCategoria) return false;
+    }
     if (filterDescricao !== "all") {
       const descNorm = normalizeDescriptionName(r.descricao || "");
       const filterDescNorm = filterDescricaoOptions.find(d => d.id === filterDescricao)?.nome || "";
