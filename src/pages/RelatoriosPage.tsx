@@ -11,13 +11,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save, Archive } from "lucide-react";
+import { FileText, Save, Archive, Info, ShieldAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
 } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeOverallConfidence, isLowSample, getAverageDailyObs, IDEAL_DAILY_OBS } from "@/lib/confidenceFactor";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -486,6 +487,32 @@ export default function RelatoriosPage() {
                 {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
               </h2>
             </div>
+
+            {/* Confidence Factor Indicator */}
+            {(() => {
+              const cf = computeOverallConfidence(records);
+              const lowSample = isLowSample(records);
+              const avgObs = getAverageDailyObs(records);
+              const cfPercent = Math.round(cf * 100);
+              return (
+                <div className={`flex flex-wrap items-center gap-3 p-3 rounded-lg border ${lowSample ? 'bg-warning/5 border-warning/30' : 'bg-muted/30 border-border/50'}`}>
+                  <div className="flex items-center gap-2">
+                    {lowSample ? <ShieldAlert className="w-4 h-4 text-warning" /> : <Info className="w-4 h-4 text-muted-foreground" />}
+                    <span className="text-xs font-semibold text-foreground">
+                      Confiabilidade da amostra: {cfPercent}%
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      (média de {avgObs.toFixed(1)} observações/dia — ideal: {IDEAL_DAILY_OBS}+)
+                    </span>
+                  </div>
+                  {lowSample && (
+                    <span className="text-[10px] text-warning font-medium">
+                      ⚠ Baixa amostragem — os percentuais podem não representar o dia completo
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="stat-card">
               <h3 className="text-sm font-semibold text-foreground mb-3">Resumo do Período</h3>
