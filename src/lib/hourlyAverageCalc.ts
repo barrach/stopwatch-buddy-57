@@ -183,16 +183,24 @@ function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number
  * Compute HH_medio_dia for a set of records (same day/obra).
  * HH_medio = sum(qty × duration) / sum(qty)
  */
-export function computeHHMedioDia(dayRecords: any[]): number {
+export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number {
   if (dayRecords.length === 0) return 0;
   let hhTotal = 0;
   let qtyTotal = 0;
   const specialtyBaseMap = getDaySpecialtyBaseMap(dayRecords);
 
   for (const r of dayRecords) {
-    const qty = usesDerivedHHValue(r)
-      ? specialtyBaseMap.get(`${r.data}|${r.especialidade_id ?? "sem-especialidade"}`) || 0
-      : getStoredQty(r);
+    let qty: number;
+    if (usesDerivedHHValue(r)) {
+      qty = specialtyBaseMap.get(`${r.data}|${r.especialidade_id ?? "sem-especialidade"}`) || 0;
+      // Apply fallback if no base in day
+      if (qty === 0 && allRecords && allRecords.length > 0) {
+        const hist = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
+        qty = hist > 0 ? hist : FALLBACK_DEFAULT_QTY;
+      }
+    } else {
+      qty = getStoredQty(r);
+    }
     const dur = getDuration(r);
     hhTotal += qty * dur;
     qtyTotal += qty;
