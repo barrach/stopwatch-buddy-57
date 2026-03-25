@@ -75,22 +75,31 @@ function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
     hoursForSpec.set(hour, (hoursForSpec.get(hour) || 0) + getStoredQty(record));
   }
 
-  // Second pass: compute average = totalQty / uniqueHours
+  // Second pass: compute average = totalQty / uniqueHours, adjusted by confidence factor
+  const EXPECTED_OBSERVATIONS = 8;
   const resultMap = new Map<string, number>();
   for (const [specKey, hoursMap] of hourlyMap) {
     const totalQty = [...hoursMap.values()].reduce((a, b) => a + b, 0);
     const uniqueHours = hoursMap.size;
     const avgPerHour = uniqueHours > 0 ? totalQty / uniqueHours : 0;
 
+    // Confidence factor: clamp between 0.25 and 1.0
+    const fatorConfiabilidade = Math.min(Math.max(uniqueHours / EXPECTED_OBSERVATIONS, 0.25), 1.0);
+    const qtdAjustada = avgPerHour * fatorConfiabilidade;
+
     console.log({
       especialidade_key: specKey,
       horas_unicas: [...hoursMap.keys()],
       qtd_por_hora: Object.fromEntries(hoursMap),
       QTD_total_dia: totalQty,
-      QTD_dinamica: avgPerHour,
+      media_amostras_por_hora: avgPerHour,
+      total_amostras: uniqueHours,
+      horas_com_registro: uniqueHours,
+      fator_confiabilidade: fatorConfiabilidade,
+      qtd_final: qtdAjustada,
     });
 
-    resultMap.set(specKey, avgPerHour);
+    resultMap.set(specKey, qtdAjustada);
   }
 
   return resultMap;
