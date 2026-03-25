@@ -16,11 +16,6 @@
  *
  * IMPORTANT: The `quantidade` field in the DB is NEVER modified.
  *            All HH values are derived at read-time.
- *
- * CONFIDENCE FACTOR:
- *   fator_confiabilidade = min(1, horarios_unicos_dia / 8)
- *   Applied to ALL record values before percentage calculation.
- *   Days with fewer unique observation hours are weighted down.
  */
 
 import { canonicalDescription } from "@/lib/chartConstants";
@@ -264,34 +259,9 @@ export function getRecordHH(r: any): number {
 }
 
 /**
- * Compute the confidence factor for a day group.
- * fator = min(1, unique_hours / 8)
- * Uses unique observation hours (horario field) as sample density metric.
- */
-export function computeConfidenceFactor(dayRecords: any[]): number {
-  const uniqueHours = new Set<string>();
-  for (const r of dayRecords) {
-    const rawHorario = r.horario ?? "";
-    const hour = rawHorario.length >= 5 ? rawHorario.slice(0, 5) : rawHorario;
-    if (hour) uniqueHours.add(hour);
-  }
-  const total_observacoes_dia = uniqueHours.size;
-  const fator = Math.min(1, total_observacoes_dia / 8);
-
-  console.log({
-    total_observacoes_dia,
-    horarios_unicos: [...uniqueHours],
-    fator_confiabilidade: fator,
-  });
-
-  return fator;
-}
-
-/**
  * Compute percentage for each description using the full HH model.
  * Groups records by day/obra to calculate HH_medio_dia per group,
  * then sums HH values per description across all groups.
- * Applies confidence factor per day group.
  *
  * Returns { [description]: percentValue } summing to ~100%.
  */
@@ -311,15 +281,13 @@ export function computeHourlyAdjustedPercentages(
     dayGroups.get(key)!.push(r);
   }
 
-  // Pre-compute HH_medio_dia and confidence factor for each day group
+  // Pre-compute HH_medio_dia for each day group
   const hhMedioMap = new Map<string, number>();
-  const confidenceMap = new Map<string, number>();
   for (const [key, recs] of dayGroups) {
     hhMedioMap.set(key, computeHHMedioDia(recs, groupRecords));
-    confidenceMap.set(key, computeConfidenceFactor(recs));
   }
 
-  // Sum HH values per description (with confidence factor applied)
+  // Sum HH values per description
   const descValues: Record<string, number> = {};
   for (const desc of descriptions) {
     descValues[desc] = 0;
@@ -329,24 +297,13 @@ export function computeHourlyAdjustedPercentages(
     const desc = canonicalDescription(r.descricao || "Sem descrição");
     const key = `${r.data}|${r.obra_id}`;
     const hhMedio = hhMedioMap.get(key) || 1;
-    const fator = confidenceMap.get(key) || 1;
-    const valor_original = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || [], groupRecords);
-    const valor_ajustado = valor_original * fator;
-
-    console.log({
-      fator_confiabilidade: fator,
-      valor_original,
-      valor_ajustado,
-      descricao: desc,
-      data: r.data,
-    });
-
+    const value = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || [], groupRecords);
     if (desc in descValues) {
-      descValues[desc] += valor_ajustado;
+      descValues[desc] += value;
     }
   }
 
-  // Total of all adjusted HH values
+  // Total of all HH values
   const total = Object.values(descValues).reduce((a, b) => a + b, 0);
 
   // Compute percentages
@@ -374,22 +331,11 @@ export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
 /**
  * Get HH value for a record in the context of all day records.
  * This is the main function to use for ALL chart/aggregate calculations.
- * Applies confidence factor.
  */
 export function getRecordValue(r: any, allRecords: any[]): number {
   // Find all records from the same day/obra
   const dayKey = `${r.data}|${r.obra_id}`;
   const dayRecords = allRecords.filter(rec => `${rec.data}|${rec.obra_id}` === dayKey);
   const hhMedio = computeHHMedioDia(dayRecords, allRecords);
-  const valor_original = getRecordHHWithContext(r, hhMedio, dayRecords, allRecords);
-  const fator = computeConfidenceFactor(dayRecords);
-  const valor_ajustado = valor_original * fator;
-
-  console.log({
-    fator_confiabilidade: fator,
-    valor_original,
-    valor_ajustado,
-  });
-
-  return valor_ajustado;
+  return getRecordHHWithContext(r, hhMedio, dayRecords, allRecords);
 }
