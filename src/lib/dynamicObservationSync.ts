@@ -52,9 +52,7 @@ export async function reprocessarObservacoesDoDia(data: string, obraId: string) 
 
   const dayRecords = (records ?? []) as ObservationForReprocessing[];
   const hhTotalDia = dayRecords.reduce((sum, record) => sum + getBaseQuantity(record) * getDuration(record), 0);
-  const totalAmostras = dayRecords
-    .filter((record) => !isDynamicObservationTarget(record))
-    .reduce((sum, record) => sum + getBaseQuantity(record), 0);
+  const totalAmostras = dayRecords.reduce((sum, record) => sum + getBaseQuantity(record), 0);
 
   console.log("TOTAL HH:", hhTotalDia, "TOTAL AMOSTRAS:", totalAmostras);
 
