@@ -51,26 +51,36 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
   });
   const info: NpeParentInfo = { impactMap };
 
+  // Identify which records are dynamic (NPE/PT)
+  const isDynamic = (r: any): boolean => {
+    const isNpe = isNpeRecord(r, info);
+    const isPt = isExcludedFromAverage(r);
+    if (!isNpe && !isPt) return false;
+    if (isPt && !isNpe) return r.is_dinamico === true;
+    return true;
+  };
+
   // Group by (date, obra_id) to compute HH totals
-  // key: "date|obra_id"
+  // For dynamic records, weight = duracao_horas (base qty=1)
+  // For non-dynamic records, weight = qty × duracao_horas
   const hhTotalMap = new Map<string, number>();
   const qtyTotalMap = new Map<string, number>();
 
   for (const r of records) {
     const key = `${r.data}|${r.obra_id}`;
-    hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + recordHH(r));
-    qtyTotalMap.set(key, (qtyTotalMap.get(key) || 0) + (r.quantidade || 0));
+    const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
+    if (isDynamic(r)) {
+      hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + duracao);
+      qtyTotalMap.set(key, (qtyTotalMap.get(key) || 0) + 1);
+    } else {
+      const qty = r.quantidade || 0;
+      hhTotalMap.set(key, (hhTotalMap.get(key) || 0) + qty * duracao);
+      qtyTotalMap.set(key, (qtyTotalMap.get(key) || 0) + qty);
+    }
   }
 
   return records.map((r) => {
-    const isNpe = isNpeRecord(r, info);
-    const isPt = isExcludedFromAverage(r);
-    if (!isNpe && !isPt) return r;
-
-    // NPE is always dynamic. PT is dynamic only if is_dinamico === true
-    if (isPt && !isNpe) {
-      if (r.is_dinamico !== true) return r;
-    }
+    if (!isDynamic(r)) return r;
 
     const key = `${r.data}|${r.obra_id}`;
     const hhTotal = hhTotalMap.get(key) || 0;
@@ -78,11 +88,10 @@ export function reprocessNpeQuantities<T extends Record<string, any>>(
 
     if (hhTotal <= 0 || qtyTotal <= 0) return r;
 
-    // Proportion based on HH impact
-    const hh = recordHH(r);
-    const proportion = hh / hhTotal;
-    const newQty = Math.round(proportion * qtyTotal);
+    const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
+    const proportion = duracao / hhTotal;
+    const newQty = Math.round(proportion * qtyTotal * 100) / 100;
 
-    return { ...r, quantidade: newQty > 0 ? newQty : 1 };
+    return { ...r, quantidade: newQty > 0.01 ? newQty : 0.01 };
   });
 }
