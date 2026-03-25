@@ -218,9 +218,9 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
  * - Dynamic categories: valor = qty × duration (HH real)
  * - Other categories: valor = qty × HH_medio_dia (HH equivalent)
  */
-export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: any[] = []): number {
+export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: any[] = [], allRecords?: any[]): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  const qty = getCalculatedQty(r, dayRecords);
+  const qty = getCalculatedQty(r, dayRecords, allRecords);
   const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
@@ -284,7 +284,7 @@ export function computeHourlyAdjustedPercentages(
   // Pre-compute HH_medio_dia for each day group
   const hhMedioMap = new Map<string, number>();
   for (const [key, recs] of dayGroups) {
-    hhMedioMap.set(key, computeHHMedioDia(recs));
+    hhMedioMap.set(key, computeHHMedioDia(recs, groupRecords));
   }
 
   // Sum HH values per description
@@ -297,7 +297,7 @@ export function computeHourlyAdjustedPercentages(
     const desc = canonicalDescription(r.descricao || "Sem descrição");
     const key = `${r.data}|${r.obra_id}`;
     const hhMedio = hhMedioMap.get(key) || 1;
-    const value = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || []);
+    const value = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || [], groupRecords);
     if (desc in descValues) {
       descValues[desc] += value;
     }
@@ -323,7 +323,7 @@ export function computeHourlyAdjustedPercentages(
 export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
   if (usesDerivedHHValue(r)) {
     const dayRecords = allRecords.filter((rec) => `${rec.data}|${rec.obra_id}` === `${r.data}|${r.obra_id}`);
-    return getCalculatedQty(r, dayRecords);
+    return getCalculatedQty(r, dayRecords, allRecords);
   }
   return Number(r.quantidade ?? 0);
 }
@@ -336,6 +336,6 @@ export function getRecordValue(r: any, allRecords: any[]): number {
   // Find all records from the same day/obra
   const dayKey = `${r.data}|${r.obra_id}`;
   const dayRecords = allRecords.filter(rec => `${rec.data}|${rec.obra_id}` === dayKey);
-  const hhMedio = computeHHMedioDia(dayRecords);
-  return getRecordHHWithContext(r, hhMedio, dayRecords);
+  const hhMedio = computeHHMedioDia(dayRecords, allRecords);
+  return getRecordHHWithContext(r, hhMedio, dayRecords, allRecords);
 }
