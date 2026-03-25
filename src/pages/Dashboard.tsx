@@ -521,23 +521,17 @@ export default function Dashboard() {
     return false;
   }, [parentCatImpactMap, npeDescriptions]);
 
-  // ── NPE Reprocessing (dynamic weighted quantities) ───────────
-  const reprocessedRecords = useMemo(
-    () => reprocessNpeQuantities(allRecords, parentCats as any),
-    [allRecords, parentCats]
-  );
-
   // ── Filtering ──────────────────────────────────────────────────
-  // Pre-NPE filter: used to compute available NPE options
+  // Os valores dinâmicos já chegam recalculados do banco; a UI deve consumir o valor persistido.
   const preNpeRecords = useMemo(() => {
-    let filtered = obraFilter === "all" ? reprocessedRecords : reprocessedRecords.filter((r: any) => r.obra_id === obraFilter);
+    let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
     } else if (dateMode === "period") {
       filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
     return filtered;
-  }, [reprocessedRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
+  }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Apply global NPE exclusion filter
   const baseRecords = useMemo(() => {

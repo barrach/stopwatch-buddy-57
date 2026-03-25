@@ -155,8 +155,11 @@ export default function Records() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+        queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+      ]);
       toast({ title: "Registro excluído", description: "Registro removido com sucesso." });
     },
   });
@@ -193,7 +196,10 @@ export default function Records() {
 
         const { error } = await supabase.from("observacoes").update(payload).eq("id", editRecord.id);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+        queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+      ]);
       toast({ title: "Registro atualizado", description: "Dados atualizados — cálculos recalculados automaticamente." });
       setEditRecord(null);
     } catch (e: any) {
@@ -282,6 +288,10 @@ export default function Records() {
         failed = idsToDelete.length;
       } else {
         succeeded = idsToDelete.length;
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+          queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+        ]);
       }
     } catch {
       failed = idsToDelete.length;
@@ -290,7 +300,6 @@ export default function Records() {
     setBulkDeleting(false);
     setBulkDeleteOpen(false);
     setSelectedIds(new Set());
-    queryClient.invalidateQueries({ queryKey: ["observacoes"] });
 
     if (failed > 0) {
       toast({
