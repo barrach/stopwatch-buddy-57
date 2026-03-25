@@ -17,7 +17,7 @@ import {
   CANONICAL_ORDER_FULL, canonicalDescription,
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
 } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, getRecordHH, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
