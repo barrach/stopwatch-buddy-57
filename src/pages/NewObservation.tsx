@@ -122,7 +122,7 @@ export default function NewObservation() {
     [categorias, categoriaId]
   );
 
-  const { mutate: saveObservation, isPending } = useMutation({
+  const { mutateAsync: saveObservation, isPending } = useMutation({
     retry: false,
     mutationFn: async (payload: {
       data: string; horario: string; rota_id: string; obra_id: string;
@@ -137,33 +137,6 @@ export default function NewObservation() {
       }
       const { error } = await supabase.from("observacoes").insert([payload as any]);
       if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["observacoes"] });
-      }
-      // Save last observation for repeat
-      setLastObs({
-        time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
-        duracaoHoras, duracaoMinutos,
-      });
-      const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
-      const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
-      toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantity} amostras)` });
-      setCategoriaId("");
-      setDescricao("");
-      setEspecialidadeId("");
-      setRotaId("");
-      setObraId("");
-      setTime("");
-      setTimeEnd("");
-      setQuantity("1");
-      setDuracaoHoras(0);
-      setDuracaoMinutos(0);
-      setNotes("");
-    },
-    onError: (err: any) => {
-      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
     },
   });
 
@@ -194,23 +167,56 @@ export default function NewObservation() {
     const isDinamico = isNpeCategory || (isPtDescription && isDinamicoToggle);
     const duracaoDecimal = isHhModel ? duracaoHoras + (duracaoMinutos / 60) : null;
 
-    for (const slot of slots) {
-      saveObservation({
-        data: date,
-        horario: slot,
-        rota_id: rotaId,
-        obra_id: obraId,
-        contrato_id: null,
-        especialidade_id: especialidadeId,
-        funcao_id: null,
-        categoria_id: categoriaId,
-        descricao,
-        empresa: "MEGASTEAM",
-        quantidade: isDinamico ? 1 : parseInt(quantity, 10),
-        notas: notes || null,
-        is_dinamico: isDinamico,
-        duracao_horas: duracaoDecimal,
+    try {
+      for (const slot of slots) {
+        await saveObservation({
+          data: date,
+          horario: slot,
+          rota_id: rotaId,
+          obra_id: obraId,
+          contrato_id: null,
+          especialidade_id: especialidadeId,
+          funcao_id: null,
+          categoria_id: categoriaId,
+          descricao,
+          empresa: "MEGASTEAM",
+          quantidade: isDinamico ? 1 : parseInt(quantity, 10),
+          notas: notes || null,
+          is_dinamico: isDinamico,
+          duracao_horas: duracaoDecimal,
+        });
+      }
+
+      if (navigator.onLine) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+          queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+        ]);
+      }
+
+      setLastObs({
+        time, rotaId, obraId, especialidadeId, categoriaId, descricao, quantity, notes,
+        duracaoHoras, duracaoMinutos,
       });
+
+      const catName = parentCategorias.find(c => c.id === categoriaId)?.nome ?? "";
+      const offlineMsg = !navigator.onLine ? " (salvo offline)" : "";
+      const quantityLabel = isDinamico ? "valor dinâmico recalculado automaticamente" : `${quantity} amostras`;
+      toast({ title: `Observação registrada!${offlineMsg}`, description: `${catName} — ${descricao} (${quantityLabel})` });
+
+      setCategoriaId("");
+      setDescricao("");
+      setEspecialidadeId("");
+      setRotaId("");
+      setObraId("");
+      setTime("");
+      setTimeEnd("");
+      setQuantity("1");
+      setDuracaoHoras(0);
+      setDuracaoMinutos(0);
+      setNotes("");
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
     }
   };
 
