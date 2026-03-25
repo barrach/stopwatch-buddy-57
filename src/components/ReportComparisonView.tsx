@@ -221,6 +221,7 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
             descriptions={CANONICAL_ORDER_FULL}
             title={`${title} — A`}
             xAngle={xAngle}
+            legendBelow
           />
           <StackedBarChartSection
             data={sB[dataKey] || []}
@@ -228,6 +229,7 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
             descriptions={CANONICAL_ORDER_FULL}
             title={`${title} — B`}
             xAngle={xAngle}
+            legendBelow
           />
         </div>
       ))}
