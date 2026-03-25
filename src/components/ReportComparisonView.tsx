@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown } from "lucide-react";
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
+import { generateComparisonPDF } from "@/lib/comparisonReportPdf";
+import { useToast } from "@/hooks/use-toast";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
