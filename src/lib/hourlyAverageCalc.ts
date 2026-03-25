@@ -96,22 +96,87 @@ function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
   return resultMap;
 }
 
-function getCalculatedQty(r: any, dayRecords: any[]): number {
+const FALLBACK_DEFAULT_QTY = 10;
+
+/**
+ * Compute historical average for a specialty from records of other days (last 7 days).
+ * Returns average qty per hour across those days, or 0 if no data.
+ */
+function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string, allRecords: any[]): number {
+  const specId = especialidadeId ?? "sem-especialidade";
+  const currentDateObj = new Date(currentDate);
+  const sevenDaysAgo = new Date(currentDateObj);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  // Filter records: same specialty, different days (last 7), non-dynamic only
+  const historicalRecords = allRecords.filter((rec) => {
+    if (usesDerivedHHValue(rec)) return false;
+    if ((rec.especialidade_id ?? "sem-especialidade") !== specId) return false;
+    const recDate = new Date(rec.data);
+    return rec.data !== currentDate && recDate >= sevenDaysAgo && recDate < currentDateObj;
+  });
+
+  if (historicalRecords.length === 0) return 0;
+
+  // Group by day, compute avg per day, then average across days
+  const dayMap = new Map<string, any[]>();
+  for (const rec of historicalRecords) {
+    if (!dayMap.has(rec.data)) dayMap.set(rec.data, []);
+    dayMap.get(rec.data)!.push(rec);
+  }
+
+  let totalAvg = 0;
+  let dayCount = 0;
+  for (const [, recs] of dayMap) {
+    const baseMap = getDaySpecialtyBaseMap(recs);
+    // Sum all specialty averages for this day (there should be one key per specialty)
+    for (const [key, val] of baseMap) {
+      if (key.includes(specId)) {
+        totalAvg += val;
+        dayCount++;
+        break;
+      }
+    }
+  }
+
+  return dayCount > 0 ? totalAvg / dayCount : 0;
+}
+
+function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number {
   if (!usesDerivedHHValue(r)) return getStoredQty(r);
 
   const specialtyKey = `${r.data}|${r.especialidade_id ?? "sem-especialidade"}`;
   const specialtyBaseQty = getDaySpecialtyBaseMap(dayRecords).get(specialtyKey) || 0;
   const duracao = getDuration(r);
 
+  let finalQty = specialtyBaseQty;
+  let origem = "dia";
+
+  if (specialtyBaseQty === 0 && allRecords && allRecords.length > 0) {
+    // FALLBACK: historical average (last 7 days)
+    const historicalAvg = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
+    if (historicalAvg > 0) {
+      finalQty = historicalAvg;
+      origem = "historico_7dias";
+    } else {
+      // FALLBACK do fallback: default value
+      finalQty = FALLBACK_DEFAULT_QTY;
+      origem = "default_fallback";
+    }
+  }
+
   console.log({
     especialidade: (r.especialidades as any)?.nome || r.especialidade_id || "Sem especialidade",
     data: r.data,
+    tem_base_no_dia: specialtyBaseQty > 0,
     QTD_base_especialidade: specialtyBaseQty,
+    qtd_dinamica: finalQty,
+    origem,
     duracao,
-    valor_final: specialtyBaseQty * duracao,
+    valor_final: finalQty * duracao,
   });
 
-  return specialtyBaseQty;
+  return finalQty;
 }
 
 /**
