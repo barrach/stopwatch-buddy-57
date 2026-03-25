@@ -26,7 +26,6 @@ import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 
@@ -146,11 +145,7 @@ export default function Records() {
     },
   });
 
-  // Apply NPE dynamic reprocessing so table shows same values as Dashboard/Charts
-  const records = useMemo(
-    () => reprocessNpeQuantities(rawRecords, parentCats as any),
-    [rawRecords, parentCats]
-  );
+  const records = rawRecords;
 
   const { mutate: deleteRecord } = useMutation({
     mutationFn: async (id: string) => {
@@ -168,23 +163,35 @@ export default function Records() {
 
   const openEdit = (r: any) => {
     setEditRecord(r);
-    setEditForm({
+      const isDynamicRecord = r.is_dinamico === true && [
+        "Aguardando Liberação de PT",
+        "Fatores Climáticos e Consequências",
+        "Interferências Operacionais",
+      ].includes(normalizeDescriptionName(r.descricao));
+
+      setEditForm({
       data: r.data, horario: r.horario, obra_id: r.obra_id, rota_id: r.rota_id,
       especialidade_id: r.especialidade_id, categoria_id: r.categoria_id, descricao: normalizeDescriptionName(r.descricao),
-      quantidade: r.quantidade, notas: r.notas || "",
+      quantidade: r.quantidade, notas: r.notas || "", is_dinamico: isDynamicRecord,
     });
   };
 
   const handleEditSave = async () => {
     setEditSaving(true);
     try {
-      const { error } = await supabase.from("observacoes").update({
+        const payload: any = {
         data: editForm.data, horario: editForm.horario, obra_id: editForm.obra_id,
         rota_id: editForm.rota_id, especialidade_id: editForm.especialidade_id,
         funcao_id: null, categoria_id: editForm.categoria_id,
-        descricao: editForm.descricao, quantidade: parseInt(editForm.quantidade, 10),
+          descricao: editForm.descricao,
         notas: editForm.notas || null,
-      }).eq("id", editRecord.id);
+        };
+
+        if (!editForm.is_dinamico) {
+          payload.quantidade = parseFloat(editForm.quantidade);
+        }
+
+        const { error } = await supabase.from("observacoes").update(payload).eq("id", editRecord.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["observacoes"] });
       toast({ title: "Registro atualizado", description: "Dados atualizados — cálculos recalculados automaticamente." });
@@ -730,7 +737,10 @@ export default function Records() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Quantidade</Label>
-              <Input type="number" min="1" value={editForm.quantidade || ""} onChange={e => setEditForm((f: any) => ({ ...f, quantidade: e.target.value }))} className="mt-1" />
+              <Input type="number" min="1" value={editForm.quantidade || ""} onChange={e => setEditForm((f: any) => ({ ...f, quantidade: e.target.value }))} className="mt-1" disabled={editForm.is_dinamico} />
+              {editForm.is_dinamico && (
+                <p className="text-xs text-muted-foreground mt-1">Valor recalculado automaticamente e exibido conforme salvo no banco.</p>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Observações</Label>
