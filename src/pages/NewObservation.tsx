@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
+import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
@@ -188,6 +189,7 @@ export default function NewObservation() {
       }
 
       if (navigator.onLine) {
+        await reprocessarObservacoesDoDia(date, obraId);
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
           queryClient.refetchQueries({ queryKey: ["observacoes"] }),
