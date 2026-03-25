@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown } from "lucide-react";
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
+import { generateComparisonPDF } from "@/lib/comparisonReportPdf";
+import { useToast } from "@/hooks/use-toast";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -41,6 +43,7 @@ function getProductivity(snapshot: any): Record<string, number> {
 }
 
 export default function ReportComparisonView({ reportA, reportB, onBack }: Props) {
+  const { toast } = useToast();
   const sA = reportA.snapshot as any;
   const sB = reportB.snapshot as any;
 
@@ -49,6 +52,15 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
 
   const mainCategories = ["Trabalhando", "Planejando", "Deslocamento"];
 
+  const handleExportPDF = () => {
+    try {
+      generateComparisonPDF(reportA, reportB);
+      toast({ title: "PDF gerado com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar PDF", description: err.message, variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -56,7 +68,10 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
         <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5">
           <ArrowLeft className="w-4 h-4" /> Voltar
         </Button>
-        <h1 className="text-lg font-bold text-foreground">Comparação de Relatórios</h1>
+        <h1 className="text-lg font-bold text-foreground flex-1">Comparação de Relatórios</h1>
+        <Button size="sm" onClick={handleExportPDF} className="gap-1.5">
+          <FileDown className="w-4 h-4" /> Exportar PDF
+        </Button>
       </div>
 
       {/* Summary comparison */}
