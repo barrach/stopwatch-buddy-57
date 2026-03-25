@@ -49,9 +49,9 @@ function getProductivity(snapshot: any): Record<string, number> {
 }
 
 const GROUP_MAP: Record<string, string[]> = {
-  "Produtivo": ["Trabalhando"],
+  "Produtivo": ["Trabalhando", "Planejando"],
   "Suplementar": [
-    "Planejando", "Aguardando Ferramenta ou Material", "Assistindo / Stand By",
+    "Aguardando Ferramenta ou Material", "Assistindo / Stand By",
     "Aguardando Liberação de PT",
     "Transitando no local de trabalho - com ferramenta", "Transitando no local de trabalho - sem ferramenta",
     "Transitando fora do local de trabalho - com ferramenta", "Transitando fora do local de trabalho - sem ferramenta",
