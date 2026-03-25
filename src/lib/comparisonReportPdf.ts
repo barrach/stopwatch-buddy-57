@@ -87,6 +87,14 @@ async function captureElementById(id: string): Promise<string | null> {
   const el = document.getElementById(id);
   if (!el) return null;
   try {
+    // Temporarily remove truncation and overflow hidden so all text is visible
+    const truncatedEls = el.querySelectorAll('.truncate');
+    truncatedEls.forEach((te) => {
+      (te as HTMLElement).style.overflow = 'visible';
+      (te as HTMLElement).style.textOverflow = 'unset';
+      (te as HTMLElement).style.whiteSpace = 'normal';
+    });
+
     const canvas = await html2canvas(el, {
       backgroundColor: "#FFFFFF",
       scale: 2,
@@ -96,6 +104,14 @@ async function captureElementById(id: string): Promise<string | null> {
       scrollX: 0,
       scrollY: -window.scrollY,
     });
+
+    // Restore truncation
+    truncatedEls.forEach((te) => {
+      (te as HTMLElement).style.overflow = '';
+      (te as HTMLElement).style.textOverflow = '';
+      (te as HTMLElement).style.whiteSpace = '';
+    });
+
     return canvas.toDataURL("image/png", 0.92);
   } catch (e) {
     console.warn(`Failed to capture #${id}:`, e);
@@ -222,7 +238,7 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
 
   // ═══ BLOCO 3 — INDICADORES PRINCIPAIS ═══
   sectionHeader("Indicadores Principais");
-  const cols = [MARGIN + 2, MARGIN + 60, MARGIN + 100, MARGIN + 140];
+  const cols = [MARGIN + 2, MARGIN + 95, MARGIN + 120, MARGIN + 150];
   doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...C.textDark);
   doc.text("Indicador", cols[0], curY);
   doc.text("Relatório A", cols[1], curY);
@@ -260,7 +276,7 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
     doc.setFillColor(...color);
     doc.circle(cols[0] + 1.5, curY - 1, 1.3, "F");
     doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...C.textDark);
-    doc.text(cat.length > 45 ? cat.substring(0, 45) + "…" : cat, cols[0] + 5, curY);
+    doc.text(cat.length > 55 ? cat.substring(0, 55) + "…" : cat, cols[0] + 5, curY);
     doc.text(fmtPct(a), cols[1], curY);
     doc.text(fmtPct(b), cols[2], curY);
     if (Math.abs(diff) < 0.1) { doc.setTextColor(...C.textMuted); doc.text("=", cols[3], curY); }
