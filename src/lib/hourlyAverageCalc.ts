@@ -31,15 +31,13 @@ export function isHourlyAvgDescription(desc: string): boolean {
   return HH_DESCRIPTIONS.has(desc);
 }
 
+/**
+ * Unified check: a record is dynamic if its canonical description
+ * matches ANY of the 3 dynamic descriptions. Same rule for PT and NPE.
+ */
 function isDynamicTargetRecord(r: any): boolean {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  const cat = (r.categorias_observacao as any)?.nome || r.categoria || "";
-  const impactsProd = (r.categorias_observacao as any)?.impacta_produtividade;
-
-  const isPt = cat === "Suplementar" && desc === "Aguardando Liberação de PT";
-  const isExternal = (cat === "Não Produtivo Externo" || impactsProd === false) && HH_DESCRIPTIONS.has(desc);
-
-  return isPt || isExternal || (r.is_dinamico === true && HH_DESCRIPTIONS.has(desc));
+  return HH_DESCRIPTIONS.has(desc);
 }
 
 export function usesDerivedHHValue(r: any): boolean {
