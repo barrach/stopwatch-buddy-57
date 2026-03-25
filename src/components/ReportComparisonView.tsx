@@ -123,13 +123,16 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
       {/* Delta KPIs */}
       <div className="stat-card">
         <h3 className="text-sm font-semibold text-foreground mb-4">Comparação de Indicadores</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {mainCategories.map((cat) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {mainCategories.map((cat) => {
+            const valA = sumGroup(prodA, groupMap[cat]);
+            const valB = sumGroup(prodB, groupMap[cat]);
+            return (
             <div key={cat} className="p-3 rounded-lg bg-muted/50 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1">{cat}</p>
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-foreground">{(prodA[cat] || 0).toFixed(1)}%</span>
+                  <span className="font-medium text-foreground">{valA.toFixed(1)}%</span>
                   <span className="text-muted-foreground mx-1">→</span>
                   <span className="font-medium text-foreground">{(prodB[cat] || 0).toFixed(1)}%</span>
                 </div>
