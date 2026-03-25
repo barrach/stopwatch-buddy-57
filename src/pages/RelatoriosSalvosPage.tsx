@@ -237,7 +237,7 @@ export default function RelatoriosSalvosPage() {
                 : `${report.data_inicio} até ${report.data_fim}`;
               const createdAt = format(new Date(report.criado_em), "dd/MM/yyyy HH:mm");
               const isSelected = selectedIds.includes(report.id);
-              const totalMeasurements = (report.snapshot as any)?.summary?.totalMeasurements ?? "—";
+              const totalMeasurements = (report.snapshot as any)?.summary?.totalMeasurements != null ? Math.round((report.snapshot as any).summary.totalMeasurements) : "—";
 
               return (
                 <div

@@ -80,7 +80,7 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Total de medições</p>
-                  <p className="text-sm font-medium text-foreground">{s.summary?.totalMeasurements ?? "—"}</p>
+                  <p className="text-sm font-medium text-foreground">{s.summary?.totalMeasurements != null ? Math.round(s.summary.totalMeasurements) : "—"}</p>
                 </div>
               </div>
             </div>
