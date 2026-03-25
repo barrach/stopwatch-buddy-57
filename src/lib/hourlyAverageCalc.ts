@@ -323,7 +323,7 @@ export function computeHourlyAdjustedPercentages(
 export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
   if (usesDerivedHHValue(r)) {
     const dayRecords = allRecords.filter((rec) => `${rec.data}|${rec.obra_id}` === `${r.data}|${r.obra_id}`);
-    return getCalculatedQty(r, dayRecords, allRecords);
+    return Math.round(getCalculatedQty(r, dayRecords, allRecords));
   }
   return Number(r.quantidade ?? 0);
 }
