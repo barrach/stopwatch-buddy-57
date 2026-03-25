@@ -48,7 +48,6 @@ function getProductivity(snapshot: any): Record<string, number> {
   return result;
 }
 
-// ── Group map for executive KPIs ──
 const GROUP_MAP: Record<string, string[]> = {
   "Produtivo": ["Trabalhando"],
   "Suplementar": [
@@ -83,63 +82,6 @@ function computeGrouped(prod: Record<string, number>): Record<string, number> {
   return result;
 }
 
-function generateInsights(prodA: Record<string, number>, prodB: Record<string, number>, reportA: SavedReport, reportB: SavedReport): string[] {
-  const insights: string[] = [];
-  const sA = reportA.snapshot as any;
-  const sB = reportB.snapshot as any;
-
-  const trabDiff = (prodB["Trabalhando"] || 0) - (prodA["Trabalhando"] || 0);
-  if (Math.abs(trabDiff) >= 1) {
-    insights.push(trabDiff > 0
-      ? `Aumento de +${trabDiff.toFixed(1)}% em "Trabalhando" indica ganho de produtividade no período B.`
-      : `Redução de ${trabDiff.toFixed(1)}% em "Trabalhando" sugere queda de produtividade no período B.`);
-  }
-
-  const transitCats = CANONICAL_ORDER_FULL.filter(c => c.startsWith("Transitando"));
-  const transitDiff = transitCats.reduce((s, c) => s + (prodB[c] || 0), 0) - transitCats.reduce((s, c) => s + (prodA[c] || 0), 0);
-  if (Math.abs(transitDiff) >= 1) {
-    insights.push(transitDiff < 0
-      ? `Redução de ${Math.abs(transitDiff).toFixed(1)}% em deslocamento sugere melhoria logística.`
-      : `Aumento de +${transitDiff.toFixed(1)}% em deslocamento pode indicar problemas de layout ou logística.`);
-  }
-
-  const planDiff = (prodB["Planejando"] || 0) - (prodA["Planejando"] || 0);
-  if (Math.abs(planDiff) >= 1) {
-    insights.push(planDiff > 0
-      ? `Aumento de +${planDiff.toFixed(1)}% em "Planejando" pode indicar maior complexidade das atividades.`
-      : `Redução de ${Math.abs(planDiff).toFixed(1)}% em "Planejando" sugere melhor preparação prévia.`);
-  }
-
-  const ocDiff = (prodB["Ocioso"] || 0) - (prodA["Ocioso"] || 0);
-  if (Math.abs(ocDiff) >= 1) {
-    insights.push(ocDiff > 0
-      ? `Aumento de +${ocDiff.toFixed(1)}% em "Ocioso" requer atenção da supervisão.`
-      : `Redução de ${Math.abs(ocDiff).toFixed(1)}% em "Ocioso" é um indicador positivo de engajamento.`);
-  }
-
-  const npeCats = ["Interferências Operacionais", "Fatores Climáticos e Consequências"];
-  const npeDiff = npeCats.reduce((s, c) => s + (prodB[c] || 0), 0) - npeCats.reduce((s, c) => s + (prodA[c] || 0), 0);
-  if (Math.abs(npeDiff) >= 0.5) {
-    insights.push(npeDiff > 0
-      ? `Aumento de +${npeDiff.toFixed(1)}% em causas externas (NPE) no período B.`
-      : `Redução de ${Math.abs(npeDiff).toFixed(1)}% em causas externas (NPE) no período B.`);
-  }
-
-  const measA = sA?.summary?.totalMeasurements || 0;
-  const measB = sB?.summary?.totalMeasurements || 0;
-  if (measA > 0 && measB > 0) {
-    const ratio = Math.min(measA, measB) / Math.max(measA, measB);
-    if (ratio < 0.5) {
-      insights.push(`Grande diferença no volume de medições (${Math.round(measA)} vs ${Math.round(measB)}) pode reduzir confiabilidade da comparação.`);
-    }
-  }
-
-  if (insights.length === 0) {
-    insights.push("Os indicadores entre os dois períodos são muito similares, sem variações significativas.");
-  }
-  return insights;
-}
-
 // ── Chart capture helper ──
 async function captureElementById(id: string): Promise<string | null> {
   const el = document.getElementById(id);
@@ -161,8 +103,8 @@ async function captureElementById(id: string): Promise<string | null> {
   }
 }
 
-export async function generateComparisonPDF(reportA: SavedReport, reportB: SavedReport, container?: HTMLElement | null) {
-  // ── 1. Capture all chart sections from DOM ──
+export async function generateComparisonPDF(reportA: SavedReport, reportB: SavedReport, _container?: HTMLElement | null) {
+  // ── 1. Capture chart sections from DOM ──
   const chartIds = [
     "comp-summary", "comp-kpis",
     "comp-byObra", "comp-bySpecialty", "comp-byHorario",
@@ -204,9 +146,6 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   const addCapturedImage = (id: string, maxH: number = 120) => {
     const imgData = captures[id];
     if (!imgData) return;
-    const img = new Image();
-    img.src = imgData;
-    // Calculate aspect ratio from the data
     const imgW = CONTENT_W;
     const el = document.getElementById(id);
     let imgH = maxH;
@@ -255,12 +194,11 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   doc.text(`Gerado em: ${dateStr}`, PAGE_W - MARGIN, 43, { align: "right" });
   curY = 63;
 
-  // ═══ BLOCO 2 — RESUMO (capturado do DOM) ═══
+  // ═══ BLOCO 2 — RESUMO ═══
   sectionHeader("Resumo dos Relatórios");
   if (captures["comp-summary"]) {
     addCapturedImage("comp-summary", 60);
   } else {
-    // Fallback: render programmatically
     const colW = (CONTENT_W - 6) / 2;
     const drawCard = (label: string, report: SavedReport, x: number) => {
       const s = report.snapshot as any;
@@ -332,39 +270,7 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   }
   curY += 4;
 
-  // ═══ BLOCO 5 — BARRAS COMPARATIVAS ═══
-  ensureSpace(20);
-  sectionHeader("Análise Visual Comparativa");
-  const barMaxW = CONTENT_W - 50;
-  const relevantCats = CANONICAL_ORDER_FULL.filter(c => (prodA[c] || 0) > 0.5 || (prodB[c] || 0) > 0.5);
-
-  for (const cat of relevantCats) {
-    ensureSpace(16);
-    const a = prodA[cat] || 0;
-    const b = prodB[cat] || 0;
-    const maxVal = Math.max(a, b, 1);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...C.textDark);
-    doc.text(cat.length > 40 ? cat.substring(0, 40) + "…" : cat, MARGIN + 2, curY);
-    curY += 3;
-    const barX = MARGIN + 10;
-    const color = hexToRgb(DESCRIPTION_COLORS[cat] || "#6B7280");
-    // Bar A
-    doc.setFontSize(6.5); doc.setTextColor(...C.textMuted); doc.text("A", MARGIN + 2, curY + 2.5);
-    const barWa = (a / maxVal) * barMaxW;
-    doc.setFillColor(...color);
-    doc.roundedRect(barX, curY, Math.max(barWa, 0.5), 3, 0.8, 0.8, "F");
-    doc.setTextColor(...C.textDark); doc.text(fmtPct(a), barX + barWa + 2, curY + 2.5);
-    curY += 5;
-    // Bar B
-    doc.setTextColor(...C.textMuted); doc.text("B", MARGIN + 2, curY + 2.5);
-    const barWb = (b / maxVal) * barMaxW;
-    doc.setFillColor(Math.min(color[0] + 40, 255), Math.min(color[1] + 40, 255), Math.min(color[2] + 40, 255));
-    doc.roundedRect(barX, curY, Math.max(barWb, 0.5), 3, 0.8, 0.8, "F");
-    doc.setTextColor(...C.textDark); doc.text(fmtPct(b), barX + barWb + 2, curY + 2.5);
-    curY += 7;
-  }
-
-  // ═══ BLOCO 6 — GRÁFICOS CAPTURADOS ═══
+  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS ═══
   const chartSections = [
     { id: "comp-byObra", title: "Visão Geral por Contrato" },
     { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
@@ -380,27 +286,6 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
     newPage();
     sectionHeader(title);
     addCapturedImage(id, MAX_Y - curY - 10);
-  }
-
-  // ═══ BLOCO 7 — INSIGHTS ═══
-  newPage();
-  sectionHeader("Observações e Insights");
-  const insights = generateInsights(prodA, prodB, reportA, reportB);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...C.textDark);
-
-  for (let i = 0; i < insights.length; i++) {
-    ensureSpace(14);
-    const text = insights[i];
-    const lines = doc.splitTextToSize(text, CONTENT_W - 16);
-    doc.setFillColor(...C.ocean);
-    doc.circle(MARGIN + 4, curY + 1.5, 1.5, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...C.white);
-    doc.text(String(i + 1), MARGIN + 3, curY + 2.5);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...C.textDark);
-    for (let j = 0; j < lines.length; j++) {
-      doc.text(lines[j], MARGIN + 10, curY + 2 + j * 4.5);
-    }
-    curY += lines.length * 4.5 + 5;
   }
 
   // ═══ FOOTER ═══
