@@ -27,7 +27,12 @@ export function isHourlyAvgDescription(desc: string): boolean {
 export function getRecordHH(r: any): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
   const qty = r.quantidade || 0;
+  if (HH_DESCRIPTIONS.has(desc) && r.is_dinamico === true) {
+    // quantidade already stores HH (qtd_base × duração) for dynamic records
+    return qty;
+  }
   if (HH_DESCRIPTIONS.has(desc)) {
+    // Non-dynamic HH records: multiply manually
     const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
     return qty * duracao;
   }
