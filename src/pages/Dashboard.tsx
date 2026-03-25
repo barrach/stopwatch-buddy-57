@@ -1535,7 +1535,27 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
               Limpar todos
             </Button>
+        </div>
+
+        {/* Confidence Factor Indicator */}
+        {records.length > 0 && (
+          <div className={`flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border animate-fade-in ${lowSampleWarning ? 'bg-warning/5 border-warning/30' : 'bg-muted/30 border-border/50'}`}>
+            <div className="flex items-center gap-2">
+              {lowSampleWarning ? <ShieldAlert className="w-4 h-4 text-warning" /> : <Info className="w-4 h-4 text-muted-foreground" />}
+              <span className="text-xs font-semibold text-foreground">
+                Confiabilidade da amostra: {confidencePercent}%
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                (média de {avgDailyObs.toFixed(1)} observações/dia — ideal: {IDEAL_DAILY_OBS}+)
+              </span>
+            </div>
+            {lowSampleWarning && (
+              <span className="text-[10px] text-warning font-medium">
+                ⚠ Baixa amostragem — os percentuais podem não representar o dia completo
+              </span>
+            )}
           </div>
+        )}
         )}
 
         {/* 7) Strategic KPI Cards */}
