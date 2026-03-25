@@ -23,9 +23,7 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
-import { computeOverallConfidence, isLowSample, getAverageDailyObs, IDEAL_DAILY_OBS } from "@/lib/confidenceFactor";
 import { LegendTooltip } from "@/components/LegendTooltip";
-import { Info, ShieldAlert } from "lucide-react";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -608,29 +606,20 @@ export default function Dashboard() {
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
   const efficiencyPercent = (productiveCount + supplementaryCount) > 0 ? Math.round((productiveCount / (productiveCount + supplementaryCount)) * 100) : 0;
-  // ── Confidence Factor ────────────────────────────────────────────
-  const confidenceFactor = useMemo(() => computeOverallConfidence(records), [records]);
-  const lowSampleWarning = useMemo(() => isLowSample(records), [records]);
-  const avgDailyObs = useMemo(() => getAverageDailyObs(records), [records]);
-  const confidencePercent = useMemo(() => Math.round(confidenceFactor * 100), [confidenceFactor]);
-
   const [productivePercent, supplementaryPercent, unproductivePercent, externalPercent] = useMemo(() => {
     if (totalSamples === 0) return [0, 0, 0, 0];
     const counts = [productiveCount, supplementaryCount, unproductiveCount, externalCount];
     const rawPercents = counts.map(c => (c / totalSamples) * 100);
-    // Apply confidence factor
-    const adjusted = rawPercents.map(p => p * confidenceFactor);
-    const floored = adjusted.map(p => Math.floor(p));
-    const targetSum = Math.round(adjusted.reduce((a, b) => a + b, 0));
-    let remainder = targetSum - floored.reduce((a, b) => a + b, 0);
-    const decimals = adjusted.map((p, i) => ({ i, d: p - floored[i] })).sort((a, b) => b.d - a.d);
+    const floored = rawPercents.map(p => Math.floor(p));
+    let remainder = 100 - floored.reduce((a, b) => a + b, 0);
+    const decimals = rawPercents.map((p, i) => ({ i, d: p - floored[i] })).sort((a, b) => b.d - a.d);
     for (const item of decimals) {
       if (remainder <= 0) break;
       floored[item.i]++;
       remainder--;
     }
     return floored as [number, number, number, number];
-  }, [totalSamples, productiveCount, supplementaryCount, unproductiveCount, externalCount, confidenceFactor]);
+  }, [totalSamples, productiveCount, supplementaryCount, unproductiveCount, externalCount]);
 
   // ── Chart data ─────────────────────────────────────────────────
 
@@ -1535,26 +1524,6 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-6 px-2">
               Limpar todos
             </Button>
-          </div>
-        )}
-
-        {/* Confidence Factor Indicator */}
-        {records.length > 0 && (
-          <div className={`flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border animate-fade-in ${lowSampleWarning ? 'bg-warning/5 border-warning/30' : 'bg-muted/30 border-border/50'}`}>
-            <div className="flex items-center gap-2">
-              {lowSampleWarning ? <ShieldAlert className="w-4 h-4 text-warning" /> : <Info className="w-4 h-4 text-muted-foreground" />}
-              <span className="text-xs font-semibold text-foreground">
-                Confiabilidade da amostra: {confidencePercent}%
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                (média de {avgDailyObs.toFixed(1)} observações/dia — ideal: {IDEAL_DAILY_OBS}+)
-              </span>
-            </div>
-            {lowSampleWarning && (
-              <span className="text-[10px] text-warning font-medium">
-                ⚠ Baixa amostragem — os percentuais podem não representar o dia completo
-              </span>
-            )}
           </div>
         )}
 
