@@ -524,7 +524,16 @@ export default function Records() {
                 <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas Categorias</SelectItem>
-                  {categorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  {parentCategorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-52">
+              <Select value={filterDescricao} onValueChange={setFilterDescricao}>
+                <SelectTrigger><SelectValue placeholder="Todas Descrições" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Descrições</SelectItem>
+                  {filterDescricaoOptions.map((d) => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
