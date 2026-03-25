@@ -28,6 +28,7 @@ import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/cat
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
+import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
 
 const PAGE_SIZE = 50;
 
@@ -149,11 +150,15 @@ export default function Records() {
 
   const { mutate: deleteRecord } = useMutation({
     mutationFn: async (id: string) => {
+      const target = records.find((record: any) => record.id === id);
       const { error } = await supabase
         .from("observacoes")
         .update({ deleted_at: new Date().toISOString(), deleted_by: null })
         .eq("id", id);
       if (error) throw error;
+      if (target) {
+        await reprocessarObservacoesDoDia(target.data, target.obra_id);
+      }
     },
     onSuccess: async () => {
       await Promise.all([
@@ -194,8 +199,14 @@ export default function Records() {
           payload.quantidade = parseFloat(editForm.quantidade);
         }
 
+        const previousData = editRecord.data;
+        const previousObraId = editRecord.obra_id;
         const { error } = await supabase.from("observacoes").update(payload).eq("id", editRecord.id);
       if (error) throw error;
+      await reprocessarObservacoesDoDia(previousData, previousObraId);
+      if (previousData !== editForm.data || previousObraId !== editForm.obra_id) {
+        await reprocessarObservacoesDoDia(editForm.data, editForm.obra_id);
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
         queryClient.refetchQueries({ queryKey: ["observacoes"] }),
@@ -287,6 +298,17 @@ export default function Records() {
       if (error) {
         failed = idsToDelete.length;
       } else {
+        const affectedGroups = new Map<string, { data: string; obra_id: string }>();
+        records
+          .filter((record: any) => idsToDelete.includes(record.id))
+          .forEach((record: any) => {
+            affectedGroups.set(`${record.data}|${record.obra_id}`, { data: record.data, obra_id: record.obra_id });
+          });
+
+        for (const group of affectedGroups.values()) {
+          await reprocessarObservacoesDoDia(group.data, group.obra_id);
+        }
+
         succeeded = idsToDelete.length;
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
@@ -389,7 +411,17 @@ export default function Records() {
       if (insertRows.length > 0) {
         const { error } = await supabase.from("observacoes").insert(insertRows);
         if (error) throw error;
-        queryClient.invalidateQueries({ queryKey: ["observacoes"] });
+        const affectedGroups = new Map<string, { data: string; obra_id: string }>();
+        insertRows.forEach((row) => {
+          affectedGroups.set(`${row.data}|${row.obra_id}`, { data: row.data, obra_id: row.obra_id });
+        });
+        for (const group of affectedGroups.values()) {
+          await reprocessarObservacoesDoDia(group.data, group.obra_id);
+        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+          queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+        ]);
       }
 
       const msg = `${insertRows.length} registro(s) importados.` + (errors.length > 0 ? ` ${errors.length} linha(s) com erro ignoradas.` : "");
