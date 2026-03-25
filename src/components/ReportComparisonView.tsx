@@ -50,7 +50,24 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
   const prodA = useMemo(() => getProductivity(sA), [sA]);
   const prodB = useMemo(() => getProductivity(sB), [sB]);
 
-  const mainCategories = ["Trabalhando", "Planejando", "Deslocamento"];
+  // Group descriptions into 4 executive categories
+  const groupMap: Record<string, string[]> = {
+    "Produtivo": ["Trabalhando"],
+    "Suplementar": ["Planejando", "Aguardando Ferramenta ou Material", "Assistindo / Stand By", "Aguardando Liberação de PT"],
+    "Não Produtivo": [
+      "Transitando no local de trabalho - com ferramenta",
+      "Transitando no local de trabalho - sem ferramenta",
+      "Transitando fora do local de trabalho - com ferramenta",
+      "Transitando fora do local de trabalho - sem ferramenta",
+      "Pessoal", "Ocioso",
+    ],
+    "Não Produtivo Externo": ["Interferências Operacionais", "Fatores Climáticos e Consequências"],
+  };
+
+  const sumGroup = (prod: Record<string, number>, descs: string[]) =>
+    descs.reduce((s, d) => s + (prod[d] || 0), 0);
+
+  const mainCategories = Object.keys(groupMap);
 
   const handleExportPDF = () => {
     try {
