@@ -357,7 +357,7 @@ export default function Records() {
       Especialidade: (r.especialidades as any)?.nome || "",
       Categoria: (r.categorias_observacao as any)?.nome || "",
       "Descrição": r.descricao || "",
-      Quantidade: getDisplayQuantity(r),
+      Quantidade: getDisplayQuantity(r, records),
       Empresa: r.empresa || "",
       Notas: r.notas || "",
     }));
@@ -629,7 +629,7 @@ export default function Records() {
                 const catNome = (r.categorias_observacao as any)?.nome || "";
                 const isSelected = selectedIds.has(r.id);
                 const userName = r.criado_por ? (profileMap.get(r.criado_por) || r.criado_por.substring(0, 8) + "…") : "—";
-                const displayedQuantity = getDisplayQuantity(r);
+                const displayedQuantity = getDisplayQuantity(r, records);
                 return (
                   <TableRow
                     key={r.id}
@@ -801,7 +801,7 @@ export default function Records() {
                     <span className="text-[10px] text-muted-foreground">Minutos</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">✨ Observação dinâmica — Qtd é calculada automaticamente (HH = qty × duração).</p>
+                <p className="text-xs text-muted-foreground mt-1">✨ Observação dinâmica — Qtd é calculada automaticamente pela base da especialidade no dia.</p>
               </div>
             ) : (
               <div>

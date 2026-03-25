@@ -31,14 +31,24 @@ export function isHourlyAvgDescription(desc: string): boolean {
   return HH_DESCRIPTIONS.has(desc);
 }
 
-export function usesDerivedHHValue(r: any): boolean {
+function isDynamicTargetRecord(r: any): boolean {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  return r.is_dinamico === true && HH_DESCRIPTIONS.has(desc);
+  const cat = (r.categorias_observacao as any)?.nome || r.categoria || "";
+  const impactsProd = (r.categorias_observacao as any)?.impacta_produtividade;
+
+  const isPt = cat === "Suplementar" && desc === "Aguardando Liberação de PT";
+  const isExternal = (cat === "Não Produtivo Externo" || impactsProd === false) && HH_DESCRIPTIONS.has(desc);
+
+  return isPt || isExternal || (r.is_dinamico === true && HH_DESCRIPTIONS.has(desc));
+}
+
+export function usesDerivedHHValue(r: any): boolean {
+  return isDynamicTargetRecord(r);
 }
 
 /** Get raw qty for a record */
-function getRawQty(r: any): number {
-  return Number(r.quantidade_base ?? r.quantidade ?? 1);
+function getStoredQty(r: any): number {
+  return Number(r.quantidade_base ?? r.quantidade ?? 0);
 }
 
 /** Get duration in hours for a record (default 1.0) */
@@ -46,21 +56,56 @@ function getDuration(r: any): number {
   return Number(r.duracao_horas ?? r.duracao_em_horas ?? r.duracao ?? 1);
 }
 
+function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
+  const map = new Map<string, number>();
+
+  for (const record of dayRecords) {
+    if (usesDerivedHHValue(record)) continue;
+
+    const key = `${record.data}|${record.especialidade_id ?? "sem-especialidade"}`;
+    map.set(key, (map.get(key) || 0) + getStoredQty(record));
+  }
+
+  return map;
+}
+
+function getCalculatedQty(r: any, dayRecords: any[]): number {
+  if (!usesDerivedHHValue(r)) return getStoredQty(r);
+
+  const specialtyKey = `${r.data}|${r.especialidade_id ?? "sem-especialidade"}`;
+  const specialtyBaseQty = getDaySpecialtyBaseMap(dayRecords).get(specialtyKey) || 0;
+  const duracao = getDuration(r);
+
+  console.log({
+    especialidade: (r.especialidades as any)?.nome || r.especialidade_id || "Sem especialidade",
+    data: r.data,
+    QTD_base_especialidade: specialtyBaseQty,
+    duracao,
+    valor_final: specialtyBaseQty * duracao,
+  });
+
+  return specialtyBaseQty;
+}
+
 /**
  * Compute HH_medio_dia for a set of records (same day/obra).
  * HH_medio = sum(qty × duration) / sum(qty)
  */
 export function computeHHMedioDia(dayRecords: any[]): number {
-  if (dayRecords.length === 0) return 1;
+  if (dayRecords.length === 0) return 0;
   let hhTotal = 0;
   let qtyTotal = 0;
+  const specialtyBaseMap = getDaySpecialtyBaseMap(dayRecords);
+
   for (const r of dayRecords) {
-    const qty = getRawQty(r);
+    const qty = usesDerivedHHValue(r)
+      ? specialtyBaseMap.get(`${r.data}|${r.especialidade_id ?? "sem-especialidade"}`) || 0
+      : getStoredQty(r);
     const dur = getDuration(r);
     hhTotal += qty * dur;
     qtyTotal += qty;
   }
-  if (qtyTotal === 0) return 1;
+  if (qtyTotal === 0) return 0;
   const medio = hhTotal / qtyTotal;
   console.log({ HH_total_dia: hhTotal, QTD_total_dia: qtyTotal, HH_medio_dia: medio });
   return medio;
@@ -73,9 +118,9 @@ export function computeHHMedioDia(dayRecords: any[]): number {
  * - Dynamic categories: valor = qty × duration (HH real)
  * - Other categories: valor = qty × HH_medio_dia (HH equivalent)
  */
-export function getRecordHHWithContext(r: any, hhMedioDia: number): number {
+export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: any[] = []): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  const qty = getRawQty(r);
+  const qty = getCalculatedQty(r, dayRecords);
   const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
@@ -104,7 +149,7 @@ export function getRecordHHWithContext(r: any, hhMedioDia: number): number {
  */
 export function getRecordHH(r: any): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  const qty = getRawQty(r);
+  const qty = getStoredQty(r);
   const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
@@ -152,7 +197,7 @@ export function computeHourlyAdjustedPercentages(
     const desc = canonicalDescription(r.descricao || "Sem descrição");
     const key = `${r.data}|${r.obra_id}`;
     const hhMedio = hhMedioMap.get(key) || 1;
-    const value = getRecordHHWithContext(r, hhMedio);
+    const value = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || []);
     if (desc in descValues) {
       descValues[desc] += value;
     }
@@ -175,11 +220,10 @@ export function computeHourlyAdjustedPercentages(
  * Dynamic records show the HH real value (qty × duration).
  * Other records show raw quantity.
  */
-export function getDisplayQuantity(r: any): number {
+export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
   if (usesDerivedHHValue(r)) {
-    const qty = getRawQty(r);
-    const duracao = getDuration(r);
-    return qty * duracao;
+    const dayRecords = allRecords.filter((rec) => `${rec.data}|${rec.obra_id}` === `${r.data}|${r.obra_id}`);
+    return getCalculatedQty(r, dayRecords);
   }
   return Number(r.quantidade ?? 0);
 }
@@ -193,5 +237,5 @@ export function getRecordValue(r: any, allRecords: any[]): number {
   const dayKey = `${r.data}|${r.obra_id}`;
   const dayRecords = allRecords.filter(rec => `${rec.data}|${rec.obra_id}` === dayKey);
   const hhMedio = computeHHMedioDia(dayRecords);
-  return getRecordHHWithContext(r, hhMedio);
+  return getRecordHHWithContext(r, hhMedio, dayRecords);
 }

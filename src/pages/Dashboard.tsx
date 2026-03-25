@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, getRecordHH, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -956,7 +956,7 @@ export default function Dashboard() {
             result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
           }
           const desc = canonicalDescription(r.descricao || "Sem descrição");
-          const qty = getRecordHH(r);
+          const qty = getHH(r);
           if (desc in result[key]) {
             result[key][desc] = (result[key][desc] || 0) + qty;
           }
@@ -1110,7 +1110,7 @@ export default function Dashboard() {
     const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     records.forEach((r: any) => {
-      const qty = getRecordHH(r);
+      const qty = getHH(r);
       total += qty;
       const cat = getParentCatName(r);
       const isExt = isExternalRecord(r);
@@ -1180,7 +1180,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      const qty = getRecordHH(r);
+      const qty = getHH(r);
       if (!espChartData[sName]) espChartData[sName] = { total: 0 };
       espChartData[sName].total = (espChartData[sName].total || 0) + qty;
       espChartData[sName][desc] = (espChartData[sName][desc] || 0) + qty;
@@ -1216,7 +1216,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       if (isExternalRecord(r)) return;
       const desc = r.descricao || "Sem descrição";
-      controlDescriptions[desc] = (controlDescriptions[desc] || 0) + getRecordHH(r);
+      controlDescriptions[desc] = (controlDescriptions[desc] || 0) + getHH(r);
     });
     const topCategorias = Object.entries(controlDescriptions)
       .sort(([, a], [, b]) => b - a).slice(0, 10)
@@ -1228,7 +1228,7 @@ export default function Dashboard() {
     records.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "");
       if (hhDescriptions.includes(desc)) {
-        const hh = getRecordHH(r);
+        const hh = getHH(r);
         hhPerdido[desc] = (hhPerdido[desc] || 0) + hh;
       }
     });

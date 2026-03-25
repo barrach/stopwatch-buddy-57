@@ -150,7 +150,7 @@ export default function NewObservation() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!especialidadeId || !rotaId || !obraId || !time || !categoriaId || !descricao || !quantity) {
+    if (!especialidadeId || !rotaId || !obraId || !time || !categoriaId || !descricao || (!isDynamicObservation && !quantity)) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
@@ -181,7 +181,7 @@ export default function NewObservation() {
           categoria_id: categoriaId,
           descricao,
           empresa: "MEGASTEAM",
-          quantidade: isDinamico ? 1 : parseInt(quantity, 10),
+          quantidade: isDinamico ? 0 : parseInt(quantity, 10),
           notas: notes || null,
           is_dinamico: isDinamico,
           duracao_horas: duracaoDecimal,
@@ -490,7 +490,7 @@ export default function NewObservation() {
 
                   {isDynamicObservation ? (
                     <div className="mt-1 flex items-center gap-2">
-                      <Input id="qty" type="number" value="1" readOnly disabled className="mt-0 bg-muted cursor-not-allowed" />
+                      <Input id="qty" type="number" value="Calculado" readOnly disabled className="mt-0 bg-muted cursor-not-allowed" />
                       <span className="text-xs text-warning font-medium whitespace-nowrap flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         Observação Dinâmica
@@ -501,7 +501,7 @@ export default function NewObservation() {
                   )}
                   {isDynamicObservation && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Quantidade inicial é apenas temporária; o valor final é recalculado e sobrescrito automaticamente no banco.
+                      Quantidade é derivada automaticamente pelas amostras não dinâmicas da mesma especialidade no dia.
                     </p>
                   )}
                 </div>
