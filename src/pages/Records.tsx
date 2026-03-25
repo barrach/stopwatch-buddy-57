@@ -278,7 +278,12 @@ export default function Records() {
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterEspecialidade, filterCategoria, filterObra, filterDateStart, filterDateEnd]);
+  }, [search, filterEspecialidade, filterCategoria, filterDescricao, filterObra, filterDateStart, filterDateEnd]);
+
+  // Reset description filter when category changes
+  useEffect(() => {
+    setFilterDescricao("all");
+  }, [filterCategoria]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((r: any) => selectedIds.has(r.id));
   const someSelected = selectedIds.size > 0;
