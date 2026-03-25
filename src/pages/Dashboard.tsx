@@ -21,7 +21,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
-import { reprocessNpeQuantities } from "@/lib/npeReprocessing";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
