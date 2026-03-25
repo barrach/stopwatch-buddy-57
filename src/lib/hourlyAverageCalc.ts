@@ -16,6 +16,11 @@
  *
  * IMPORTANT: The `quantidade` field in the DB is NEVER modified.
  *            All HH values are derived at read-time.
+ *
+ * CONFIDENCE FACTOR:
+ *   fator_confiabilidade = min(1, horarios_unicos_dia / 8)
+ *   Applied to ALL record values before percentage calculation.
+ *   Days with fewer unique observation hours are weighted down.
  */
 
 import { canonicalDescription } from "@/lib/chartConstants";
