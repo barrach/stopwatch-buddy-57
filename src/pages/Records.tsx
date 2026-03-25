@@ -48,6 +48,7 @@ export default function Records() {
   const [search, setSearch] = useState("");
   const [filterEspecialidade, setFilterEspecialidade] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
+  const [filterDescricao, setFilterDescricao] = useState("all");
   const [filterObra, setFilterObra] = useState("all");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
@@ -85,6 +86,18 @@ export default function Records() {
     if (!editForm.categoria_id) return [];
     return normalizeDescriptionOptions(allCategorias.filter(c => c.categoria_pai_id === editForm.categoria_id && c.status === "Ativo"));
   }, [allCategorias, editForm.categoria_id]);
+
+  // Descriptions available for the filter (based on selected parent category)
+  const filterDescricaoOptions = useMemo(() => {
+    const parentId = filterCategoria !== "all" ? filterCategoria : null;
+    const subs = allCategorias.filter(c => {
+      if (!c.categoria_pai_id) return false;
+      if (c.status !== "Ativo") return false;
+      if (parentId && c.categoria_pai_id !== parentId) return false;
+      return true;
+    });
+    return normalizeDescriptionOptions(subs);
+  }, [allCategorias, filterCategoria]);
 
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
@@ -233,7 +246,15 @@ export default function Records() {
 
   const filtered = records.filter((r: any) => {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
-    if (filterCategoria !== "all" && r.categoria_id !== filterCategoria) return false;
+    if (filterCategoria !== "all") {
+      const recParentId = (r.categorias_observacao as any)?.categoria_pai_id;
+      if (recParentId !== filterCategoria && r.categoria_id !== filterCategoria) return false;
+    }
+    if (filterDescricao !== "all") {
+      const descNorm = normalizeDescriptionName(r.descricao || "");
+      const filterDescNorm = filterDescricaoOptions.find(d => d.id === filterDescricao)?.nome || "";
+      if (descNorm !== filterDescNorm) return false;
+    }
     if (filterObra !== "all" && r.obra_id !== filterObra) return false;
     if (filterDateStart && r.data < filterDateStart) return false;
     if (filterDateEnd && r.data > filterDateEnd) return false;
@@ -260,7 +281,12 @@ export default function Records() {
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterEspecialidade, filterCategoria, filterObra, filterDateStart, filterDateEnd]);
+  }, [search, filterEspecialidade, filterCategoria, filterDescricao, filterObra, filterDateStart, filterDateEnd]);
+
+  // Reset description filter when category changes
+  useEffect(() => {
+    setFilterDescricao("all");
+  }, [filterCategoria]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((r: any) => selectedIds.has(r.id));
   const someSelected = selectedIds.size > 0;
@@ -501,7 +527,16 @@ export default function Records() {
                 <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas Categorias</SelectItem>
-                  {categorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  {parentCategorias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-52">
+              <Select value={filterDescricao} onValueChange={setFilterDescricao}>
+                <SelectTrigger><SelectValue placeholder="Todas Descrições" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Descrições</SelectItem>
+                  {filterDescricaoOptions.map((d) => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
