@@ -482,7 +482,7 @@ export default function NewObservation() {
 
                   {isDynamicObservation ? (
                     <div className="mt-1 flex items-center gap-2">
-                      <Input id="qty" type="number" value="1" disabled className="mt-0 bg-muted cursor-not-allowed" />
+                      <Input id="qty" type="number" value="1" readOnly disabled className="mt-0 bg-muted cursor-not-allowed" />
                       <span className="text-xs text-warning font-medium whitespace-nowrap flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         Observação Dinâmica
@@ -493,7 +493,7 @@ export default function NewObservation() {
                   )}
                   {isDynamicObservation && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Quantidade calculada automaticamente pela média da especialidade no dia.
+                      Quantidade inicial é apenas temporária; o valor final é recalculado e sobrescrito automaticamente no banco.
                     </p>
                   )}
                 </div>
