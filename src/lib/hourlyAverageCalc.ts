@@ -26,16 +26,23 @@ export function isHourlyAvgDescription(desc: string): boolean {
 /** Get the effective value for a record: HH for special categories, qty for others */
 export function getRecordHH(r: any): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
-  const qty = r.quantidade || 0;
-  if (HH_DESCRIPTIONS.has(desc) && r.is_dinamico === true) {
-    // quantidade already stores HH (qtd_base × duração) for dynamic records
-    return qty;
+  const categoria = (r.categorias_observacao as any)?.nome || r.categoria || "";
+  const qty = Number(r.quantidade ?? 0);
+  const duracao = Number(r.duracao_horas ?? r.duracao_em_horas ?? r.duracao ?? 1);
+  const isDynamicHH =
+    r.is_dinamico === true &&
+    (
+      (categoria === "Suplementar" && desc === "Aguardando Liberação de PT") ||
+      (["Não Produtivo Externo", "Não Produtivo"].includes(categoria) && HH_DESCRIPTIONS.has(desc))
+    );
+
+  if (isDynamicHH) {
+    const valorFinal = qty * duracao;
+    console.log({ categoria, qtd: qty, duracao, valor_final: valorFinal });
+    return valorFinal;
   }
-  if (HH_DESCRIPTIONS.has(desc)) {
-    // Non-dynamic HH records: multiply manually
-    const duracao = r.duracao_horas != null ? Number(r.duracao_horas) : 1.0;
-    return qty * duracao;
-  }
+
+  if (HH_DESCRIPTIONS.has(desc) && r.is_dinamico !== true) return qty * duracao;
   return qty;
 }
 
