@@ -153,7 +153,7 @@ export default function RelatoriosPage() {
 
   const getHH = useCallback((r: any) => {
     const key = `${r.data}|${r.obra_id}`;
-    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1);
+    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 0, records.filter((rec: any) => `${rec.data}|${rec.obra_id}` === key));
   }, [hhMedioByDay]);
 
   // ── Summary ──
