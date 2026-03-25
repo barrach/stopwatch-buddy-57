@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, getRecordHH } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, getRecordHH, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
@@ -559,23 +559,43 @@ export default function Dashboard() {
     });
   }, [baseRecords, crossFilters, getParentCatName]);
 
+  // ── Pre-compute HH medio per day group ──
+  const hhMedioByDay = useMemo(() => {
+    const dayGroups = new Map<string, any[]>();
+    for (const r of records) {
+      const key = `${(r as any).data}|${(r as any).obra_id}`;
+      if (!dayGroups.has(key)) dayGroups.set(key, []);
+      dayGroups.get(key)!.push(r);
+    }
+    const map = new Map<string, number>();
+    for (const [key, recs] of dayGroups) {
+      map.set(key, computeHHMedioDia(recs));
+    }
+    return map;
+  }, [records]);
+
+  const getHH = useCallback((r: any) => {
+    const key = `${r.data}|${r.obra_id}`;
+    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1);
+  }, [hhMedioByDay]);
+
   // ── KPI Metrics ────────────────────────────────────────────────
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getRecordHH(r), 0), [records]);
+  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getHH(r), 0), [records, getHH]);
   const externalCount = useMemo(
-    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + getRecordHH(r), 0),
-    [records, isExternalRecord]
+    () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + getHH(r), 0),
+    [records, isExternalRecord, getHH]
   );
   const productiveCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + getRecordHH(r), 0),
-    [records, getParentCatName]
+    () => records.filter((r: any) => getParentCatName(r) === "Produtivo").reduce((s: number, r: any) => s + getHH(r), 0),
+    [records, getParentCatName, getHH]
   );
   const supplementaryCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Suplementar").reduce((s: number, r: any) => s + getRecordHH(r), 0),
-    [records, getParentCatName]
+    () => records.filter((r: any) => getParentCatName(r) === "Suplementar").reduce((s: number, r: any) => s + getHH(r), 0),
+    [records, getParentCatName, getHH]
   );
   const unproductiveCount = useMemo(
-    () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + getRecordHH(r), 0),
-    [records, getParentCatName]
+    () => records.filter((r: any) => getParentCatName(r) === "Não Produtivo").reduce((s: number, r: any) => s + getHH(r), 0),
+    [records, getParentCatName, getHH]
   );
   // Global productivity: NPE included in denominator
   // Largest-remainder method to guarantee sum = 100%
