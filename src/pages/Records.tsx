@@ -29,6 +29,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
+import { getRecordHH, usesDerivedHHValue } from "@/lib/hourlyAverageCalc";
 
 const PAGE_SIZE = 50;
 
@@ -346,7 +347,7 @@ export default function Records() {
       Especialidade: (r.especialidades as any)?.nome || "",
       Categoria: (r.categorias_observacao as any)?.nome || "",
       "Descrição": r.descricao || "",
-      Quantidade: r.quantidade,
+      Quantidade: usesDerivedHHValue(r) ? getRecordHH(r) : r.quantidade,
       Empresa: r.empresa || "",
       Notas: r.notas || "",
     }));
@@ -618,6 +619,7 @@ export default function Records() {
                 const catNome = (r.categorias_observacao as any)?.nome || "";
                 const isSelected = selectedIds.has(r.id);
                 const userName = r.criado_por ? (profileMap.get(r.criado_por) || r.criado_por.substring(0, 8) + "…") : "—";
+                const displayedQuantity = usesDerivedHHValue(r) ? getRecordHH(r) : r.quantidade;
                 return (
                   <TableRow
                     key={r.id}
@@ -644,7 +646,7 @@ export default function Records() {
                       </span>
                     </TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
-                    <TableCell className="text-xs text-right font-bold">{r.quantidade}</TableCell>
+                    <TableCell className="text-xs text-right font-bold">{displayedQuantity}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
                       {userName}
                     </TableCell>
