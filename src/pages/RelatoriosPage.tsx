@@ -284,10 +284,13 @@ export default function RelatoriosPage() {
   }, [records, totalSamples]);
 
   const externalCausas = useMemo(() => {
+    const AG_PT = "Aguardando Liberação de PT";
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
-      if (!isExternalRecord(r)) return;
-      const desc = r.descricao || "Sem descrição";
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      const isNPE = isExternalRecord(r);
+      const isAgPT = desc === AG_PT;
+      if (!isNPE && !isAgPT) return;
       totals[desc] = (totals[desc] || 0) + getHH(r);
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
@@ -296,7 +299,7 @@ export default function RelatoriosPage() {
       ...item,
       percent: total > 0 ? +((item.value / total) * 100).toFixed(1) : 0,
     }));
-  }, [records, isExternalRecord]);
+  }, [records, isExternalRecord, getHH]);
 
   // ── Validation & generation ──
   const handleGenerate = () => {
