@@ -1556,7 +1556,6 @@ export default function Dashboard() {
             )}
           </div>
         )}
-        )}
 
         {/* 7) Strategic KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-6 md:mb-8">
