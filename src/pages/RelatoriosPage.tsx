@@ -146,15 +146,15 @@ export default function RelatoriosPage() {
     }
     const map = new Map<string, number>();
     for (const [key, recs] of dayGroups) {
-      map.set(key, computeHHMedioDia(recs));
+      map.set(key, computeHHMedioDia(recs, records));
     }
     return map;
   }, [records]);
 
   const getHH = useCallback((r: any) => {
     const key = `${r.data}|${r.obra_id}`;
-    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 0, records.filter((rec: any) => `${rec.data}|${rec.obra_id}` === key));
-  }, [hhMedioByDay]);
+    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 0, records.filter((rec: any) => `${rec.data}|${rec.obra_id}` === key), records);
+  }, [hhMedioByDay, records]);
 
   // ── Summary ──
   const summary = useMemo(() => {
