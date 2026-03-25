@@ -515,8 +515,10 @@ export default function Dashboard() {
     if (catData.impacta_produtividade === false) return true;
     // Check parent category flag
     if (catData.categoria_pai_id && parentCatImpactMap[catData.categoria_pai_id] === false) return true;
-    // Fallback: check description against known NPE subcategory names
-    if (r.descricao && npeDescriptions.has(r.descricao)) return true;
+    // Fallback: check NORMALIZED description against known NPE subcategory names
+    const normalizedDesc = canonicalDescription(r.descricao || "");
+    if (npeDescriptions.has(normalizedDesc)) return true;
+    if (npeDescriptions.has(r.descricao)) return true;
     return false;
   }, [parentCatImpactMap, npeDescriptions]);
 
@@ -551,7 +553,7 @@ export default function Dashboard() {
         const bucket = getTimeBucketLabel(r, crossFilters.tempoMode || "horario");
         if (bucket !== crossFilters.tempo) return false;
       }
-      if (crossFilters.descricao && r.descricao !== crossFilters.descricao) return false;
+      if (crossFilters.descricao && canonicalDescription(r.descricao || "") !== crossFilters.descricao) return false;
       if (crossFilters.pareto) {
         if (r.descricao !== crossFilters.pareto) return false;
       }
@@ -559,25 +561,29 @@ export default function Dashboard() {
     });
   }, [baseRecords, crossFilters, getParentCatName]);
 
-  // ── Pre-compute HH medio per day group ──
-  const hhMedioByDay = useMemo(() => {
+  // ── Pre-compute day groups for HH context ──
+  const dayGroupsMap = useMemo(() => {
     const dayGroups = new Map<string, any[]>();
     for (const r of records) {
       const key = `${(r as any).data}|${(r as any).obra_id}`;
       if (!dayGroups.has(key)) dayGroups.set(key, []);
       dayGroups.get(key)!.push(r);
     }
+    return dayGroups;
+  }, [records]);
+
+  const hhMedioByDay = useMemo(() => {
     const map = new Map<string, number>();
-    for (const [key, recs] of dayGroups) {
+    for (const [key, recs] of dayGroupsMap) {
       map.set(key, computeHHMedioDia(recs));
     }
     return map;
-  }, [records]);
+  }, [dayGroupsMap]);
 
   const getHH = useCallback((r: any) => {
     const key = `${r.data}|${r.obra_id}`;
-    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1);
-  }, [hhMedioByDay]);
+    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1, dayGroupsMap.get(key) || []);
+  }, [hhMedioByDay, dayGroupsMap]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getHH(r), 0), [records, getHH]);
