@@ -54,9 +54,8 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
 
   // Group descriptions into 4 executive categories (per official taxonomy)
   const groupMap: Record<string, string[]> = {
-    "Produtivo": ["Trabalhando"],
+    "Produtivo": ["Trabalhando", "Planejando"],
     "Suplementar": [
-      "Planejando",
       "Aguardando Ferramenta ou Material",
       "Assistindo / Stand By",
       "Aguardando Liberação de PT",

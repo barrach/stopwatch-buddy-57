@@ -142,7 +142,7 @@ export function StackedBarChartSection({ data, dataKeyX, descriptions, title, xA
             </ResponsiveContainer>
           </div>
           <div className="shrink-0 lg:max-w-[28%]">
-            <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px] overflow-y-auto" style={{ maxHeight: !isMobile && typeof window !== 'undefined' && window.innerWidth >= 1024 ? STACKED_CHART_HEIGHT - STACKED_CHART_MARGIN.top - STACKED_CHART_MARGIN.bottom : undefined }}>
+            <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-[5px]">
               {[...descriptions].reverse().map((desc) => (
                 <LegendTooltip key={desc} name={displayName(desc)} description={tooltipMap?.[desc] || tooltipMap?.[displayName(desc)]}>
                   <div className="flex items-center gap-1.5 lg:gap-2">
