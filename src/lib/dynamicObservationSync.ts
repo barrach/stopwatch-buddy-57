@@ -59,8 +59,9 @@ export async function reprocessarObservacoesDoDia(data: string, obraId: string) 
   dayRecords
     .filter(isDynamicObservationTarget)
     .forEach((record) => {
-      const hh = getBaseQuantity(record) * getDuration(record);
-      console.log("ATUALIZANDO REGISTRO:", record.id, "HH =", hh);
+      const valorFinal = getBaseQuantity(record) * getDuration(record);
+      console.log({ categoria: record.categorias_observacao?.nome ?? "", qtd: getBaseQuantity(record), duracao: getDuration(record), valor_final: valorFinal });
+      console.log("ATUALIZANDO REGISTRO:", record.id, valorFinal);
     });
 
   const { error: rpcError } = await supabase.rpc("recalculate_dynamic_observations", {
