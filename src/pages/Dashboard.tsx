@@ -575,15 +575,15 @@ export default function Dashboard() {
   const hhMedioByDay = useMemo(() => {
     const map = new Map<string, number>();
     for (const [key, recs] of dayGroupsMap) {
-      map.set(key, computeHHMedioDia(recs));
+      map.set(key, computeHHMedioDia(recs, records));
     }
     return map;
-  }, [dayGroupsMap]);
+  }, [dayGroupsMap, records]);
 
   const getHH = useCallback((r: any) => {
     const key = `${r.data}|${r.obra_id}`;
-    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1, dayGroupsMap.get(key) || []);
-  }, [hhMedioByDay, dayGroupsMap]);
+    return getRecordHHWithContext(r, hhMedioByDay.get(key) || 1, dayGroupsMap.get(key) || [], records);
+  }, [hhMedioByDay, dayGroupsMap, records]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
   const totalSamples = useMemo(() => Math.round(records.reduce((s: number, r: any) => s + getHH(r), 0)), [records, getHH]);
