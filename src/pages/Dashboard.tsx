@@ -586,7 +586,7 @@ export default function Dashboard() {
   }, [hhMedioByDay, dayGroupsMap]);
 
   // ── KPI Metrics ────────────────────────────────────────────────
-  const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getHH(r), 0), [records, getHH]);
+  const totalSamples = useMemo(() => Math.round(records.reduce((s: number, r: any) => s + getHH(r), 0)), [records, getHH]);
   const externalCount = useMemo(
     () => records.filter((r: any) => isExternalRecord(r)).reduce((s: number, r: any) => s + getHH(r), 0),
     [records, isExternalRecord, getHH]
