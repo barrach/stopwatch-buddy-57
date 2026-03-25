@@ -56,17 +56,46 @@ function getDuration(r: any): number {
   return Number(r.duracao_horas ?? r.duracao_em_horas ?? r.duracao ?? 1);
 }
 
+/**
+ * Build a map of (date|especialidade) → average qty per hour.
+ * Groups non-dynamic records by hour, sums per hour, then divides total by unique hours.
+ */
 function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
-  const map = new Map<string, number>();
+  // First pass: group qty by (date|especialidade|hour)
+  const hourlyMap = new Map<string, Map<string, number>>(); // specKey → (hour → sumQty)
 
   for (const record of dayRecords) {
     if (usesDerivedHHValue(record)) continue;
 
-    const key = `${record.data}|${record.especialidade_id ?? "sem-especialidade"}`;
-    map.set(key, (map.get(key) || 0) + getStoredQty(record));
+    const specKey = `${record.data}|${record.especialidade_id ?? "sem-especialidade"}`;
+    const rawHorario = record.horario ?? "";
+    // Normalize to HH:mm (take first 5 chars, pad if needed)
+    const hour = rawHorario.length >= 5 ? rawHorario.slice(0, 5) : rawHorario;
+
+    if (!hourlyMap.has(specKey)) hourlyMap.set(specKey, new Map());
+    const hoursForSpec = hourlyMap.get(specKey)!;
+    hoursForSpec.set(hour, (hoursForSpec.get(hour) || 0) + getStoredQty(record));
   }
 
-  return map;
+  // Second pass: compute average = totalQty / uniqueHours
+  const resultMap = new Map<string, number>();
+  for (const [specKey, hoursMap] of hourlyMap) {
+    const totalQty = [...hoursMap.values()].reduce((a, b) => a + b, 0);
+    const uniqueHours = hoursMap.size;
+    const avgPerHour = uniqueHours > 0 ? totalQty / uniqueHours : 0;
+
+    console.log({
+      especialidade_key: specKey,
+      horas_unicas: [...hoursMap.keys()],
+      qtd_por_hora: Object.fromEntries(hoursMap),
+      QTD_total_dia: totalQty,
+      QTD_dinamica: avgPerHour,
+    });
+
+    resultMap.set(specKey, avgPerHour);
+  }
+
+  return resultMap;
 }
 
 function getCalculatedQty(r: any, dayRecords: any[]): number {
