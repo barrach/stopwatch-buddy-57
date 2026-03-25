@@ -23,18 +23,18 @@ export function isHourlyAvgDescription(desc: string): boolean {
   return HH_DESCRIPTIONS.has(desc);
 }
 
+export function usesDerivedHHValue(r: any): boolean {
+  const desc = canonicalDescription(r.descricao || "Sem descrição");
+  return r.is_dinamico === true && HH_DESCRIPTIONS.has(desc);
+}
+
 /** Get the effective value for a record: HH for special categories, qty for others */
 export function getRecordHH(r: any): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
   const categoria = (r.categorias_observacao as any)?.nome || r.categoria || "";
   const qty = Number(r.quantidade ?? 0);
   const duracao = Number(r.duracao_horas ?? r.duracao_em_horas ?? r.duracao ?? 1);
-  const isDynamicHH =
-    r.is_dinamico === true &&
-    (
-      (categoria === "Suplementar" && desc === "Aguardando Liberação de PT") ||
-      (["Não Produtivo Externo", "Não Produtivo"].includes(categoria) && HH_DESCRIPTIONS.has(desc))
-    );
+  const isDynamicHH = usesDerivedHHValue(r);
 
   if (isDynamicHH) {
     const valorFinal = qty * duracao;
