@@ -1,6 +1,7 @@
-import { useMemo, useState, useCallback } from "react"; // refreshed-v2
+import { useMemo, useState, useCallback } from "react"; // refreshed-v3
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserObra } from "@/hooks/useUserObra";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -377,6 +378,7 @@ export default function Dashboard() {
   const isMobileView = useIsMobile();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { obraFilter: userObraRestriction, isAdmin: isAdminUser } = useUserObra();
   const [obraFilter, setObraFilter] = useState("all");
   const [aiReport, setAiReport] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -526,15 +528,18 @@ export default function Dashboard() {
 
   // ── Filtering ──────────────────────────────────────────────────
   // Os valores dinâmicos já chegam recalculados do banco; a UI deve consumir o valor persistido.
+  // Apply contract-based restriction: non-admin users only see their contract
+  const effectiveObraFilter = userObraRestriction ? userObraRestriction : obraFilter;
+
   const preNpeRecords = useMemo(() => {
-    let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
+    let filtered = effectiveObraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === effectiveObraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
     } else if (dateMode === "period") {
       filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
     return filtered;
-  }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
+  }, [allRecords, effectiveObraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Apply global NPE exclusion filter
   const baseRecords = useMemo(() => {
@@ -1446,16 +1451,18 @@ export default function Dashboard() {
                 </>
               )}
             </div>
-            <div>
-              <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
-              <Select value={obraFilter} onValueChange={setObraFilter}>
-                <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Contratos</SelectItem>
-                  {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {!userObraRestriction && (
+              <div>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
+                <Select value={obraFilter} onValueChange={setObraFilter}>
+                  <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Contratos</SelectItem>
+                    {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {npeDescList.length > 0 && (
               <div>
                 <Label className="text-[10px] md:text-xs text-muted-foreground">Fatores</Label>

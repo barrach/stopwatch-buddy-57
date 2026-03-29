@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import AppLayout from "@/components/AppLayout";
 import { SPECIALTIES, OBSERVATION_CATEGORIES } from "@/data/mockData";
-import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield } from "lucide-react";
+import { Settings2, List, Tag, Users, Pencil, Trash2, KeyRound, Shield, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoMega from "@/assets/logo-mega.png";
 
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface AppUser {
@@ -20,6 +21,14 @@ interface AppUser {
   nome: string;
   created_at: string;
   role: string;
+  status: string;
+  obra_id: string | null;
+  obra_nome: string;
+}
+
+interface Obra {
+  id: string;
+  nome: string;
 }
 
 const roleLabels: Record<string, string> = {
@@ -29,11 +38,18 @@ const roleLabels: Record<string, string> = {
   user: "Usuário",
 };
 
+const statusLabels: Record<string, string> = {
+  pendente: "Pendente",
+  aprovado: "Aprovado",
+  rejeitado: "Rejeitado",
+};
+
 export default function SettingsPage() {
   const { isAdmin: isAdminRole, loading: adminLoading } = useIsAdmin();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [obras, setObras] = useState<Obra[]>([]);
 
   // Dialog states
   const [editUser, setEditUser] = useState<AppUser | null>(null);
@@ -44,6 +60,10 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
 
   const [deleteUser, setDeleteUser] = useState<AppUser | null>(null);
+
+  // Contract binding dialog
+  const [obraUser, setObraUser] = useState<AppUser | null>(null);
+  const [selectedObraId, setSelectedObraId] = useState("");
 
   const callAdmin = async (action: string, body?: Record<string, unknown>) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -87,8 +107,14 @@ export default function SettingsPage() {
     }
   };
 
+  const fetchObras = async () => {
+    const { data } = await supabase.from("obras").select("id, nome").eq("status", "Ativo").order("nome");
+    setObras(data || []);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchObras();
   }, []);
 
   const handleEditSave = async () => {
@@ -132,6 +158,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleObraSave = async () => {
+    if (!obraUser) return;
+    try {
+      await callAdmin("update-obra", { targetUserId: obraUser.id, obraId: selectedObraId || null });
+      toast.success("Contrato vinculado com sucesso");
+      setObraUser(null);
+      fetchUsers();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
   if (!isAdminRole) return <Navigate to="/" replace />;
 
@@ -142,9 +180,7 @@ export default function SettingsPage() {
           <img src={logoMega} alt="ProdControl logo" className="w-10 h-10 object-contain" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">ProdControl</h1>
-            <p className="text-sm text-muted-foreground">
-              Medição de Produtividade
-            </p>
+            <p className="text-sm text-muted-foreground">Medição de Produtividade</p>
           </div>
         </div>
 
@@ -166,6 +202,8 @@ export default function SettingsPage() {
                       <TableHead>Nome</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Perfil</TableHead>
+                      <TableHead>Contrato</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Criado em</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -186,6 +224,27 @@ export default function SettingsPage() {
                             <Shield className="w-3 h-3" />
                             {roleLabels[u.role] || u.role}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {u.obra_nome ? (
+                            <Badge variant="outline" className="text-[10px]">{u.obra_nome}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${
+                              u.status === "aprovado"
+                                ? "border-green-500/30 bg-green-500/10 text-green-600"
+                                : u.status === "rejeitado"
+                                ? "border-destructive/30 bg-destructive/10 text-destructive"
+                                : "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                            }`}
+                          >
+                            {statusLabels[u.status] || u.status}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {new Date(u.created_at).toLocaleDateString("pt-BR")}
@@ -209,6 +268,18 @@ export default function SettingsPage() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
+                              title="Vincular Contrato"
+                              onClick={() => {
+                                setObraUser(u);
+                                setSelectedObraId(u.obra_id || "");
+                              }}
+                            >
+                              <Building2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
                               title="Redefinir senha"
                               onClick={() => {
                                 setResetUser(u);
@@ -217,17 +288,15 @@ export default function SettingsPage() {
                             >
                               <KeyRound className="w-3.5 h-3.5" />
                             </Button>
-                            {true && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                title="Excluir"
-                                onClick={() => setDeleteUser(u)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              title="Excluir"
+                              onClick={() => setDeleteUser(u)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -310,6 +379,32 @@ export default function SettingsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
             <Button onClick={handleEditSave}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contract Binding Dialog */}
+      <Dialog open={!!obraUser} onOpenChange={(o) => !o && setObraUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular Contrato</DialogTitle>
+            <DialogDescription>
+              Selecione o contrato para <strong>{obraUser?.email}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Select value={selectedObraId} onValueChange={setSelectedObraId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger>
+              <SelectContent>
+                {obras.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setObraUser(null)}>Cancelar</Button>
+            <Button onClick={handleObraSave}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

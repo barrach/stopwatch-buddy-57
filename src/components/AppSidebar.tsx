@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download, FileBarChart } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download, FileBarChart, UserCheck } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
@@ -71,6 +71,13 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           <NavLink to="/auditoria" onClick={handleClick} className={`sidebar-item ${location.pathname === "/auditoria" ? "sidebar-item-active" : ""}`}>
             <ShieldAlert className="w-[18px] h-[18px]" />
             <span className="text-sm">Auditoria</span>
+          </NavLink>
+        )}
+
+        {isAdmin && (
+          <NavLink to="/aprovacoes" onClick={handleClick} className={`sidebar-item ${location.pathname === "/aprovacoes" ? "sidebar-item-active" : ""}`}>
+            <UserCheck className="w-[18px] h-[18px]" />
+            <span className="text-sm">Aprovações</span>
           </NavLink>
         )}
 

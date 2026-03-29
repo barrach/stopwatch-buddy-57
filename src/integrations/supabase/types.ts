@@ -357,6 +357,8 @@ export type Database = {
           email: string | null
           id: string
           nome: string | null
+          obra_id: string | null
+          status: string
           user_id: string
         }
         Insert: {
@@ -364,6 +366,8 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+          obra_id?: string | null
+          status?: string
           user_id: string
         }
         Update: {
@@ -371,9 +375,19 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+          obra_id?: string | null
+          status?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       relatorios_salvos: {
         Row: {

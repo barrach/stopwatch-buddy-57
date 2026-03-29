@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,11 @@ import {
 import { Sparkles, Loader2, FileText, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserObra } from "@/hooks/useUserObra";
 
 export default function RelatorioIA() {
   const { toast } = useToast();
+  const { obraFilter: userObraRestriction } = useUserObra();
   const [obraFilter, setObraFilter] = useState("all");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -59,9 +61,12 @@ export default function RelatorioIA() {
     return map;
   }, [parentCats]);
 
+  // Apply contract restriction
+  const effectiveObraFilter = userObraRestriction || obraFilter;
+
   const filteredRecords = useMemo(() => {
     let r = allRecords.filter((rec: any) => rec.data >= startDate && rec.data <= endDate);
-    if (obraFilter !== "all") r = r.filter((rec: any) => rec.obra_id === obraFilter);
+    if (effectiveObraFilter !== "all") r = r.filter((rec: any) => rec.obra_id === effectiveObraFilter);
     return r;
   }, [allRecords, startDate, endDate, obraFilter]);
 
