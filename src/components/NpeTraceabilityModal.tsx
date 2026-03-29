@@ -173,7 +173,7 @@ export default function NpeTraceabilityModal({
             <p className="text-xl font-bold text-foreground">{totalRecords}</p>
           </div>
           <div className="rounded-lg border bg-muted/50 p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">HH Total</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Interferências Operacionais</p>
             <p className="text-xl font-bold text-foreground">{totalHH.toFixed(1)}</p>
           </div>
           {externalCausas.slice(0, 2).map(c => (
@@ -231,7 +231,7 @@ export default function NpeTraceabilityModal({
         </p>
 
         {/* Table */}
-        <ScrollArea className="flex-1 border rounded-lg">
+        <ScrollArea className="flex-1 border rounded-lg" style={{ maxHeight: "450px" }}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -241,15 +241,14 @@ export default function NpeTraceabilityModal({
                 <TableHead className="text-xs">Especialidade</TableHead>
                 <TableHead className="text-xs">Categoria</TableHead>
                 <TableHead className="text-xs">Descrição</TableHead>
-                <TableHead className="text-xs w-16 text-right">HH</TableHead>
+                <TableHead className="text-xs w-20 text-right">Amostras</TableHead>
                 <TableHead className="text-xs">Observação</TableHead>
-                <TableHead className="text-xs w-20">ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nenhum registro encontrado.
                   </TableCell>
                 </TableRow>
@@ -268,7 +267,6 @@ export default function NpeTraceabilityModal({
                     <TableCell className="text-xs truncate max-w-[180px]">{r.descricao}</TableCell>
                     <TableCell className="text-xs text-right font-mono">{r.quantidade.toFixed(2)}</TableCell>
                     <TableCell className="text-xs truncate max-w-[120px] text-muted-foreground">{r.notas || "—"}</TableCell>
-                    <TableCell className="text-[10px] font-mono text-muted-foreground">{r.id.slice(0, 8)}</TableCell>
                   </TableRow>
                 ))
               )}
