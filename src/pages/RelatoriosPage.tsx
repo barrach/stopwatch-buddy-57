@@ -40,6 +40,13 @@ export default function RelatoriosPage() {
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Auto-set obra for restricted users
+  useEffect(() => {
+    if (userObraRestriction && !obraId) {
+      setObraId(userObraRestriction);
+    }
+  }, [userObraRestriction]);
+
   // ── Data fetching ──
   const { data: obras = [] } = useQuery({
     queryKey: ["obras", "ativas"],
