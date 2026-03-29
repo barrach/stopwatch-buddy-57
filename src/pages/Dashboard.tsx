@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain, Presentation, Trophy } from "lucide-react";
+import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain, Presentation, Trophy, Search } from "lucide-react";
 import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
 import { LegendTooltip } from "@/components/LegendTooltip";
+import NpeTraceabilityModal from "@/components/NpeTraceabilityModal";
 
 // ── Color constants (BI-grade palette) ───────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -389,6 +390,7 @@ export default function Dashboard() {
   const [npeExclude, setNpeExclude] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
+  const [npeTraceOpen, setNpeTraceOpen] = useState(false);
   const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
@@ -1859,7 +1861,12 @@ export default function Dashboard() {
                 <CloudRain className="w-4 h-4 text-muted-foreground" />
                 Causas Externas de Parada
               </h3>
-              <ZoomButton onClick={() => setZoomChart("externas")} />
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setNpeTraceOpen(true)} className="h-7 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground">
+                  <Search className="w-3.5 h-3.5" /> Rastrear
+                </Button>
+                <ZoomButton onClick={() => setZoomChart("externas")} />
+              </div>
             </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
@@ -2169,6 +2176,15 @@ export default function Dashboard() {
             </div>
           </div>
         </ChartZoomDialog>
+        <NpeTraceabilityModal
+          open={npeTraceOpen}
+          onOpenChange={setNpeTraceOpen}
+          records={records}
+          externalCausas={externalCausas}
+          isExternalRecord={isExternalRecord}
+          getHH={getHH}
+          getParentCatName={getParentCatName}
+        />
       </div>
     </AppLayout>
   );
