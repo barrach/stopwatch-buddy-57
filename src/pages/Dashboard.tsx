@@ -2176,6 +2176,15 @@ export default function Dashboard() {
             </div>
           </div>
         </ChartZoomDialog>
+        <NpeTraceabilityModal
+          open={npeTraceOpen}
+          onOpenChange={setNpeTraceOpen}
+          records={records}
+          externalCausas={externalCausas}
+          isExternalRecord={isExternalRecord}
+          getHH={getHH}
+          getParentCatName={getParentCatName}
+        />
       </div>
     </AppLayout>
   );
