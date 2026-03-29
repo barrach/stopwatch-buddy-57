@@ -378,6 +378,7 @@ export default function Dashboard() {
   const isMobileView = useIsMobile();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { obraFilter: userObraRestriction, isAdmin: isAdminUser } = useUserObra();
   const [obraFilter, setObraFilter] = useState("all");
   const [aiReport, setAiReport] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
