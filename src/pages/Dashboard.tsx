@@ -1861,7 +1861,12 @@ export default function Dashboard() {
                 <CloudRain className="w-4 h-4 text-muted-foreground" />
                 Causas Externas de Parada
               </h3>
-              <ZoomButton onClick={() => setZoomChart("externas")} />
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setNpeTraceOpen(true)} className="h-7 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground">
+                  <Search className="w-3.5 h-3.5" /> Rastrear
+                </Button>
+                <ZoomButton onClick={() => setZoomChart("externas")} />
+              </div>
             </div>
             <p className="text-[10px] text-muted-foreground mb-3">Eventos fora do controle da equipe</p>
             
