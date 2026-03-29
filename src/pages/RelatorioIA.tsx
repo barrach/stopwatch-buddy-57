@@ -61,9 +61,12 @@ export default function RelatorioIA() {
     return map;
   }, [parentCats]);
 
+  // Apply contract restriction
+  const effectiveObraFilter = userObraRestriction || obraFilter;
+
   const filteredRecords = useMemo(() => {
     let r = allRecords.filter((rec: any) => rec.data >= startDate && rec.data <= endDate);
-    if (obraFilter !== "all") r = r.filter((rec: any) => rec.obra_id === obraFilter);
+    if (effectiveObraFilter !== "all") r = r.filter((rec: any) => rec.obra_id === effectiveObraFilter);
     return r;
   }, [allRecords, startDate, endDate, obraFilter]);
 
