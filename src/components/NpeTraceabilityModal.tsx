@@ -1,19 +1,30 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Search, X } from "lucide-react";
+import { FileDown, X } from "lucide-react";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import jsPDF from "jspdf";
@@ -48,7 +59,13 @@ interface Props {
 }
 
 export default function NpeTraceabilityModal({
-  open, onOpenChange, records, externalCausas, isExternalRecord, getHH, getParentCatName,
+  open,
+  onOpenChange,
+  records,
+  externalCausas,
+  isExternalRecord,
+  getHH,
+  getParentCatName,
 }: Props) {
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
@@ -56,42 +73,42 @@ export default function NpeTraceabilityModal({
   const [filterDescricao, setFilterDescricao] = useState("all");
 
   const AG_PT = "Aguardando Liberação de PT";
+  const INTERFERENCIAS_OPERACIONAIS = "Interferências Operacionais";
 
-  // Get exactly the same records that compose the chart
   const npeRecords = useMemo(() => {
-    return records.filter((r: any) => {
-      const desc = normalizeDescriptionName(r.descricao || "");
-      const isNPE = isExternalRecord(r);
-      const isAgPT = desc === AG_PT;
-      return isNPE || isAgPT;
-    }).map((r: any) => ({
-      id: r.id,
-      data: r.data,
-      horario: r.horario,
-      descricao: normalizeDescriptionName(r.descricao || ""),
-      quantidade: getHH(r),
-      notas: r.notas,
-      obra_nome: (r.obras as any)?.nome || "—",
-      especialidade_nome: (r.especialidades as any)?.nome || "—",
-      categoria_pai_nome: getParentCatName(r),
-    }));
+    return records
+      .filter((r: any) => {
+        const desc = normalizeDescriptionName(r.descricao || "");
+        const isNPE = isExternalRecord(r);
+        const isAgPT = desc === AG_PT;
+        return isNPE || isAgPT;
+      })
+      .map((r: any) => ({
+        id: r.id,
+        data: r.data,
+        horario: r.horario,
+        descricao: normalizeDescriptionName(r.descricao || ""),
+        quantidade: getHH(r),
+        notas: r.notas,
+        obra_nome: (r.obras as any)?.nome || "—",
+        especialidade_nome: (r.especialidades as any)?.nome || "—",
+        categoria_pai_nome: getParentCatName(r),
+      }));
   }, [records, isExternalRecord, getHH, getParentCatName]);
 
-  // Available categories and descriptions for filters
   const availableCategorias = useMemo(() => {
-    const set = new Set(npeRecords.map(r => r.categoria_pai_nome));
+    const set = new Set(npeRecords.map((r) => r.categoria_pai_nome));
     return Array.from(set).sort();
   }, [npeRecords]);
 
   const availableDescricoes = useMemo(() => {
-    const set = new Set(npeRecords.map(r => r.descricao));
+    const set = new Set(npeRecords.map((r) => r.descricao));
     return Array.from(set).sort();
   }, [npeRecords]);
 
-  // Apply local filters (don't affect chart)
   const filtered = useMemo(() => {
     return npeRecords
-      .filter(r => {
+      .filter((r) => {
         if (filterDateStart && r.data < filterDateStart) return false;
         if (filterDateEnd && r.data > filterDateEnd) return false;
         if (filterCategoria !== "all" && r.categoria_pai_nome !== filterCategoria) return false;
@@ -105,8 +122,18 @@ export default function NpeTraceabilityModal({
       });
   }, [npeRecords, filterDateStart, filterDateEnd, filterCategoria, filterDescricao]);
 
-  const totalRecords = npeRecords.length;
+  const totalRecords = filtered.length;
   const totalHH = npeRecords.reduce((s, r) => s + r.quantidade, 0);
+
+  const interferenciasPercent = useMemo(() => {
+    if (!filtered.length) return 0;
+
+    const interferenciasCount = filtered.filter(
+      (record) => record.descricao === INTERFERENCIAS_OPERACIONAIS,
+    ).length;
+
+    return (interferenciasCount / filtered.length) * 100;
+  }, [filtered]);
 
   const clearFilters = () => {
     setFilterDateStart("");
@@ -115,7 +142,11 @@ export default function NpeTraceabilityModal({
     setFilterDescricao("all");
   };
 
-  const hasFilters = filterDateStart || filterDateEnd || filterCategoria !== "all" || filterDescricao !== "all";
+  const hasFilters =
+    filterDateStart ||
+    filterDateEnd ||
+    filterCategoria !== "all" ||
+    filterDescricao !== "all";
 
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -130,7 +161,7 @@ export default function NpeTraceabilityModal({
     autoTable(doc, {
       startY: 32,
       head: [["Data", "Hora", "Contrato", "Especialidade", "Categoria", "Descrição", "HH", "Observação", "ID"]],
-      body: filtered.map(r => [
+      body: filtered.map((r) => [
         r.data ? format(new Date(`${r.data}T12:00:00`), "dd/MM/yyyy") : "—",
         r.horario || "—",
         r.obra_nome,
@@ -151,22 +182,24 @@ export default function NpeTraceabilityModal({
 
   const getCategoryBadgeColor = (cat: string) => {
     switch (cat) {
-      case "Suplementar": return "bg-green-600/20 text-green-400 border-green-600/30";
-      case "Não Produtivo Externo": return "bg-orange-600/20 text-orange-400 border-orange-600/30";
-      default: return "bg-muted text-muted-foreground";
+      case "Suplementar":
+        return "bg-green-600/20 text-green-400 border-green-600/30";
+      case "Não Produtivo Externo":
+        return "bg-orange-600/20 text-orange-400 border-orange-600/30";
+      default:
+        return "bg-muted text-muted-foreground";
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
             Rastreabilidade — Causas Externas de Parada
           </DialogTitle>
         </DialogHeader>
 
-        {/* Summary stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="rounded-lg border bg-muted/50 p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Registros</p>
@@ -174,9 +207,9 @@ export default function NpeTraceabilityModal({
           </div>
           <div className="rounded-lg border bg-muted/50 p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Interferências Operacionais</p>
-            <p className="text-xl font-bold text-foreground">{totalHH.toFixed(1)}</p>
+            <p className="text-xl font-bold text-foreground">{interferenciasPercent.toFixed(1)}%</p>
           </div>
-          {externalCausas.slice(0, 2).map(c => (
+          {externalCausas.slice(0, 2).map((c) => (
             <div key={c.name} className="rounded-lg border bg-muted/50 p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{c.name}</p>
               <p className="text-xl font-bold text-foreground">{c.percent}%</p>
@@ -184,33 +217,54 @@ export default function NpeTraceabilityModal({
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-end gap-3 mb-3">
           <div>
             <Label className="text-[10px] text-muted-foreground">Data Inicial</Label>
-            <Input type="date" value={filterDateStart} onChange={e => setFilterDateStart(e.target.value)} className="h-8 text-xs w-36" />
+            <Input
+              type="date"
+              value={filterDateStart}
+              onChange={(e) => setFilterDateStart(e.target.value)}
+              className="h-8 text-xs w-36"
+            />
           </div>
           <div>
             <Label className="text-[10px] text-muted-foreground">Data Final</Label>
-            <Input type="date" value={filterDateEnd} onChange={e => setFilterDateEnd(e.target.value)} className="h-8 text-xs w-36" />
+            <Input
+              type="date"
+              value={filterDateEnd}
+              onChange={(e) => setFilterDateEnd(e.target.value)}
+              className="h-8 text-xs w-36"
+            />
           </div>
           <div>
             <Label className="text-[10px] text-muted-foreground">Categoria</Label>
             <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="h-8 text-xs w-44"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs w-44">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {availableCategorias.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {availableCategorias.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label className="text-[10px] text-muted-foreground">Descrição</Label>
             <Select value={filterDescricao} onValueChange={setFilterDescricao}>
-              <SelectTrigger className="h-8 text-xs w-52"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs w-52">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {availableDescricoes.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                {availableDescricoes.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -227,22 +281,21 @@ export default function NpeTraceabilityModal({
         </div>
 
         <p className="text-xs text-muted-foreground mb-2">
-          Exibindo <strong>{filtered.length}</strong> de {totalRecords} registros
+          Exibindo <strong>{filtered.length}</strong> de {npeRecords.length} registros
         </p>
 
-        {/* Table */}
-        <ScrollArea className="flex-1 border rounded-lg" style={{ maxHeight: "450px" }}>
+        <div className="max-h-[450px] overflow-y-auto rounded-lg border flex-1 min-h-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
-                <TableHead className="text-xs w-24">Data</TableHead>
-                <TableHead className="text-xs w-16">Hora</TableHead>
-                <TableHead className="text-xs">Contrato</TableHead>
-                <TableHead className="text-xs">Especialidade</TableHead>
-                <TableHead className="text-xs">Categoria</TableHead>
-                <TableHead className="text-xs">Descrição</TableHead>
-                <TableHead className="text-xs w-20 text-right">Amostras</TableHead>
-                <TableHead className="text-xs">Observação</TableHead>
+                <TableHead className="text-xs w-24 bg-background">Data</TableHead>
+                <TableHead className="text-xs w-16 bg-background">Hora</TableHead>
+                <TableHead className="text-xs bg-background">Contrato</TableHead>
+                <TableHead className="text-xs bg-background">Especialidade</TableHead>
+                <TableHead className="text-xs bg-background">Categoria</TableHead>
+                <TableHead className="text-xs bg-background">Descrição</TableHead>
+                <TableHead className="text-xs w-20 text-right bg-background">Amostras</TableHead>
+                <TableHead className="text-xs bg-background">Observação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,9 +306,11 @@ export default function NpeTraceabilityModal({
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map(r => (
+                filtered.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="text-xs">{r.data ? format(new Date(`${r.data}T12:00:00`), "dd/MM/yyyy") : "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {r.data ? format(new Date(`${r.data}T12:00:00`), "dd/MM/yyyy") : "—"}
+                    </TableCell>
                     <TableCell className="text-xs">{r.horario || "—"}</TableCell>
                     <TableCell className="text-xs truncate max-w-[120px]">{r.obra_nome}</TableCell>
                     <TableCell className="text-xs truncate max-w-[100px]">{r.especialidade_nome}</TableCell>
@@ -265,14 +320,14 @@ export default function NpeTraceabilityModal({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs truncate max-w-[180px]">{r.descricao}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{r.quantidade.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">1</TableCell>
                     <TableCell className="text-xs truncate max-w-[120px] text-muted-foreground">{r.notas || "—"}</TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
