@@ -16,6 +16,7 @@ import CadastroCategorias from "./pages/CadastroCategorias";
 import CadastroObras from "./pages/CadastroObras";
 
 import AuditoriaPage from "./pages/AuditoriaPage";
+import AprovacoesPage from "./pages/AprovacoesPage";
 import RelatorioIA from "./pages/RelatorioIA";
 import RelatoriosPage from "./pages/RelatoriosPage";
 import RelatoriosSalvosPage from "./pages/RelatoriosSalvosPage";
@@ -26,7 +27,7 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   useOfflineSync();
-  const { user, loading } = useAuth();
+  const { user, loading, isApproved, userStatus } = useAuth();
 
   if (loading) {
     return (
@@ -36,7 +37,8 @@ function AppRoutes() {
     );
   }
 
-  if (!user) {
+  // Not logged in or not approved → show login page (which handles pending/rejected states)
+  if (!user || !isApproved) {
     return <LoginPage />;
   }
 
@@ -53,6 +55,7 @@ function AppRoutes() {
       <Route path="/cadastro/obras" element={<CadastroObras />} />
       
       <Route path="/auditoria" element={<AuditoriaPage />} />
+      <Route path="/aprovacoes" element={<AprovacoesPage />} />
       <Route path="/relatorios" element={<RelatoriosPage />} />
       <Route path="/relatorios-salvos" element={<RelatoriosSalvosPage />} />
       <Route path="/relatorio-ia" element={<RelatorioIA />} />
