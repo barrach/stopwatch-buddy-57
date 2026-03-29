@@ -390,6 +390,7 @@ export default function Dashboard() {
   const [npeExclude, setNpeExclude] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isGeneratingPPTX, setIsGeneratingPPTX] = useState(false);
+  const [npeTraceOpen, setNpeTraceOpen] = useState(false);
   const canExportPPTX = user?.email === "michel.zabalia@megasteam.com.br";
 
   const applyQuickFilter = (preset: "today" | "week" | "month") => {
