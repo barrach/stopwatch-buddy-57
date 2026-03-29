@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useUserObra } from "@/hooks/useUserObra";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
@@ -42,6 +43,7 @@ const categoryBadgeVariant: Record<string, string> = {
 
 export default function Records() {
   const { isAdmin } = useIsAdmin();
+  const { obraFilter: userObraRestriction } = useUserObra();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,7 +162,11 @@ export default function Records() {
     },
   });
 
-  const records = rawRecords;
+  // Apply contract-based restriction for non-admin users
+  const records = useMemo(() => {
+    if (!userObraRestriction) return rawRecords;
+    return rawRecords.filter((r: any) => r.obra_id === userObraRestriction);
+  }, [rawRecords, userObraRestriction]);
 
   const { mutate: deleteRecord } = useMutation({
     mutationFn: async (id: string) => {
