@@ -211,8 +211,6 @@ export default function NpeTraceabilityModal({
               <p className="text-xl font-bold text-foreground">{c.percent.toFixed(1)}%</p>
             </div>
           ))}
-            </div>
-          ))}
         </div>
 
         <div className="flex flex-wrap items-end gap-3 mb-3">
