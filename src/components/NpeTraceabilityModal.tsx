@@ -205,14 +205,10 @@ export default function NpeTraceabilityModal({
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Registros</p>
             <p className="text-xl font-bold text-foreground">{totalRecords}</p>
           </div>
-          <div className="rounded-lg border bg-muted/50 p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Interferências Operacionais</p>
-            <p className="text-xl font-bold text-foreground">{interferenciasPercent.toFixed(1)}%</p>
-          </div>
-          {externalCausas.slice(0, 2).map((c) => (
+          {externalCausas.map((c) => (
             <div key={c.name} className="rounded-lg border bg-muted/50 p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{c.name}</p>
-              <p className="text-xl font-bold text-foreground">{c.percent}%</p>
+              <p className="text-xl font-bold text-foreground">{c.percent.toFixed(1)}%</p>
             </div>
           ))}
         </div>
@@ -294,14 +290,12 @@ export default function NpeTraceabilityModal({
                 <TableHead className="text-xs bg-background">Especialidade</TableHead>
                 <TableHead className="text-xs bg-background">Categoria</TableHead>
                 <TableHead className="text-xs bg-background">Descrição</TableHead>
-                <TableHead className="text-xs w-20 text-right bg-background">Amostras</TableHead>
-                <TableHead className="text-xs bg-background">Observação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Nenhum registro encontrado.
                   </TableCell>
                 </TableRow>
@@ -320,8 +314,6 @@ export default function NpeTraceabilityModal({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs truncate max-w-[180px]">{r.descricao}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">1</TableCell>
-                    <TableCell className="text-xs truncate max-w-[120px] text-muted-foreground">{r.notas || "—"}</TableCell>
                   </TableRow>
                 ))
               )}
