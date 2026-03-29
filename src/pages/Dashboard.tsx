@@ -1451,16 +1451,18 @@ export default function Dashboard() {
                 </>
               )}
             </div>
-            <div>
-              <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
-              <Select value={obraFilter} onValueChange={setObraFilter}>
-                <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Contratos</SelectItem>
-                  {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {!userObraRestriction && (
+              <div>
+                <Label className="text-[10px] md:text-xs text-muted-foreground">Contrato</Label>
+                <Select value={obraFilter} onValueChange={setObraFilter}>
+                  <SelectTrigger className="w-40 md:w-48 mt-1 h-8 md:h-10 text-xs"><SelectValue placeholder="Filtrar por Contrato" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Contratos</SelectItem>
+                    {obras.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {npeDescList.length > 0 && (
               <div>
                 <Label className="text-[10px] md:text-xs text-muted-foreground">Fatores</Label>
