@@ -528,15 +528,18 @@ export default function Dashboard() {
 
   // ── Filtering ──────────────────────────────────────────────────
   // Os valores dinâmicos já chegam recalculados do banco; a UI deve consumir o valor persistido.
+  // Apply contract-based restriction: non-admin users only see their contract
+  const effectiveObraFilter = userObraRestriction ? userObraRestriction : obraFilter;
+
   const preNpeRecords = useMemo(() => {
-    let filtered = obraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === obraFilter);
+    let filtered = effectiveObraFilter === "all" ? allRecords : allRecords.filter((r: any) => r.obra_id === effectiveObraFilter);
     if (dateMode === "day") {
       filtered = filtered.filter((r: any) => r.data === selectedDate);
     } else if (dateMode === "period") {
       filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
     return filtered;
-  }, [allRecords, obraFilter, dateMode, selectedDate, startDate, endDate]);
+  }, [allRecords, effectiveObraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Apply global NPE exclusion filter
   const baseRecords = useMemo(() => {
