@@ -161,7 +161,8 @@ export default function SettingsPage() {
   const handleObraSave = async () => {
     if (!obraUser) return;
     try {
-      await callAdmin("update-obra", { targetUserId: obraUser.id, obraId: selectedObraId || null });
+      const obraId = selectedObraId === "ALL" ? null : (selectedObraId || null);
+      await callAdmin("update-obra", { targetUserId: obraUser.id, obraId });
       toast.success("Contrato vinculado com sucesso");
       setObraUser(null);
       fetchUsers();
@@ -228,6 +229,8 @@ export default function SettingsPage() {
                         <TableCell className="text-xs">
                           {u.obra_nome ? (
                             <Badge variant="outline" className="text-[10px]">{u.obra_nome}</Badge>
+                          ) : u.role === "admin" ? (
+                            <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/10 text-primary">Todos os Contratos</Badge>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
@@ -271,7 +274,7 @@ export default function SettingsPage() {
                               title="Vincular Contrato"
                               onClick={() => {
                                 setObraUser(u);
-                                setSelectedObraId(u.obra_id || "");
+                                setSelectedObraId(u.obra_id || "ALL");
                               }}
                             >
                               <Building2 className="w-3.5 h-3.5" />
@@ -396,6 +399,7 @@ export default function SettingsPage() {
             <Select value={selectedObraId} onValueChange={setSelectedObraId}>
               <SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="ALL">Todos os Contratos</SelectItem>
                 {obras.map((o) => (
                   <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
                 ))}
