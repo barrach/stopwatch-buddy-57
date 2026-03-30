@@ -164,19 +164,33 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
     curY += 14;
   };
 
+  const getImageHeight = (id: string, maxH: number = 120): number => {
+    const el = document.getElementById(id);
+    if (el) {
+      const ratio = el.scrollHeight / el.scrollWidth;
+      return Math.min(CONTENT_W * ratio, maxH);
+    }
+    return maxH;
+  };
+
   const addCapturedImage = (id: string, maxH: number = 120) => {
     const imgData = captures[id];
     if (!imgData) return;
-    const imgW = CONTENT_W;
-    const el = document.getElementById(id);
-    let imgH = maxH;
-    if (el) {
-      const ratio = el.scrollHeight / el.scrollWidth;
-      imgH = Math.min(imgW * ratio, maxH);
-    }
-    ensureSpace(imgH + 4);
-    doc.addImage(imgData, "PNG", MARGIN, curY, imgW, imgH);
-    curY += imgH + 6;
+    const imgH = getImageHeight(id, maxH);
+    doc.addImage(imgData, "PNG", MARGIN, curY, CONTENT_W, imgH);
+    curY += imgH + 4;
+  };
+
+  // Render a rigid block: header + image, never split across pages
+  const HEADER_H = 14; // height of sectionHeader
+  const addChartBlock = (id: string, title: string, maxH: number) => {
+    if (!captures[id]) return false;
+    const imgH = getImageHeight(id, maxH);
+    const totalBlockH = HEADER_H + imgH + 4; // header + image + gap
+    ensureSpace(totalBlockH);
+    sectionHeader(title);
+    addCapturedImage(id, maxH);
+    return true;
   };
 
   const renderDeltaRow = (name: string, valA: number, valB: number, cols: number[]) => {
