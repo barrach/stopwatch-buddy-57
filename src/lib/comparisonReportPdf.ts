@@ -291,22 +291,39 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   }
   curY += 4;
 
-  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS ═══
-  const chartSections = [
-    { id: "comp-byObra", title: "Visão Geral por Contrato" },
-    { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
-    { id: "comp-byHorario", title: "Produtividade por Horário" },
-    { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
-    { id: "comp-byMes", title: "Produtividade por Mês" },
-    { id: "comp-pareto", title: "Top Causas (Pareto)" },
-    { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
+  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS (2 por página) ═══
+  const chartPairs: Array<{ id: string; title: string }[]> = [
+    [
+      { id: "comp-byObra", title: "Visão Geral por Contrato" },
+      { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
+    ],
+    [
+      { id: "comp-byHorario", title: "Produtividade por Horário" },
+      { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
+    ],
+    [
+      { id: "comp-byMes", title: "Produtividade por Mês" },
+      { id: "comp-pareto", title: "Top Causas (Pareto)" },
+    ],
+    [
+      { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
+    ],
   ];
 
-  for (const { id, title } of chartSections) {
-    if (!captures[id]) continue;
+  const HALF_PAGE_H = Math.floor((MAX_Y - MARGIN - 6) / 2) - 10; // ~120mm per chart block
+
+  for (const pair of chartPairs) {
+    // Filter to only charts that were captured
+    const validCharts = pair.filter(({ id }) => captures[id]);
+    if (validCharts.length === 0) continue;
+
     newPage();
-    sectionHeader(title);
-    addCapturedImage(id, MAX_Y - curY - 10);
+
+    for (const { id, title } of validCharts) {
+      sectionHeader(title);
+      addCapturedImage(id, HALF_PAGE_H);
+      curY += 2; // small gap between blocks
+    }
   }
 
   // ═══ FOOTER ═══
