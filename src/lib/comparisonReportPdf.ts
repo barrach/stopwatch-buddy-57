@@ -164,19 +164,33 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
     curY += 14;
   };
 
+  const getImageHeight = (id: string, maxH: number = 120): number => {
+    const el = document.getElementById(id);
+    if (el) {
+      const ratio = el.scrollHeight / el.scrollWidth;
+      return Math.min(CONTENT_W * ratio, maxH);
+    }
+    return maxH;
+  };
+
   const addCapturedImage = (id: string, maxH: number = 120) => {
     const imgData = captures[id];
     if (!imgData) return;
-    const imgW = CONTENT_W;
-    const el = document.getElementById(id);
-    let imgH = maxH;
-    if (el) {
-      const ratio = el.scrollHeight / el.scrollWidth;
-      imgH = Math.min(imgW * ratio, maxH);
-    }
-    ensureSpace(imgH + 4);
-    doc.addImage(imgData, "PNG", MARGIN, curY, imgW, imgH);
-    curY += imgH + 6;
+    const imgH = getImageHeight(id, maxH);
+    doc.addImage(imgData, "PNG", MARGIN, curY, CONTENT_W, imgH);
+    curY += imgH + 4;
+  };
+
+  // Render a rigid block: header + image, never split across pages
+  const HEADER_H = 14; // height of sectionHeader
+  const addChartBlock = (id: string, title: string, maxH: number) => {
+    if (!captures[id]) return false;
+    const imgH = getImageHeight(id, maxH);
+    const totalBlockH = HEADER_H + imgH + 4; // header + image + gap
+    ensureSpace(totalBlockH);
+    sectionHeader(title);
+    addCapturedImage(id, maxH);
+    return true;
   };
 
   const renderDeltaRow = (name: string, valA: number, valB: number, cols: number[]) => {
@@ -291,39 +305,24 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   }
   curY += 4;
 
-  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS (2 por página) ═══
-  const chartPairs: Array<{ id: string; title: string }[]> = [
-    [
-      { id: "comp-byObra", title: "Visão Geral por Contrato" },
-      { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
-    ],
-    [
-      { id: "comp-byHorario", title: "Produtividade por Horário" },
-      { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
-    ],
-    [
-      { id: "comp-byMes", title: "Produtividade por Mês" },
-      { id: "comp-pareto", title: "Top Causas (Pareto)" },
-    ],
-    [
-      { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
-    ],
+  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS (2 por página, blocos rígidos) ═══
+  const chartSequence: Array<{ id: string; title: string }> = [
+    { id: "comp-byObra", title: "Visão Geral por Contrato" },
+    { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
+    { id: "comp-byHorario", title: "Produtividade por Horário" },
+    { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
+    { id: "comp-byMes", title: "Produtividade por Mês" },
+    { id: "comp-pareto", title: "Top Causas (Pareto)" },
+    { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
   ];
 
-  const HALF_PAGE_H = Math.floor((MAX_Y - MARGIN - 6) / 2) - 10; // ~120mm per chart block
+  const HALF_PAGE_H = Math.floor((MAX_Y - MARGIN - 6) / 2) - 14;
 
-  for (const pair of chartPairs) {
-    // Filter to only charts that were captured
-    const validCharts = pair.filter(({ id }) => captures[id]);
-    if (validCharts.length === 0) continue;
+  // Start charts on a new page
+  newPage();
 
-    newPage();
-
-    for (const { id, title } of validCharts) {
-      sectionHeader(title);
-      addCapturedImage(id, HALF_PAGE_H);
-      curY += 2; // small gap between blocks
-    }
+  for (const { id, title } of chartSequence) {
+    addChartBlock(id, title, HALF_PAGE_H);
   }
 
   // ═══ FOOTER ═══
