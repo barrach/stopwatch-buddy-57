@@ -39,5 +39,12 @@ export function useInstallPrompt() {
     return outcome === "accepted";
   };
 
-  return { canInstall: !!deferredPrompt && !isInstalled, isInstalled, install };
+  // Show button if: has deferred prompt OR (is in browser, not installed, not in iframe)
+  const isInBrowser = !isInstalled && typeof window !== 'undefined' && !window.matchMedia("(display-mode: standalone)").matches;
+  const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+  const canInstall = (!!deferredPrompt && !isInstalled) || (isInBrowser && !isInIframe);
+
+  console.log("useInstallPrompt:", { canInstall, isInstalled, hasDeferredPrompt: !!deferredPrompt, isInBrowser, isInIframe });
+
+  return { canInstall, isInstalled, install };
 }
