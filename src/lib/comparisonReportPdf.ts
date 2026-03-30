@@ -305,39 +305,24 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
   }
   curY += 4;
 
-  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS (2 por página) ═══
-  const chartPairs: Array<{ id: string; title: string }[]> = [
-    [
-      { id: "comp-byObra", title: "Visão Geral por Contrato" },
-      { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
-    ],
-    [
-      { id: "comp-byHorario", title: "Produtividade por Horário" },
-      { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
-    ],
-    [
-      { id: "comp-byMes", title: "Produtividade por Mês" },
-      { id: "comp-pareto", title: "Top Causas (Pareto)" },
-    ],
-    [
-      { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
-    ],
+  // ═══ BLOCO 5 — GRÁFICOS CAPTURADOS (2 por página, blocos rígidos) ═══
+  const chartSequence: Array<{ id: string; title: string }> = [
+    { id: "comp-byObra", title: "Visão Geral por Contrato" },
+    { id: "comp-bySpecialty", title: "Produtividade por Especialidade" },
+    { id: "comp-byHorario", title: "Produtividade por Horário" },
+    { id: "comp-byDiaSemana", title: "Produtividade por Dia da Semana" },
+    { id: "comp-byMes", title: "Produtividade por Mês" },
+    { id: "comp-pareto", title: "Top Causas (Pareto)" },
+    { id: "comp-external", title: "Causas Externas de Parada (NPE)" },
   ];
 
-  const HALF_PAGE_H = Math.floor((MAX_Y - MARGIN - 6) / 2) - 10; // ~120mm per chart block
+  const HALF_PAGE_H = Math.floor((MAX_Y - MARGIN - 6) / 2) - 14;
 
-  for (const pair of chartPairs) {
-    // Filter to only charts that were captured
-    const validCharts = pair.filter(({ id }) => captures[id]);
-    if (validCharts.length === 0) continue;
+  // Start charts on a new page
+  newPage();
 
-    newPage();
-
-    for (const { id, title } of validCharts) {
-      sectionHeader(title);
-      addCapturedImage(id, HALF_PAGE_H);
-      curY += 2; // small gap between blocks
-    }
+  for (const { id, title } of chartSequence) {
+    addChartBlock(id, title, HALF_PAGE_H);
   }
 
   // ═══ FOOTER ═══
