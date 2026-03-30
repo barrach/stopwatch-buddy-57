@@ -95,9 +95,13 @@ async function captureElementById(id: string): Promise<string | null> {
       (te as HTMLElement).style.whiteSpace = 'normal';
     });
 
+    // Boost saturation/contrast for PDF output
+    const origFilter = (el as HTMLElement).style.filter;
+    (el as HTMLElement).style.filter = 'saturate(1.35) contrast(1.1)';
+
     const canvas = await html2canvas(el, {
       backgroundColor: "#FFFFFF",
-      scale: 2,
+      scale: 4,
       logging: false,
       useCORS: true,
       allowTaint: true,
@@ -105,14 +109,15 @@ async function captureElementById(id: string): Promise<string | null> {
       scrollY: -window.scrollY,
     });
 
-    // Restore truncation
+    // Restore styles
+    (el as HTMLElement).style.filter = origFilter;
     truncatedEls.forEach((te) => {
       (te as HTMLElement).style.overflow = '';
       (te as HTMLElement).style.textOverflow = '';
       (te as HTMLElement).style.whiteSpace = '';
     });
 
-    return canvas.toDataURL("image/png", 0.92);
+    return canvas.toDataURL("image/png", 1.0);
   } catch (e) {
     console.warn(`Failed to capture #${id}:`, e);
     return null;
