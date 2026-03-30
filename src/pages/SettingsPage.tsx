@@ -229,7 +229,7 @@ export default function SettingsPage() {
                         <TableCell className="text-xs">
                           {u.obra_nome ? (
                             <Badge variant="outline" className="text-[10px]">{u.obra_nome}</Badge>
-                          ) : u.role === "admin" ? (
+                          ) : !u.obra_id ? (
                             <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/10 text-primary">Todos os Contratos</Badge>
                           ) : (
                             <span className="text-muted-foreground">—</span>
