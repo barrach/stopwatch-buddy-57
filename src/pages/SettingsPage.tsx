@@ -274,7 +274,7 @@ export default function SettingsPage() {
                               title="Vincular Contrato"
                               onClick={() => {
                                 setObraUser(u);
-                                setSelectedObraId(u.obra_id || "");
+                                setSelectedObraId(u.obra_id || "ALL");
                               }}
                             >
                               <Building2 className="w-3.5 h-3.5" />
