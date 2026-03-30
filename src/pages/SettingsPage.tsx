@@ -161,7 +161,8 @@ export default function SettingsPage() {
   const handleObraSave = async () => {
     if (!obraUser) return;
     try {
-      await callAdmin("update-obra", { targetUserId: obraUser.id, obraId: selectedObraId || null });
+      const obraId = selectedObraId === "ALL" ? null : (selectedObraId || null);
+      await callAdmin("update-obra", { targetUserId: obraUser.id, obraId });
       toast.success("Contrato vinculado com sucesso");
       setObraUser(null);
       fetchUsers();
