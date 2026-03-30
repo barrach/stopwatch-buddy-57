@@ -396,6 +396,7 @@ export default function SettingsPage() {
             <Select value={selectedObraId} onValueChange={setSelectedObraId}>
               <SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="ALL">Todos os Contratos</SelectItem>
                 {obras.map((o) => (
                   <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
                 ))}
