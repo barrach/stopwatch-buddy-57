@@ -832,15 +832,15 @@ export default function Dashboard() {
       const total = recs.reduce((s, r) => s + getHH(r), 0);
       const row: any = { time: label, total };
       if (useHourlyAvg) {
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
-        for (const desc of CANONICAL_ORDER_FULL) {
+        const pcts = computeHourlyAdjustedPercentages(recs, allDescriptions);
+        for (const desc of allDescriptions) {
           row[desc] = pcts[desc] || 0;
           let rawQty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getHH(r); });
           row[`raw_${desc}`] = rawQty;
         }
       } else {
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           let qty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getHH(r); });
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
@@ -849,7 +849,7 @@ export default function Dashboard() {
       }
       return row;
     });
-  }, [records, timeViewMode]);
+  }, [records, timeViewMode, allDescriptions]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
