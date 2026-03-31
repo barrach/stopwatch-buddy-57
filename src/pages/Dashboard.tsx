@@ -747,9 +747,9 @@ export default function Dashboard() {
     return Object.entries(grouped)
       .map(([name, recs]) => {
         const total = recs.reduce((s, r) => s + getHH(r), 0);
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
+        const pcts = computeHourlyAdjustedPercentages(recs, allDescriptions);
         const row: any = { name, total };
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           row[desc] = pcts[desc] || 0;
           // raw counts for tooltip
           let rawQty = 0;
@@ -759,7 +759,7 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, allDescriptions]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
