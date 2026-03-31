@@ -537,11 +537,11 @@ export default function RelatoriosPage() {
               </div>
             </div>
 
-            <StackedBarChartSection data={byObra} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
-            <StackedBarChartSection data={bySpecialty} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
-            <StackedBarChartSection data={byHorario} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
-            <StackedBarChartSection data={byDiaSemana} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
-            <StackedBarChartSection data={byMes} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
+            <StackedBarChartSection data={byObra} dataKeyX="name" descriptions={dynamicDescriptions} title="Visão Geral por Contrato" xAngle={-15} />
+            <StackedBarChartSection data={bySpecialty} dataKeyX="name" descriptions={dynamicDescriptions} title="Produtividade por Especialidade" xAngle={-25} />
+            <StackedBarChartSection data={byHorario} dataKeyX="time" descriptions={dynamicDescriptions} title="Produtividade por Horário" />
+            <StackedBarChartSection data={byDiaSemana} dataKeyX="time" descriptions={dynamicDescriptions} title="Produtividade por Dia da Semana" />
+            <StackedBarChartSection data={byMes} dataKeyX="time" descriptions={dynamicDescriptions} title="Produtividade por Mês" />
             <ParetoChartSection data={paretoData} title="Top Causas (Pareto)" mode="categoria" />
             <ExternalPieSection data={externalCausas} title="Causas Externas de Parada" />
           </div>
