@@ -720,10 +720,21 @@ export default function Dashboard() {
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
   // Build ordered description lists strictly from canonical order
   // Only include descriptions that exist in the data, but always in canonical order
-  const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
+  // Build dynamic description list: canonical order + any extra descriptions found in data
+  const allDescriptions = useMemo(() => {
+    const extraDescs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (!CANONICAL_ORDER_FULL.includes(desc) && desc !== "Sem descrição") {
+        extraDescs.add(desc);
+      }
+    });
+    // Canonical first, then extras sorted alphabetically
+    return [...CANONICAL_ORDER_FULL, ...Array.from(extraDescs).sort()];
+  }, [records]);
 
-  // All charts now use the full description list including Causas Naturais
-  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
+  // All charts now use the dynamic description list
+  const nonNpeDescriptions = useMemo(() => allDescriptions, [allDescriptions]);
 
   const byObra = useMemo(() => {
     // Group records by contract
@@ -736,9 +747,9 @@ export default function Dashboard() {
     return Object.entries(grouped)
       .map(([name, recs]) => {
         const total = recs.reduce((s, r) => s + getHH(r), 0);
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
+        const pcts = computeHourlyAdjustedPercentages(recs, allDescriptions);
         const row: any = { name, total };
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           row[desc] = pcts[desc] || 0;
           // raw counts for tooltip
           let rawQty = 0;
@@ -748,7 +759,7 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, allDescriptions]);
 
   // NPE descriptions for comparison button
   // Compute available NPE options from pre-filter data so they remain visible
@@ -767,24 +778,23 @@ export default function Dashboard() {
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
-        result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+        result[sName] = Object.fromEntries(allDescriptions.map((desc) => [desc, 0]));
       }
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = getHH(r);
-      if (desc in result[sName]) {
-        result[sName][desc] = (result[sName][desc] || 0) + qty;
+      if (!(desc in result[sName])) {
+        result[sName][desc] = 0;
       }
+      result[sName][desc] = (result[sName][desc] || 0) + qty;
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
@@ -792,7 +802,7 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
+  }, [records, allDescriptions, isExternalRecord]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
@@ -822,15 +832,15 @@ export default function Dashboard() {
       const total = recs.reduce((s, r) => s + getHH(r), 0);
       const row: any = { time: label, total };
       if (useHourlyAvg) {
-        const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
-        for (const desc of CANONICAL_ORDER_FULL) {
+        const pcts = computeHourlyAdjustedPercentages(recs, allDescriptions);
+        for (const desc of allDescriptions) {
           row[desc] = pcts[desc] || 0;
           let rawQty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) rawQty += getHH(r); });
           row[`raw_${desc}`] = rawQty;
         }
       } else {
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           let qty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getHH(r); });
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
@@ -839,7 +849,7 @@ export default function Dashboard() {
       }
       return row;
     });
-  }, [records, timeViewMode]);
+  }, [records, timeViewMode, allDescriptions]);
 
 
   // ── Click handlers ─────────────────────────────────────────────
@@ -966,13 +976,14 @@ export default function Dashboard() {
             key = MONTH_NAMES[d.getMonth()];
           }
           if (!result[key]) {
-            result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+            result[key] = Object.fromEntries(allDescriptions.map((desc) => [desc, 0]));
           }
           const desc = canonicalDescription(r.descricao || "Sem descrição");
           const qty = getHH(r);
-          if (desc in result[key]) {
-            result[key][desc] = (result[key][desc] || 0) + qty;
+          if (!(desc in result[key])) {
+            result[key][desc] = 0;
           }
+          result[key][desc] = (result[key][desc] || 0) + qty;
         });
         const entries = Object.entries(result);
         if (mode === "horario") entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
@@ -981,7 +992,7 @@ export default function Dashboard() {
         return entries.map(([label, descs]) => {
           const total = Object.values(descs).reduce((s, v) => s + v, 0);
           const row: any = { time: label, total };
-          for (const desc of CANONICAL_ORDER_FULL) {
+          for (const desc of allDescriptions) {
             const qty = descs[desc] || 0;
             row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
             row[`raw_${desc}`] = qty;

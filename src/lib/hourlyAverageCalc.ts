@@ -307,9 +307,11 @@ export function computeHourlyAdjustedPercentages(
     const key = `${r.data}|${r.obra_id}`;
     const hhMedio = hhMedioMap.get(key) || 1;
     const value = getRecordHHWithContext(r, hhMedio, dayGroups.get(key) || [], groupRecords);
-    if (desc in descValues) {
-      descValues[desc] += value;
+    // Always accumulate — even if desc is not in the original list
+    if (!(desc in descValues)) {
+      descValues[desc] = 0;
     }
+    descValues[desc] += value;
   }
 
   // Total of all HH values
