@@ -778,24 +778,23 @@ export default function Dashboard() {
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
-      const normalizedDesc = canonicalDescription(r.descricao || "Sem descrição");
-      // Allow all NPE descriptions through
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
       if (!result[sName]) {
-        result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+        result[sName] = Object.fromEntries(allDescriptions.map((desc) => [desc, 0]));
       }
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const qty = getHH(r);
-      if (desc in result[sName]) {
-        result[sName][desc] = (result[sName][desc] || 0) + qty;
+      if (!(desc in result[sName])) {
+        result[sName][desc] = 0;
       }
+      result[sName][desc] = (result[sName][desc] || 0) + qty;
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const desc of CANONICAL_ORDER_FULL) {
+        for (const desc of allDescriptions) {
           const qty = descs[desc] || 0;
           row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
           row[`raw_${desc}`] = qty;
@@ -803,7 +802,7 @@ export default function Dashboard() {
         return row;
       })
       .sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records, isExternalRecord]);
+  }, [records, allDescriptions, isExternalRecord]);
   
 
   // 6) By Time — productivity % breakdown, supports horario/weekday/month
