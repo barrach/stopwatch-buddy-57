@@ -720,10 +720,21 @@ export default function Dashboard() {
   // Sort by category group: Produtivo → Suplementar → Não Produtivo
   // Build ordered description lists strictly from canonical order
   // Only include descriptions that exist in the data, but always in canonical order
-  const allDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
+  // Build dynamic description list: canonical order + any extra descriptions found in data
+  const allDescriptions = useMemo(() => {
+    const extraDescs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (!CANONICAL_ORDER_FULL.includes(desc) && desc !== "Sem descrição") {
+        extraDescs.add(desc);
+      }
+    });
+    // Canonical first, then extras sorted alphabetically
+    return [...CANONICAL_ORDER_FULL, ...Array.from(extraDescs).sort()];
+  }, [records]);
 
-  // All charts now use the full description list including Causas Naturais
-  const nonNpeDescriptions = useMemo(() => CANONICAL_ORDER_FULL, []);
+  // All charts now use the dynamic description list
+  const nonNpeDescriptions = useMemo(() => allDescriptions, [allDescriptions]);
 
   const byObra = useMemo(() => {
     // Group records by contract
