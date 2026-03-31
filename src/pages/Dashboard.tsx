@@ -992,7 +992,7 @@ export default function Dashboard() {
         return entries.map(([label, descs]) => {
           const total = Object.values(descs).reduce((s, v) => s + v, 0);
           const row: any = { time: label, total };
-          for (const desc of CANONICAL_ORDER_FULL) {
+          for (const desc of allDescriptions) {
             const qty = descs[desc] || 0;
             row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
             row[`raw_${desc}`] = qty;
