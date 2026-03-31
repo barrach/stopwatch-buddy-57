@@ -976,13 +976,14 @@ export default function Dashboard() {
             key = MONTH_NAMES[d.getMonth()];
           }
           if (!result[key]) {
-            result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((desc) => [desc, 0]));
+            result[key] = Object.fromEntries(allDescriptions.map((desc) => [desc, 0]));
           }
           const desc = canonicalDescription(r.descricao || "Sem descrição");
           const qty = getHH(r);
-          if (desc in result[key]) {
-            result[key][desc] = (result[key][desc] || 0) + qty;
+          if (!(desc in result[key])) {
+            result[key][desc] = 0;
           }
+          result[key][desc] = (result[key][desc] || 0) + qty;
         });
         const entries = Object.entries(result);
         if (mode === "horario") entries.sort(([a], [b]) => timeIndex(a) - timeIndex(b));
