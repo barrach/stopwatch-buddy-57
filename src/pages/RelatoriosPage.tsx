@@ -189,6 +189,18 @@ export default function RelatoriosPage() {
   // ── Chart Data ──
   const totalSamples = useMemo(() => records.reduce((s: number, r: any) => s + getHH(r), 0), [records, getHH]);
 
+  // Build dynamic description list from data
+  const dynamicDescriptions = useMemo(() => {
+    const extraDescs = new Set<string>();
+    records.forEach((r: any) => {
+      const desc = canonicalDescription(r.descricao || "Sem descrição");
+      if (!CANONICAL_ORDER_FULL.includes(desc) && desc !== "Sem descrição") {
+        extraDescs.add(desc);
+      }
+    });
+    return [...CANONICAL_ORDER_FULL, ...Array.from(extraDescs).sort()];
+  }, [records]);
+
   const byObra = useMemo(() => {
     const grouped: Record<string, any[]> = {};
     records.forEach((r: any) => {
@@ -198,47 +210,49 @@ export default function RelatoriosPage() {
     });
     return Object.entries(grouped).map(([name, recs]) => {
       const total = recs.reduce((s: number, r: any) => s + getHH(r), 0);
-      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
+      const pcts = computeHourlyAdjustedPercentages(recs, dynamicDescriptions);
       const row: any = { name, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
+      for (const desc of dynamicDescriptions) row[desc] = pcts[desc] || 0;
       return row;
     }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, dynamicDescriptions]);
 
   const bySpecialty = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const sName = (r.especialidades as any)?.nome || "Sem especialidade";
-      if (!result[sName]) result[sName] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      if (!result[sName]) result[sName] = Object.fromEntries(dynamicDescriptions.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[sName]) result[sName][desc] += getHH(r);
+      if (!(desc in result[sName])) result[sName][desc] = 0;
+      result[sName][desc] += getHH(r);
     });
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
         const row: any = { name, total };
-        for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+        for (const desc of dynamicDescriptions) row[desc] = total > 0 ? +((descs[desc] || 0) / total * 100).toFixed(1) : 0;
         return row;
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
-  }, [records]);
+  }, [records, dynamicDescriptions]);
 
   const byHorario = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
     records.forEach((r: any) => {
       const key = getTimeBucketLabel(r, "horario");
       if (!key) return;
-      if (!result[key]) result[key] = Object.fromEntries(CANONICAL_ORDER_FULL.map((d) => [d, 0]));
+      if (!result[key]) result[key] = Object.fromEntries(dynamicDescriptions.map((d) => [d, 0]));
       const desc = canonicalDescription(r.descricao || "Sem descrição");
-      if (desc in result[key]) result[key][desc] += getHH(r);
+      if (!(desc in result[key])) result[key][desc] = 0;
+      result[key][desc] += getHH(r);
     });
     return Object.entries(result).sort(([a], [b]) => timeIndex(a) - timeIndex(b)).map(([label, descs]) => {
       const total = Object.values(descs).reduce((s, v) => s + v, 0);
       const row: any = { time: label, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = total > 0 ? +((descs[desc] / total) * 100).toFixed(1) : 0;
+      for (const desc of dynamicDescriptions) row[desc] = total > 0 ? +((descs[desc] || 0) / total * 100).toFixed(1) : 0;
       return row;
     });
-  }, [records]);
+  }, [records, dynamicDescriptions]);
 
   const byDiaSemana = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -250,12 +264,12 @@ export default function RelatoriosPage() {
     });
     return Object.entries(grouped).sort(([a], [b]) => WEEKDAY_NAMES.indexOf(a) - WEEKDAY_NAMES.indexOf(b)).map(([label, recs]) => {
       const total = recs.reduce((s: number, r: any) => s + getHH(r), 0);
-      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
+      const pcts = computeHourlyAdjustedPercentages(recs, dynamicDescriptions);
       const row: any = { time: label, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
+      for (const desc of dynamicDescriptions) row[desc] = pcts[desc] || 0;
       return row;
     });
-  }, [records]);
+  }, [records, dynamicDescriptions]);
 
   const byMes = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -267,12 +281,12 @@ export default function RelatoriosPage() {
     });
     return Object.entries(grouped).sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b)).map(([label, recs]) => {
       const total = recs.reduce((s: number, r: any) => s + getHH(r), 0);
-      const pcts = computeHourlyAdjustedPercentages(recs, CANONICAL_ORDER_FULL);
+      const pcts = computeHourlyAdjustedPercentages(recs, dynamicDescriptions);
       const row: any = { time: label, total };
-      for (const desc of CANONICAL_ORDER_FULL) row[desc] = pcts[desc] || 0;
+      for (const desc of dynamicDescriptions) row[desc] = pcts[desc] || 0;
       return row;
     });
-  }, [records]);
+  }, [records, dynamicDescriptions]);
 
   const paretoData = useMemo(() => {
     const totals: Record<string, number> = {};
