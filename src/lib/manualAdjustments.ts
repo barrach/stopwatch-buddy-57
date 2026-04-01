@@ -11,9 +11,9 @@ interface ManualAdjustment {
   date: string;
   /** Time slot (HH:mm) */
   horario: string;
-  /** Description of the original record to split */
+  /** Description of the original record to split. Use "*" to match ALL descriptions. */
   sourceDescricao: string;
-  /** Splits: each entry gets a fraction of the original quantity */
+  /** Splits: each entry gets a fraction of the original quantity. Use "__KEEP__" to keep original descricao. */
   splits: Array<{
     descricao: string;
     fraction: number;
