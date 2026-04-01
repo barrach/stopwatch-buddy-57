@@ -247,11 +247,14 @@ export type Database = {
           empresa: string
           especialidade_id: string
           funcao_id: string | null
+          hora_real: string | null
           horario: string
           id: string
           is_dinamico: boolean | null
           notas: string | null
           obra_id: string
+          peso_real: number | null
+          ponderado: boolean | null
           quantidade: number
           quantidade_base: number | null
           rota_id: string
@@ -272,11 +275,14 @@ export type Database = {
           empresa?: string
           especialidade_id: string
           funcao_id?: string | null
+          hora_real?: string | null
           horario: string
           id?: string
           is_dinamico?: boolean | null
           notas?: string | null
           obra_id: string
+          peso_real?: number | null
+          ponderado?: boolean | null
           quantidade?: number
           quantidade_base?: number | null
           rota_id: string
@@ -297,11 +303,14 @@ export type Database = {
           empresa?: string
           especialidade_id?: string
           funcao_id?: string | null
+          hora_real?: string | null
           horario?: string
           id?: string
           is_dinamico?: boolean | null
           notas?: string | null
           obra_id?: string
+          peso_real?: number | null
+          ponderado?: boolean | null
           quantidade?: number
           quantidade_base?: number | null
           rota_id?: string
