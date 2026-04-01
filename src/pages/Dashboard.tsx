@@ -87,6 +87,7 @@ const CANONICAL_ORDER_FULL: string[] = [
   "Transitando fora do local de trabalho - sem ferramenta",
   "Assistindo / Stand By",
   "Aguardando Liberação de PT",
+  "Aguardando Instruções",
   // Não Produtivo
   "Pessoal",
   "Ocioso",
@@ -111,6 +112,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#34D399",
+  "Aguardando Instruções": "#8B5CF6",
   "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
@@ -119,7 +121,6 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Fatores Climáticos e Consequências": "#F97316",
   "Causas Naturais": "#F97316",
   // Legacy
-  "Aguardando Instruções": "#16A34A",
   "Preparando, Organizando": "#65A30D",
   "Retrabalho": "#9F1239",
   "Deslocamento": "#B91C1C",
