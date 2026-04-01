@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2, Trophy } from "lucide-react";
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
 import { generateComparisonPDF } from "@/lib/comparisonReportPdf";
 import { useToast } from "@/hooks/use-toast";
@@ -242,6 +242,77 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
         <ExternalPieSection data={sA.externalCausas || []} title="Causas Externas — A" />
         <ExternalPieSection data={sB.externalCausas || []} title="Causas Externas — B" />
       </div>
+
+      {/* Evolution KPI */}
+      {(() => {
+        // Compute productivity (Trabalhando + Planejando) per specialty for A and B
+        const getSpecialtyProductivity = (snapshot: any): Record<string, number> => {
+          const data = snapshot?.bySpecialty || [];
+          const result: Record<string, number> = {};
+          data.forEach((row: any) => {
+            const name = row.name || "";
+            const prod = (row["Trabalhando"] || 0) + (row["Planejando"] || 0);
+            result[name] = prod;
+          });
+          return result;
+        };
+
+        const specProdA = getSpecialtyProductivity(sA);
+        const specProdB = getSpecialtyProductivity(sB);
+
+        // Calculate evolution for each specialty present in both
+        const allSpecs = new Set([...Object.keys(specProdA), ...Object.keys(specProdB)]);
+        const evolutions: Array<{ name: string; before: number; after: number; evolution: number }> = [];
+        allSpecs.forEach(name => {
+          const before = specProdA[name];
+          const after = specProdB[name];
+          if (before === undefined || after === undefined) return;
+          if (before === 0 && after === 0) return;
+          evolutions.push({ name, before, after, evolution: after - before });
+        });
+
+        evolutions.sort((a, b) => b.evolution - a.evolution);
+        const top3 = evolutions.slice(0, 3);
+        const hasPositive = top3.length > 0 && top3[0].evolution > 0;
+
+        const medals = ["🥇", "🥈", "🥉"];
+
+        return (
+          <div id="comp-evolution" className="stat-card animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <h3 className="text-sm font-semibold text-foreground">🏆 Maior Evolução de Produtividade</h3>
+            </div>
+            {!hasPositive ? (
+              <p className="text-sm text-muted-foreground">Nenhuma evolução positiva relevante no período.</p>
+            ) : (
+              <div className="space-y-3">
+                {top3.filter(e => e.evolution > 0).map((item, idx) => (
+                  <div
+                    key={item.name}
+                    className={`flex items-center gap-3 rounded-lg border p-3 ${idx === 0 ? "bg-green-500/10 border-green-500/30" : "border-border/50"}`}
+                  >
+                    <span className="text-2xl">{medals[idx]}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`truncate ${idx === 0 ? "text-sm font-bold text-foreground" : "text-sm font-medium text-foreground/80"}`}>
+                        {item.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-muted-foreground">Antes: {item.before.toFixed(1)}%</span>
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <span className="text-xs text-muted-foreground">Depois: {item.after.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                    <span className={`text-lg font-bold ${idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/80 dark:text-green-400/80"}`}>
+                      +{item.evolution.toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
