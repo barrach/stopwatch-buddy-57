@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { Scale, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
@@ -31,6 +32,7 @@ import { useUserObra } from "@/hooks/useUserObra";
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
 import { getDisplayQuantity, getRecordValue, usesDerivedHHValue } from "@/lib/hourlyAverageCalc";
+import PonderacaoModal from "@/components/PonderacaoModal";
 
 const PAGE_SIZE = 50;
 
@@ -64,6 +66,50 @@ export default function Records() {
   const [editRecord, setEditRecord] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [editSaving, setEditSaving] = useState(false);
+  const [ponderacaoOpen, setPonderacaoOpen] = useState(false);
+
+  // Ponderação validation
+  const getSelectedForPonderacao = () => {
+    const selected = records.filter((r: any) => selectedIds.has(r.id));
+    if (selected.length === 0) return { valid: false, error: "Nenhum registro selecionado", records: [], horario: "" };
+    const horarios = new Set(selected.map((r: any) => (r.horario || "").slice(0, 5)));
+    if (horarios.size > 1) return { valid: false, error: "Selecione registros com o mesmo horário para aplicar a ponderação", records: selected, horario: "" };
+    const horario = [...horarios][0];
+    if (horario !== "08:00" && horario !== "13:00") return { valid: false, error: "Ponderação disponível apenas para os horários 08:00 e 13:00", records: selected, horario };
+    return { valid: true, error: "", records: selected, horario };
+  };
+
+  const handleOpenPonderacao = () => {
+    const result = getSelectedForPonderacao();
+    if (!result.valid) {
+      toast({ title: "Validação", description: result.error, variant: "destructive" });
+      return;
+    }
+    setPonderacaoOpen(true);
+  };
+
+  const handleRevertPonderacao = async () => {
+    const selected = records.filter((r: any) => selectedIds.has(r.id) && r.ponderado);
+    if (selected.length === 0) {
+      toast({ title: "Nenhum registro ponderado selecionado", variant: "destructive" });
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from("observacoes")
+        .update({ ponderado: false, hora_real: null, peso_real: null })
+        .in("id", selected.map((r: any) => r.id));
+      if (error) throw error;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["observacoes"] }),
+        queryClient.refetchQueries({ queryKey: ["observacoes"] }),
+      ]);
+      setSelectedIds(new Set());
+      toast({ title: "Ponderação revertida", description: `${selected.length} registro(s) revertidos.` });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
 
   const { data: rotas = [] } = useQuery({
     queryKey: ["rotas", "ativas"],
@@ -593,6 +639,33 @@ export default function Records() {
               <X className="w-3 h-3" /> Limpar seleção
             </Button>
             <div className="flex-1" />
+            {(() => {
+              const hasPonderados = records.some((r: any) => selectedIds.has(r.id) && r.ponderado);
+              return (
+                <>
+                  {hasPonderados && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={handleRevertPonderacao}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reverter Ponderação
+                    </Button>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={handleOpenPonderacao}
+                  >
+                    <Scale className="w-3.5 h-3.5" />
+                    Ponderar Registros
+                  </Button>
+                </>
+              );
+            })()}
             <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
               <AlertDialogTrigger asChild>
                 <Button
@@ -697,6 +770,13 @@ export default function Records() {
                       </span>
                     </TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
+                    <TableCell className="text-xs">
+                      {r.ponderado && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium" title={`Ponderado — hora real: ${r.hora_real}`}>
+                          ⏱️ {r.hora_real}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-right font-bold">{displayedQuantity}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
                       {userName}
@@ -732,7 +812,7 @@ export default function Records() {
               })}
               {paginated.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
+                 <TableCell colSpan={12} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
@@ -771,6 +851,19 @@ export default function Records() {
           )}
         </div>
       </div>
+
+      {/* Ponderação Modal */}
+      {ponderacaoOpen && (() => {
+        const result = getSelectedForPonderacao();
+        return (
+          <PonderacaoModal
+            open={ponderacaoOpen}
+            onOpenChange={(open) => { setPonderacaoOpen(open); if (!open) setSelectedIds(new Set()); }}
+            selectedRecords={result.records}
+            horario={result.horario}
+          />
+        );
+      })()}
 
       {/* Edit Dialog */}
       <Dialog open={!!editRecord} onOpenChange={(open) => { if (!open) setEditRecord(null); }}>
