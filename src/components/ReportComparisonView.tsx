@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2, Trophy } from "lucide-react";
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
 import { generateComparisonPDF } from "@/lib/comparisonReportPdf";
 import { useToast } from "@/hooks/use-toast";
