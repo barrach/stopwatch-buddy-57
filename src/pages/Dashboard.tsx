@@ -1609,49 +1609,15 @@ export default function Dashboard() {
 
         {/* Evolução de Produtividade por Especialidade */}
         {(() => {
-          // Compare current period vs previous equivalent period
-          const computePreviousPeriodRecords = () => {
-            if (dateMode === "day") {
-              const prev = new Date(selectedDate);
-              prev.setDate(prev.getDate() - 1);
-              return allRecords.filter((r: any) => {
-                if (effectiveObraFilter !== "all" && r.obra_id !== effectiveObraFilter) return false;
-                return r.data === prev.toISOString().slice(0, 10);
-              });
-            } else if (dateMode === "period") {
-              const start = new Date(startDate);
-              const end = new Date(endDate);
-              const diff = end.getTime() - start.getTime();
-              const prevEnd = new Date(start.getTime() - 86400000);
-              const prevStart = new Date(prevEnd.getTime() - diff);
-              const ps = prevStart.toISOString().slice(0, 10);
-              const pe = prevEnd.toISOString().slice(0, 10);
-              return allRecords.filter((r: any) => {
-                if (effectiveObraFilter !== "all" && r.obra_id !== effectiveObraFilter) return false;
-                return r.data >= ps && r.data <= pe;
-              });
-            }
-            return [];
-          };
+          // KPI Evolução: uses ALL records from the contract (ignores date filters)
+          // Only respects obra/contrato filter
+          const allContractRecords = allRecords.filter((r: any) => {
+            if (effectiveObraFilter !== "all" && r.obra_id !== effectiveObraFilter) return false;
+            return true;
+          });
 
-          let prevRecords = computePreviousPeriodRecords();
-          let periodLabel = dateMode === "day" ? "vs dia anterior" : "vs período anterior";
+          const dates = [...new Set(allContractRecords.map((r: any) => r.data))].sort();
 
-          // Fallback: if no previous period, split current records by dates (first half vs second half)
-          if (prevRecords.length === 0 && records.length > 0) {
-            const dates = [...new Set(records.map((r: any) => r.data))].sort();
-            if (dates.length >= 2) {
-              const mid = Math.floor(dates.length / 2);
-              const firstHalf = new Set(dates.slice(0, mid));
-              const secondHalf = new Set(dates.slice(mid));
-              prevRecords = records.filter((r: any) => firstHalf.has(r.data));
-              // Override records used for "current" to second half only
-              // We'll handle this below
-              periodLabel = "1ª metade → 2ª metade do período";
-            }
-          }
-
-          // Compute productivity per specialty
           const getSpecProd = (recs: any[]) => {
             const grouped: Record<string, { trab: number; plan: number; total: number }> = {};
             recs.forEach((r: any) => {
@@ -1670,34 +1636,40 @@ export default function Dashboard() {
             return result;
           };
 
-          // If we used fallback, compute "current" from second half only
-          let currRecordsForEvol = records;
-          if (periodLabel.includes("metade")) {
-            const dates = [...new Set(records.map((r: any) => r.data))].sort();
-            const mid = Math.floor(dates.length / 2);
-            const secondHalf = new Set(dates.slice(mid));
-            currRecordsForEvol = records.filter((r: any) => secondHalf.has(r.data));
-          }
-
-          const prevProd = getSpecProd(prevRecords);
-          const currProd = getSpecProd(currRecordsForEvol);
-
-          const allSpecs = new Set([...Object.keys(prevProd), ...Object.keys(currProd)]);
           const evolutions: Array<{ name: string; before: number; after: number; evolution: number }> = [];
-          allSpecs.forEach(name => {
-            const before = prevProd[name];
-            const after = currProd[name];
-            if (before === undefined || after === undefined) return;
-            if (before === 0 && after === 0) return;
-            evolutions.push({ name, before, after, evolution: after - before });
-          });
-          evolutions.sort((a, b) => b.evolution - a.evolution);
+
+          if (dates.length >= 2) {
+            const mid = Math.floor(dates.length / 2);
+            const firstHalf = new Set(dates.slice(0, mid));
+            const secondHalf = new Set(dates.slice(mid));
+            const prevProd = getSpecProd(allContractRecords.filter((r: any) => firstHalf.has(r.data)));
+            const currProd = getSpecProd(allContractRecords.filter((r: any) => secondHalf.has(r.data)));
+
+            const allSpecs = new Set([...Object.keys(prevProd), ...Object.keys(currProd)]);
+            allSpecs.forEach(name => {
+              const before = prevProd[name];
+              const after = currProd[name];
+              if (before === undefined || after === undefined) return;
+              if (before === 0 && after === 0) return;
+              evolutions.push({ name, before, after, evolution: after - before });
+            });
+            evolutions.sort((a, b) => b.evolution - a.evolution);
+          } else if (dates.length === 1) {
+            // Single date — show productivity as-is, evolution = 0
+            const prod = getSpecProd(allContractRecords);
+            Object.entries(prod).forEach(([name, val]) => {
+              evolutions.push({ name, before: 0, after: val, evolution: val });
+            });
+            evolutions.sort((a, b) => b.evolution - a.evolution);
+          }
 
           console.log("KPI Evolução:", evolutions);
 
-          const top3 = evolutions.filter(e => e.evolution > 0).slice(0, 3);
-          const hasData = top3.length > 0;
+          const top3 = evolutions.slice(0, 3);
           const medals = ["🥇", "🥈", "🥉"];
+          const periodLabel = dates.length >= 2
+            ? `Evolução desde ${dates[0]} até ${dates[dates.length - 1]}`
+            : "Baseado na evolução desde o início das medições até hoje";
 
           return (
             <div className="stat-card animate-fade-in mb-6">
@@ -1708,7 +1680,7 @@ export default function Dashboard() {
                   <p className="text-[10px] text-muted-foreground">{periodLabel}</p>
                 </div>
               </div>
-              {hasData ? (
+              {top3.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {top3.map((item, idx) => (
                     <div
@@ -1729,15 +1701,15 @@ export default function Dashboard() {
                           {item.before.toFixed(1)}% → {item.after.toFixed(1)}%
                         </p>
                       </div>
-                      <span className={`text-lg font-bold ${idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/70 dark:text-green-400/70"}`}>
-                        +{item.evolution.toFixed(1)}%
+                      <span className={`text-lg font-bold ${item.evolution >= 0 ? (idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/70 dark:text-green-400/70") : "text-red-600 dark:text-red-400"}`}>
+                        {item.evolution >= 0 ? "+" : ""}{item.evolution.toFixed(1)}%
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Dados insuficientes para calcular evolução no período selecionado.
+                  Nenhum registro encontrado para calcular evolução.
                 </p>
               )}
             </div>
