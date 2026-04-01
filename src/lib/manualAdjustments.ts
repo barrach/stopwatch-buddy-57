@@ -37,14 +37,23 @@ const MANUAL_ADJUSTMENTS: ManualAdjustment[] = [
     ],
     reason: "Medição das 08:00 realizada às 08:50 após liberação de PT às 08:40. 40min PT + 20min produção.",
   },
+  {
+    date: "2026-03-31",
+    horario: "13:00",
+    sourceDescricao: "*",
+    splits: [
+      { descricao: "__KEEP__", fraction: 0.50 },
+      { descricao: "Transitando no local de trabalho - com ferramenta", fraction: 0.20 },
+      { descricao: "Transitando no local de trabalho - sem ferramenta", fraction: 0.15 },
+      { descricao: "Aguardando Ferramenta ou Material", fraction: 0.15 },
+    ],
+    reason: "Medição das 13:00 realizada às 13:30. 30min não observados distribuídos conforme padrão real de campo.",
+  },
 ];
 
 /**
  * Apply manual adjustments to a list of records (for visualization only).
  * Returns a new array with adjusted records — original records are NOT mutated.
- * 
- * For matching records, the original is replaced by N virtual copies
- * with adjusted `quantidade` values according to the split fractions.
  */
 export function applyManualAdjustments(records: any[]): any[] {
   const result: any[] = [];
@@ -52,21 +61,19 @@ export function applyManualAdjustments(records: any[]): any[] {
   for (const r of records) {
     const normalizedHorario = (r.horario || "").slice(0, 5);
     
-    // Check if this record matches any adjustment
     const adjustment = MANUAL_ADJUSTMENTS.find(
       (adj) =>
         r.data === adj.date &&
         normalizedHorario === adj.horario &&
-        (r.descricao || "") === adj.sourceDescricao
+        (adj.sourceDescricao === "*" || (r.descricao || "") === adj.sourceDescricao)
     );
 
     if (adjustment) {
-      // Split record into virtual copies
       for (const split of adjustment.splits) {
         const qty = Number(r.quantidade_base ?? r.quantidade ?? 0);
         result.push({
           ...r,
-          descricao: split.descricao,
+          descricao: split.descricao === "__KEEP__" ? r.descricao : split.descricao,
           quantidade: Math.round(qty * split.fraction * 100) / 100,
           quantidade_base: Math.round(qty * split.fraction * 100) / 100,
           _manual_adjustment: true,
