@@ -325,6 +325,82 @@ export async function generateComparisonPDF(reportA: SavedReport, reportB: Saved
     addChartBlock(id, title, HALF_PAGE_H);
   }
 
+  // ═══ BLOCO 6 — EVOLUÇÃO DE PRODUTIVIDADE POR ESPECIALIDADE ═══
+  {
+    const getSpecProd = (snapshot: any): Record<string, number> => {
+      const data = snapshot?.bySpecialty || [];
+      const result: Record<string, number> = {};
+      data.forEach((row: any) => {
+        const name = row.name || "";
+        result[name] = (row["Trabalhando"] || 0) + (row["Planejando"] || 0);
+      });
+      return result;
+    };
+
+    const specA = getSpecProd(sA);
+    const specB = getSpecProd(sB);
+    const allSpecs = new Set([...Object.keys(specA), ...Object.keys(specB)]);
+    const evolutions: Array<{ name: string; before: number; after: number; evolution: number }> = [];
+    allSpecs.forEach(name => {
+      const before = specA[name];
+      const after = specB[name];
+      if (before === undefined || after === undefined) return;
+      if (before === 0 && after === 0) return;
+      evolutions.push({ name, before, after, evolution: after - before });
+    });
+    evolutions.sort((a, b) => b.evolution - a.evolution);
+
+    const blockH = 14 + 10 + Math.min(evolutions.length, 5) * 8 + 10;
+    ensureSpace(blockH);
+
+    // Section header
+    sectionHeader("🏆 Maior Evolução de Produtividade");
+
+    const top = evolutions.slice(0, 5);
+    const hasPositive = top.length > 0 && top[0].evolution > 0;
+
+    if (!hasPositive) {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(...C.textMuted);
+      doc.text("Nenhuma evolução positiva relevante no período.", MARGIN + 4, curY);
+      curY += 8;
+    } else {
+      const medals = ["🥇", "🥈", "🥉"];
+      const eCols = [MARGIN + 4, MARGIN + 70, MARGIN + 100, MARGIN + 135, MARGIN + 165];
+
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...C.textDark);
+      doc.text("Posição", eCols[0], curY);
+      doc.text("Especialidade", eCols[1], curY);
+      doc.text("Antes", eCols[2], curY);
+      doc.text("Depois", eCols[3], curY);
+      doc.text("Evolução", eCols[4], curY);
+      curY += 3;
+      doc.setDrawColor(...C.border);
+      doc.line(MARGIN, curY, MARGIN + CONTENT_W, curY);
+      curY += 5;
+
+      top.filter(e => e.evolution > 0).forEach((item, idx) => {
+        const medal = medals[idx] || `${idx + 1}º`;
+        doc.setFont("helvetica", idx === 0 ? "bold" : "normal"); doc.setFontSize(9);
+
+        // Highlight winner row
+        if (idx === 0) {
+          doc.setFillColor(220, 252, 231); // green-100
+          doc.roundedRect(MARGIN + 2, curY - 4, CONTENT_W - 4, 8, 1, 1, "F");
+        }
+
+        doc.setTextColor(...C.textDark);
+        doc.text(medal, eCols[0], curY);
+        doc.text(item.name.length > 18 ? item.name.substring(0, 18) + "…" : item.name, eCols[1], curY);
+        doc.text(fmtPct(item.before), eCols[2], curY);
+        doc.text(fmtPct(item.after), eCols[3], curY);
+        doc.setTextColor(...C.green);
+        doc.text(`+${item.evolution.toFixed(1)}%`, eCols[4], curY);
+        curY += 7;
+      });
+      curY += 4;
+    }
+  }
+
   // ═══ FOOTER ═══
   const totalPages = doc.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
