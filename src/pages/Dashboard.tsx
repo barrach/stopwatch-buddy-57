@@ -25,6 +25,7 @@ import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
 import { applyManualAdjustments } from "@/lib/manualAdjustments";
+import { applyDbWeighting } from "@/lib/manualAdjustments";
 import { LegendTooltip } from "@/components/LegendTooltip";
 import NpeTraceabilityModal from "@/components/NpeTraceabilityModal";
 
@@ -540,7 +541,7 @@ export default function Dashboard() {
       filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
     // Apply manual visualization adjustments (does not modify DB records)
-    return applyManualAdjustments(filtered);
+    return applyDbWeighting(applyManualAdjustments(filtered));
   }, [allRecords, effectiveObraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Apply global NPE exclusion filter
