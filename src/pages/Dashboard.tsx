@@ -1609,34 +1609,29 @@ export default function Dashboard() {
 
         {/* Evolução de Produtividade por Especialidade */}
         {(() => {
-          // Compare current period vs previous equivalent period
-          const computePreviousPeriodRecords = () => {
+          // BASE period = all historical records BEFORE the current period
+          const computeBasePeriodRecords = () => {
+            const obraFilter = (r: any) => effectiveObraFilter === "all" || r.obra_id === effectiveObraFilter;
+            
             if (dateMode === "day") {
-              const prev = new Date(selectedDate);
-              prev.setDate(prev.getDate() - 1);
-              return allRecords.filter((r: any) => {
-                if (effectiveObraFilter !== "all" && r.obra_id !== effectiveObraFilter) return false;
-                return r.data === prev.toISOString().slice(0, 10);
-              });
+              // Base = all records before selectedDate
+              return allRecords.filter((r: any) => obraFilter(r) && r.data < selectedDate);
             } else if (dateMode === "period") {
-              const start = new Date(startDate);
-              const end = new Date(endDate);
-              const diff = end.getTime() - start.getTime();
-              const prevEnd = new Date(start.getTime() - 86400000); // day before start
-              const prevStart = new Date(prevEnd.getTime() - diff);
-              const ps = prevStart.toISOString().slice(0, 10);
-              const pe = prevEnd.toISOString().slice(0, 10);
-              return allRecords.filter((r: any) => {
-                if (effectiveObraFilter !== "all" && r.obra_id !== effectiveObraFilter) return false;
-                return r.data >= ps && r.data <= pe;
-              });
+              // Base = all records before startDate
+              return allRecords.filter((r: any) => obraFilter(r) && r.data < startDate);
             }
-            // "all" mode — no meaningful comparison
-            return [];
+            // "all" mode — split in half by date
+            const filtered = allRecords.filter((r: any) => obraFilter(r));
+            if (filtered.length < 2) return [];
+            const dates = [...new Set(filtered.map((r: any) => r.data))].sort();
+            if (dates.length < 2) return [];
+            const midIdx = Math.floor(dates.length / 2);
+            const midDate = dates[midIdx];
+            return filtered.filter((r: any) => r.data < midDate);
           };
 
-          const prevRecords = computePreviousPeriodRecords();
-          if (prevRecords.length === 0 || records.length === 0) return null;
+          const baseRecords = computeBasePeriodRecords();
+          if (baseRecords.length === 0 || records.length === 0) return null;
 
           // Compute productivity per specialty
           const getSpecProd = (recs: any[]) => {
@@ -1657,13 +1652,13 @@ export default function Dashboard() {
             return result;
           };
 
-          const prevProd = getSpecProd(prevRecords);
+          const baseProd = getSpecProd(baseRecords);
           const currProd = getSpecProd(records);
 
-          const allSpecs = new Set([...Object.keys(prevProd), ...Object.keys(currProd)]);
+          const allSpecs = new Set([...Object.keys(baseProd), ...Object.keys(currProd)]);
           const evolutions: Array<{ name: string; before: number; after: number; evolution: number }> = [];
           allSpecs.forEach(name => {
-            const before = prevProd[name];
+            const before = baseProd[name];
             const after = currProd[name];
             if (before === undefined || after === undefined) return;
             if (before === 0 && after === 0) return;
@@ -1674,8 +1669,12 @@ export default function Dashboard() {
           const top3 = evolutions.filter(e => e.evolution > 0).slice(0, 3);
           if (top3.length === 0) return null;
 
-          const medals = ["🥇", "🥈", "🥉"];
-          const periodLabel = dateMode === "day" ? "vs dia anterior" : "vs período anterior";
+          const medalEmojis = ["🥇", "🥈", "🥉"];
+          const periodLabel = dateMode === "day" 
+            ? "vs histórico anterior" 
+            : dateMode === "period" 
+              ? "vs histórico anterior ao período" 
+              : "1ª metade vs 2ª metade";
 
           return (
             <div className="stat-card animate-fade-in mb-6">
@@ -1697,13 +1696,13 @@ export default function Dashboard() {
                       backgroundColor: idx === 0 ? "rgba(34, 197, 94, 0.08)" : undefined,
                     }}
                   >
-                    <span className="text-2xl">{medals[idx]}</span>
+                    <span className="text-2xl">{medalEmojis[idx]}</span>
                     <div className="flex-1 min-w-0">
                       <p className={`truncate ${idx === 0 ? "text-sm font-bold text-foreground" : "text-sm font-medium text-foreground/80"}`}>
                         {item.name}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {item.before.toFixed(1)}% → {item.after.toFixed(1)}%
+                        Antes: {item.before.toFixed(1)}% → Depois: {item.after.toFixed(1)}%
                       </p>
                     </div>
                     <span className={`text-lg font-bold ${idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/70 dark:text-green-400/70"}`}>
