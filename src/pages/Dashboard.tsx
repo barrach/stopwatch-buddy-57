@@ -112,7 +112,7 @@ const DESCRIPTION_COLORS: Record<string, string> = {
   "Aguardando Movimentação de Carga": "#15803D",
   "Aguardando movimentação de carga": "#15803D",
   "Aguardando Liberação de PT": "#34D399",
-  "Aguardando Instruções": "#8B5CF6",
+  "Aguardando Instruções": "#059669",
   "Interferências Operacionais": "#C8A882",
   "Vazamento / Interferência da Planta": "#C8A882",
   "Pessoal": "#EF4444",
