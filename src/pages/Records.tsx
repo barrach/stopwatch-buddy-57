@@ -733,7 +733,6 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Especialidade</TableHead>
                 <TableHead className="text-xs font-semibold">Categoria</TableHead>
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
-                <TableHead className="text-xs font-semibold">Pond.</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
                 <TableHead className="text-xs font-semibold">Registrado por</TableHead>
                 {isAdmin && <TableHead className="text-xs font-semibold">Ações</TableHead>}
@@ -771,13 +770,6 @@ export default function Records() {
                       </span>
                     </TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{r.descricao}</TableCell>
-                    <TableCell className="text-xs">
-                      {r.ponderado && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium" title={`Ponderado — hora real: ${r.hora_real}`}>
-                          ⏱️ {r.hora_real}
-                        </span>
-                      )}
-                    </TableCell>
                     <TableCell className="text-xs text-right font-bold">{displayedQuantity}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
                       {userName}
@@ -813,7 +805,7 @@ export default function Records() {
               })}
               {paginated.length === 0 && (
                 <TableRow>
-                 <TableCell colSpan={12} className="text-center py-8 text-sm text-muted-foreground">
+                 <TableCell colSpan={11} className="text-center py-8 text-sm text-muted-foreground">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
