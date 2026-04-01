@@ -1622,7 +1622,7 @@ export default function Dashboard() {
               const start = new Date(startDate);
               const end = new Date(endDate);
               const diff = end.getTime() - start.getTime();
-              const prevEnd = new Date(start.getTime() - 86400000); // day before start
+              const prevEnd = new Date(start.getTime() - 86400000);
               const prevStart = new Date(prevEnd.getTime() - diff);
               const ps = prevStart.toISOString().slice(0, 10);
               const pe = prevEnd.toISOString().slice(0, 10);
@@ -1631,12 +1631,25 @@ export default function Dashboard() {
                 return r.data >= ps && r.data <= pe;
               });
             }
-            // "all" mode — no meaningful comparison
             return [];
           };
 
-          const prevRecords = computePreviousPeriodRecords();
-          if (prevRecords.length === 0 || records.length === 0) return null;
+          let prevRecords = computePreviousPeriodRecords();
+          let periodLabel = dateMode === "day" ? "vs dia anterior" : "vs período anterior";
+
+          // Fallback: if no previous period, split current records by dates (first half vs second half)
+          if (prevRecords.length === 0 && records.length > 0) {
+            const dates = [...new Set(records.map((r: any) => r.data))].sort();
+            if (dates.length >= 2) {
+              const mid = Math.floor(dates.length / 2);
+              const firstHalf = new Set(dates.slice(0, mid));
+              const secondHalf = new Set(dates.slice(mid));
+              prevRecords = records.filter((r: any) => firstHalf.has(r.data));
+              // Override records used for "current" to second half only
+              // We'll handle this below
+              periodLabel = "1ª metade → 2ª metade do período";
+            }
+          }
 
           // Compute productivity per specialty
           const getSpecProd = (recs: any[]) => {
@@ -1657,8 +1670,17 @@ export default function Dashboard() {
             return result;
           };
 
+          // If we used fallback, compute "current" from second half only
+          let currRecordsForEvol = records;
+          if (periodLabel.includes("metade")) {
+            const dates = [...new Set(records.map((r: any) => r.data))].sort();
+            const mid = Math.floor(dates.length / 2);
+            const secondHalf = new Set(dates.slice(mid));
+            currRecordsForEvol = records.filter((r: any) => secondHalf.has(r.data));
+          }
+
           const prevProd = getSpecProd(prevRecords);
-          const currProd = getSpecProd(records);
+          const currProd = getSpecProd(currRecordsForEvol);
 
           const allSpecs = new Set([...Object.keys(prevProd), ...Object.keys(currProd)]);
           const evolutions: Array<{ name: string; before: number; after: number; evolution: number }> = [];
@@ -1671,11 +1693,11 @@ export default function Dashboard() {
           });
           evolutions.sort((a, b) => b.evolution - a.evolution);
 
-          const top3 = evolutions.filter(e => e.evolution > 0).slice(0, 3);
-          if (top3.length === 0) return null;
+          console.log("KPI Evolução:", evolutions);
 
+          const top3 = evolutions.filter(e => e.evolution > 0).slice(0, 3);
+          const hasData = top3.length > 0;
           const medals = ["🥇", "🥈", "🥉"];
-          const periodLabel = dateMode === "day" ? "vs dia anterior" : "vs período anterior";
 
           return (
             <div className="stat-card animate-fade-in mb-6">
@@ -1686,32 +1708,38 @@ export default function Dashboard() {
                   <p className="text-[10px] text-muted-foreground">{periodLabel}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {top3.map((item, idx) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all"
-                    style={{
-                      borderLeftWidth: 4,
-                      borderLeftColor: idx === 0 ? "#22C55E" : idx === 1 ? "#86EFAC" : "#BBF7D0",
-                      backgroundColor: idx === 0 ? "rgba(34, 197, 94, 0.08)" : undefined,
-                    }}
-                  >
-                    <span className="text-2xl">{medals[idx]}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`truncate ${idx === 0 ? "text-sm font-bold text-foreground" : "text-sm font-medium text-foreground/80"}`}>
-                        {item.name}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {item.before.toFixed(1)}% → {item.after.toFixed(1)}%
-                      </p>
+              {hasData ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {top3.map((item, idx) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all"
+                      style={{
+                        borderLeftWidth: 4,
+                        borderLeftColor: idx === 0 ? "#22C55E" : idx === 1 ? "#86EFAC" : "#BBF7D0",
+                        backgroundColor: idx === 0 ? "rgba(34, 197, 94, 0.08)" : undefined,
+                      }}
+                    >
+                      <span className="text-2xl">{medals[idx]}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`truncate ${idx === 0 ? "text-sm font-bold text-foreground" : "text-sm font-medium text-foreground/80"}`}>
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {item.before.toFixed(1)}% → {item.after.toFixed(1)}%
+                        </p>
+                      </div>
+                      <span className={`text-lg font-bold ${idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/70 dark:text-green-400/70"}`}>
+                        +{item.evolution.toFixed(1)}%
+                      </span>
                     </div>
-                    <span className={`text-lg font-bold ${idx === 0 ? "text-green-600 dark:text-green-400" : "text-green-600/70 dark:text-green-400/70"}`}>
-                      +{item.evolution.toFixed(1)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Dados insuficientes para calcular evolução no período selecionado.
+                </p>
+              )}
             </div>
           );
         })()}
