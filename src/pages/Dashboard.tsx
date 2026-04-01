@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { applyManualAdjustments } from "@/lib/manualAdjustments";
 import { LegendTooltip } from "@/components/LegendTooltip";
 import NpeTraceabilityModal from "@/components/NpeTraceabilityModal";
 
@@ -538,7 +539,8 @@ export default function Dashboard() {
     } else if (dateMode === "period") {
       filtered = filtered.filter((r: any) => r.data >= startDate && r.data <= endDate);
     }
-    return filtered;
+    // Apply manual visualization adjustments (does not modify DB records)
+    return applyManualAdjustments(filtered);
   }, [allRecords, effectiveObraFilter, dateMode, selectedDate, startDate, endDate]);
 
   // Apply global NPE exclusion filter
