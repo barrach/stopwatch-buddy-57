@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { applyManualAdjustments } from "@/lib/manualAdjustments";
 import { LegendTooltip } from "@/components/LegendTooltip";
 import NpeTraceabilityModal from "@/components/NpeTraceabilityModal";
 
