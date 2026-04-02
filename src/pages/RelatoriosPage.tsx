@@ -314,7 +314,12 @@ export default function RelatoriosPage() {
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
       if (!isNPE && !isAgPT) return;
-      totals[desc] = (totals[desc] || 0) + getHH(r);
+      let hh = getHH(r);
+      // Fallback: if HH is 0 but record has quantidade_base, use it so NPE records aren't invisible
+      if (hh === 0 && r.quantidade_base > 0) {
+        hh = r.quantidade_base;
+      }
+      totals[desc] = (totals[desc] || 0) + hh;
     });
     const sorted = Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     const total = sorted.reduce((s, c) => s + c.value, 0);

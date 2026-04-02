@@ -654,7 +654,12 @@ export default function Dashboard() {
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
       if (!isNPE && !isAgPT) return;
-      totals[desc] = (totals[desc] || 0) + getHH(r);
+      let hh = getHH(r);
+      // Fallback: if HH is 0 but record has quantidade_base, use it so NPE records aren't invisible
+      if (hh === 0 && r.quantidade_base > 0) {
+        hh = r.quantidade_base;
+      }
+      totals[desc] = (totals[desc] || 0) + hh;
       if (!hoursSet[desc]) hoursSet[desc] = new Set();
       const key = `${r.data}_${r.horario}`;
       hoursSet[desc].add(key);
