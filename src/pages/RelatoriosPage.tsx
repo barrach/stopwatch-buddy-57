@@ -249,9 +249,11 @@ export default function RelatoriosPage() {
       result[key][desc] += getHH(r);
     });
     return Object.entries(result).sort(([a], [b]) => timeIndex(a) - timeIndex(b)).map(([label, descs]) => {
-      const total = Object.values(descs).reduce((s, v) => s + v, 0);
-      const row: any = { time: label, total };
-      for (const desc of dynamicDescriptions) row[desc] = total > 0 ? +((descs[desc] || 0) / total * 100).toFixed(1) : 0;
+      const keys = dynamicDescriptions;
+      const vals = keys.map(d => descs[d] || 0);
+      const pcts = normalizeToHundred(keys, vals);
+      const row: any = { time: label };
+      for (const desc of keys) row[desc] = pcts[desc] || 0;
       return row;
     });
   }, [records, dynamicDescriptions]);
