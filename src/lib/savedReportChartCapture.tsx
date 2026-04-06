@@ -7,6 +7,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import type { SavedReport } from "@/components/SavedReportsList";
+import type { SavedReportExternalCause } from "./savedReportExternalCauses";
 
 export interface SavedReportChartImages {
   byObra?: string;

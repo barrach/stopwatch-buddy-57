@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import type { SavedReport } from "@/components/SavedReportsList";
 import { PDF_OCEAN_RGB } from "./pdfTextFormatting";
 import type { SavedReportChartImages, SavedReportChartDimensions } from "./savedReportChartCapture";
+import type { SavedReportExternalCause } from "./savedReportExternalCauses";
 
 type RGB = [number, number, number];
 
