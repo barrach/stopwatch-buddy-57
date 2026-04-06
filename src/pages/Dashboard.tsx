@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext, normalizeToHundred } from "@/lib/hourlyAverageCalc";
 import { applyManualAdjustments } from "@/lib/manualAdjustments";
 import { applyDbWeighting } from "@/lib/manualAdjustments";
 import { LegendTooltip } from "@/components/LegendTooltip";
