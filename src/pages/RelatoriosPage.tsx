@@ -313,12 +313,17 @@ export default function RelatoriosPage() {
 
   const externalCausas = useMemo(() => {
     const AG_PT = "Aguardando Liberação de PT";
+    const KNOWN_NPE = new Set([
+      "Fatores Climáticos e Consequências",
+      "Interferências Operacionais",
+    ]);
     const totals: Record<string, number> = {};
     records.forEach((r: any) => {
       const desc = canonicalDescription(r.descricao || "Sem descrição");
       const isNPE = isExternalRecord(r);
       const isAgPT = desc === AG_PT;
-      if (!isNPE && !isAgPT) return;
+      const isKnownNPE = KNOWN_NPE.has(desc);
+      if (!isNPE && !isAgPT && !isKnownNPE) return;
       let hh = getHH(r);
       // Fallback: if HH is 0 but record has quantidade_base, use it so NPE records aren't invisible
       if (hh === 0 && r.quantidade_base > 0) {
