@@ -93,9 +93,11 @@ export default function RelatoriosSalvosPage() {
     }
   };
 
-  const handleExportPDF = (report: SavedReport) => {
+  const handleExportPDF = async (report: SavedReport) => {
+    toast({ title: "Gerando PDF...", description: "Capturando gráficos, aguarde..." });
     try {
-      generateSavedReportPDF(report);
+      const { images, dimensions } = await captureSavedReportCharts(report);
+      generateSavedReportPDF(report, images, dimensions);
       toast({ title: "PDF gerado com sucesso!" });
     } catch (err: any) {
       toast({ title: "Erro ao gerar PDF", description: err.message, variant: "destructive" });

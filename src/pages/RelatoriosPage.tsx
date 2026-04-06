@@ -23,6 +23,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import { captureSavedReportCharts } from "@/lib/savedReportChartCapture";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
