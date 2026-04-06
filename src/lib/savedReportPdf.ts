@@ -193,7 +193,7 @@ export function generateSavedReportPDF(
 
     for (const item of extData) {
       if (item.value <= 0) continue;
-      const pct = totalNpe > 0 ? ((item.value / totalNpe) * 100).toFixed(1) : "0.0";
+      const pct = item.percent > 0 ? item.percent.toFixed(1) : (totalNpe > 0 ? ((item.value / totalNpe) * 100).toFixed(1) : "0.0");
       const color = npeColors[item.name] || C.textMuted;
       // Color dot
       doc.setFillColor(...color);

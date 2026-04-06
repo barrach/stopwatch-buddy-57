@@ -164,8 +164,8 @@ export async function captureSavedReportCharts(
     },
     {
       key: "externalCausas",
-      element: s.externalCausas?.length ? (
-        <ExternalPieSection data={s.externalCausas} title="Causas Externas de Parada (NPE)" />
+      element: (externalCausasOverride || s.externalCausas)?.length ? (
+        <ExternalPieSection data={externalCausasOverride || s.externalCausas} title="Causas Externas de Parada (NPE)" />
       ) : null,
     },
   ];
