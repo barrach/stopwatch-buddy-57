@@ -22,6 +22,7 @@ import SavedReportView from "@/components/SavedReportView";
 import ReportComparisonView from "@/components/ReportComparisonView";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
 import { captureSavedReportCharts } from "@/lib/savedReportChartCapture";
+import { calculateSavedReportExternalCauses } from "@/lib/savedReportExternalCauses";
 
 export default function RelatoriosSalvosPage() {
   const { toast } = useToast();
