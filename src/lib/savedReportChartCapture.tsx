@@ -70,7 +70,8 @@ async function captureElement(el: HTMLElement): Promise<{ data: string; width: n
  * Renders chart components off-screen, captures them as images, then cleans up.
  */
 export async function captureSavedReportCharts(
-  report: SavedReport
+  report: SavedReport,
+  externalCausasOverride?: SavedReportExternalCause[]
 ): Promise<{ images: SavedReportChartImages; dimensions: SavedReportChartDimensions }> {
   const s = report.snapshot;
   const images: SavedReportChartImages = {};
