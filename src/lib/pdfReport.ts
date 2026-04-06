@@ -652,7 +652,7 @@ export function generatePDFReport(data: PDFReportData) {
 
   sectionHeader("Indicadores Principais");
   const kpis = [
-    { label: "Total de Amostras", value: `${data.totalAmostras}`, color: C.blue },
+    { label: "Total de Amostras", value: `${Math.round(data.totalAmostras)}`, color: C.blue },
     { label: "Produtividade", value: fmtPct(data.produtivoPct), color: C.green },
     { label: "Suplementar", value: fmtPct(data.suplementarPct), color: C.amber },
     { label: "Não Produtivo", value: fmtPct(data.naoProdutivoPct), color: C.red },

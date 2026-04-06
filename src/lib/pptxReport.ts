@@ -469,7 +469,7 @@ export function generatePPTXReport(data: PDFReportData) {
   let y1 = 3.6;
   y1 = addSectionHeader(s1, "Indicadores Principais", y1);
   const kpis = [
-    { label: "Total de Amostras", value: String(data.totalAmostras), color: T.ocean },
+    { label: "Total de Amostras", value: String(Math.round(data.totalAmostras)), color: T.ocean },
     { label: "Produtividade", value: fmtPct(data.produtivoPct), color: T.green },
     { label: "Suplementar", value: fmtPct(data.suplementarPct), color: T.amber },
     { label: "Não Produtivo", value: fmtPct(data.naoProdutivoPct), color: T.red },
