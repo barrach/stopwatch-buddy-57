@@ -1009,11 +1009,13 @@ export default function Dashboard() {
         else entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
         return entries.map(([label, descs]) => {
           const total = Object.values(descs).reduce((s, v) => s + v, 0);
+          const keys = allDescriptions;
+          const vals = keys.map(d => descs[d] || 0);
+          const pcts = normalizeToHundred(keys, vals);
           const row: any = { time: label, total };
-          for (const desc of allDescriptions) {
-            const qty = descs[desc] || 0;
-            row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-            row[`raw_${desc}`] = qty;
+          for (const desc of keys) {
+            row[desc] = pcts[desc] || 0;
+            row[`raw_${desc}`] = descs[desc] || 0;
           }
           return row;
         });
