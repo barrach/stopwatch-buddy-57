@@ -851,11 +851,18 @@ export default function Dashboard() {
           row[`raw_${desc}`] = rawQty;
         }
       } else {
+        const rawQtys: Record<string, number> = {};
         for (const desc of allDescriptions) {
           let qty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getHH(r); });
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
+          rawQtys[desc] = qty;
+        }
+        const keys = allDescriptions;
+        const vals = keys.map(d => rawQtys[d] || 0);
+        const pcts = normalizeToHundred(keys, vals);
+        for (const desc of keys) {
+          row[desc] = pcts[desc] || 0;
+          row[`raw_${desc}`] = rawQtys[desc] || 0;
         }
       }
       return row;
