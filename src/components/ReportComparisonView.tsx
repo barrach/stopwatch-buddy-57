@@ -47,6 +47,24 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
   const [exporting, setExporting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Normalize snapshot chart rows so each bar sums to exactly 100%
+  const normalizeRows = (rows: any[], xKey: string): any[] => {
+    if (!rows || rows.length === 0) return [];
+    return rows.map(row => {
+      const keys = CANONICAL_ORDER_FULL.filter(d => row[d] !== undefined && row[d] !== null);
+      if (keys.length === 0) return row;
+      const rawValues = keys.map(d => Number(row[d]) || 0);
+      const sum = rawValues.reduce((s, v) => s + v, 0);
+      if (sum <= 0) return row;
+      const normalized = normalizeToHundred(keys, rawValues);
+      const newRow: any = { [xKey]: row[xKey] };
+      for (const d of CANONICAL_ORDER_FULL) {
+        newRow[d] = normalized[d] ?? row[d] ?? 0;
+      }
+      return newRow;
+    });
+  };
+
   const sA = reportA.snapshot as any;
   const sB = reportB.snapshot as any;
 
