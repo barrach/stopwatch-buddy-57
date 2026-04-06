@@ -96,9 +96,8 @@ export function generateSavedReportPDF(
   const kpis = [
     { label: "Total de Medições", value: String(summ.totalMeasurements != null ? Math.round(summ.totalMeasurements) : "—") },
     { label: "Dias Analisados", value: String(summ.totalDays || "—") },
-    { label: "Horários", value: (summ.times || []).join(", ") || "—" },
   ];
-  const kpiW = (CONTENT_W - 6) / 3;
+  const kpiW = (CONTENT_W - 3) / 2;
   kpis.forEach((kpi, i) => {
     const x = MARGIN + i * (kpiW + 3);
     doc.setFillColor(...C.cardBg);
