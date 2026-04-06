@@ -317,13 +317,12 @@ export function computeHourlyAdjustedPercentages(
   // Total of all HH values
   const total = Object.values(descValues).reduce((a, b) => a + b, 0);
 
-  // Compute percentages
-  const result: Record<string, number> = {};
-  for (const desc of descriptions) {
-    result[desc] = total > 0 ? +((descValues[desc] / total) * 100).toFixed(1) : 0;
+  // Compute percentages using largest remainder method to guarantee sum = 100%
+  if (total <= 0) {
+    return Object.fromEntries(descriptions.map(d => [d, 0]));
   }
 
-  return result;
+  return normalizeToHundred(descriptions, descriptions.map(d => descValues[d] || 0));
 }
 
 /**
