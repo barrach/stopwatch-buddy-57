@@ -159,10 +159,51 @@ export function generateSavedReportPDF(
   }
 
   if (chartImages.externalCausas) {
-    const neededH = estimateChartH(chartDimensions, "externalCausas", CONTENT_W) + 14;
+    const pieH = estimateChartH(chartDimensions, "externalCausas", CONTENT_W * 0.5);
+    const neededH = pieH + 18;
     ensureSpace(neededH);
     sectionHeader("Causas Externas de Parada (NPE)");
-    addChartImage(chartImages.externalCausas, "externalCausas");
+
+    // Layout: pie image on the left, text legend on the right
+    const pieW = CONTENT_W * 0.5;
+    doc.addImage(chartImages.externalCausas, "PNG", MARGIN, curY, pieW, pieH);
+
+    // Build legend from snapshot data
+    const npeColors: Record<string, RGB> = {
+      "Aguardando Liberação de PT": [34, 197, 94],
+      "Fatores Climáticos e Consequências": [249, 115, 22],
+      "Interferências Operacionais": [217, 189, 140],
+    };
+    const extData: Array<{ name: string; value: number }> = (s.externalCausas || []).map((d: any) => ({
+      name: d.name || d.categoria || "",
+      value: Number(d.value) || 0,
+    }));
+    const totalNpe = extData.reduce((acc, d) => acc + d.value, 0);
+
+    const legendX = MARGIN + pieW + 6;
+    let legendY = curY + 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...C.textDark);
+    doc.text("Legenda", legendX, legendY);
+    legendY += 6;
+
+    for (const item of extData) {
+      if (item.value <= 0) continue;
+      const pct = totalNpe > 0 ? ((item.value / totalNpe) * 100).toFixed(1) : "0.0";
+      const color = npeColors[item.name] || C.textMuted;
+      // Color dot
+      doc.setFillColor(...color);
+      doc.circle(legendX + 2, legendY - 1.2, 1.8, "F");
+      // Text
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...C.textDark);
+      doc.text(`${item.name} — ${pct}%`, legendX + 6, legendY);
+      legendY += 5.5;
+    }
+
+    curY += pieH + 4;
   }
 
   // ═══ PAGE FOOTER ═══
