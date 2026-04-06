@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import type { SavedReport } from "@/components/SavedReportsList";
 import { PDF_OCEAN_RGB } from "./pdfTextFormatting";
 import type { SavedReportChartImages, SavedReportChartDimensions } from "./savedReportChartCapture";
+import type { SavedReportExternalCause } from "./savedReportExternalCauses";
 
 type RGB = [number, number, number];
 
@@ -33,7 +34,8 @@ function estimateChartH(dims: SavedReportChartDimensions, key: string, width: nu
 export function generateSavedReportPDF(
   report: SavedReport,
   chartImages: SavedReportChartImages,
-  chartDimensions: SavedReportChartDimensions
+  chartDimensions: SavedReportChartDimensions,
+  externalCausasData?: SavedReportExternalCause[]
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const s = report.snapshot;
@@ -168,15 +170,16 @@ export function generateSavedReportPDF(
     const pieW = CONTENT_W * 0.5;
     doc.addImage(chartImages.externalCausas, "PNG", MARGIN, curY, pieW, pieH);
 
-    // Build legend from snapshot data
+    // Build legend from recomputed PDF data when available
     const npeColors: Record<string, RGB> = {
       "Aguardando Liberação de PT": [34, 197, 94],
       "Fatores Climáticos e Consequências": [249, 115, 22],
       "Interferências Operacionais": [217, 189, 140],
     };
-    const extData: Array<{ name: string; value: number }> = (s.externalCausas || []).map((d: any) => ({
+    const extData: Array<{ name: string; value: number; percent?: number }> = (externalCausasData || s.externalCausas || []).map((d: any) => ({
       name: d.name || d.categoria || "",
       value: Number(d.value) || 0,
+      percent: Number(d.percent) || 0,
     }));
     const totalNpe = extData.reduce((acc, d) => acc + d.value, 0);
 
@@ -190,7 +193,7 @@ export function generateSavedReportPDF(
 
     for (const item of extData) {
       if (item.value <= 0) continue;
-      const pct = totalNpe > 0 ? ((item.value / totalNpe) * 100).toFixed(1) : "0.0";
+      const pct = item.percent > 0 ? item.percent.toFixed(1) : (totalNpe > 0 ? ((item.value / totalNpe) * 100).toFixed(1) : "0.0");
       const color = npeColors[item.name] || C.textMuted;
       // Color dot
       doc.setFillColor(...color);

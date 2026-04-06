@@ -7,6 +7,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import type { SavedReport } from "@/components/SavedReportsList";
+import type { SavedReportExternalCause } from "./savedReportExternalCauses";
 
 export interface SavedReportChartImages {
   byObra?: string;
@@ -69,7 +70,8 @@ async function captureElement(el: HTMLElement): Promise<{ data: string; width: n
  * Renders chart components off-screen, captures them as images, then cleans up.
  */
 export async function captureSavedReportCharts(
-  report: SavedReport
+  report: SavedReport,
+  externalCausasOverride?: SavedReportExternalCause[]
 ): Promise<{ images: SavedReportChartImages; dimensions: SavedReportChartDimensions }> {
   const s = report.snapshot;
   const images: SavedReportChartImages = {};
@@ -162,8 +164,8 @@ export async function captureSavedReportCharts(
     },
     {
       key: "externalCausas",
-      element: s.externalCausas?.length ? (
-        <ExternalPieSection data={s.externalCausas} title="Causas Externas de Parada (NPE)" />
+      element: (externalCausasOverride || s.externalCausas)?.length ? (
+        <ExternalPieSection data={externalCausasOverride || s.externalCausas} title="Causas Externas de Parada (NPE)" />
       ) : null,
     },
   ];

@@ -22,6 +22,7 @@ import SavedReportView from "@/components/SavedReportView";
 import ReportComparisonView from "@/components/ReportComparisonView";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
 import { captureSavedReportCharts } from "@/lib/savedReportChartCapture";
+import { calculateSavedReportExternalCauses } from "@/lib/savedReportExternalCauses";
 
 export default function RelatoriosSalvosPage() {
   const { toast } = useToast();
@@ -94,10 +95,11 @@ export default function RelatoriosSalvosPage() {
   };
 
   const handleExportPDF = async (report: SavedReport) => {
-    toast({ title: "Gerando PDF...", description: "Capturando gráficos, aguarde..." });
+    toast({ title: "Gerando PDF...", description: "Recalculando NPE e capturando gráficos, aguarde..." });
     try {
-      const { images, dimensions } = await captureSavedReportCharts(report);
-      generateSavedReportPDF(report, images, dimensions);
+      const externalCausasData = await calculateSavedReportExternalCauses(report);
+      const { images, dimensions } = await captureSavedReportCharts(report, externalCausasData);
+      generateSavedReportPDF(report, images, dimensions, externalCausasData);
       toast({ title: "PDF gerado com sucesso!" });
     } catch (err: any) {
       toast({ title: "Erro ao gerar PDF", description: err.message, variant: "destructive" });
