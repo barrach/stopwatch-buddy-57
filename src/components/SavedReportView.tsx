@@ -82,11 +82,11 @@ export default function SavedReportView({ report, onBack, onExportPDF }: Props) 
       </div>
 
       {/* Charts from snapshot */}
-      <StackedBarChartSection data={s.byObra || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
-      <StackedBarChartSection data={s.bySpecialty || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
-      <StackedBarChartSection data={s.byHorario || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
-      <StackedBarChartSection data={s.byDiaSemana || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
-      <StackedBarChartSection data={s.byMes || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
+      <StackedBarChartSection data={normalizeRows(s.byObra || [], "name")} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
+      <StackedBarChartSection data={normalizeRows(s.bySpecialty || [], "name")} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
+      <StackedBarChartSection data={normalizeRows(s.byHorario || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
+      <StackedBarChartSection data={normalizeRows(s.byDiaSemana || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
+      <StackedBarChartSection data={normalizeRows(s.byMes || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
       <ParetoChartSection data={s.paretoData || []} title="Top Causas (Pareto)" mode="categoria" />
       <ExternalPieSection data={s.externalCausas || []} title="Causas Externas de Parada" />
     </div>
