@@ -1,4 +1,5 @@
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
+import { normalizeToHundred } from "@/lib/hourlyAverageCalc";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
