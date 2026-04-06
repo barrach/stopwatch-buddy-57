@@ -229,9 +229,11 @@ export default function RelatoriosPage() {
     return Object.entries(result)
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
-        const total = Object.values(descs).reduce((s, v) => s + v, 0);
-        const row: any = { name, total };
-        for (const desc of dynamicDescriptions) row[desc] = total > 0 ? +((descs[desc] || 0) / total * 100).toFixed(1) : 0;
+        const keys = dynamicDescriptions;
+        const vals = keys.map(d => descs[d] || 0);
+        const pcts = normalizeToHundred(keys, vals);
+        const row: any = { name };
+        for (const desc of keys) row[desc] = pcts[desc] || 0;
         return row;
       }).sort((a, b) => (b["Trabalhando"] || 0) - (a["Trabalhando"] || 0));
   }, [records, dynamicDescriptions]);
