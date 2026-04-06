@@ -21,6 +21,7 @@ import type { SavedReport } from "@/components/SavedReportsList";
 import SavedReportView from "@/components/SavedReportView";
 import ReportComparisonView from "@/components/ReportComparisonView";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import { captureSavedReportCharts } from "@/lib/savedReportChartCapture";
 
 export default function RelatoriosSalvosPage() {
   const { toast } = useToast();
