@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
 import { normalizeTime } from "@/lib/chartConstants";
-import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext } from "@/lib/hourlyAverageCalc";
+import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext, normalizeToHundred } from "@/lib/hourlyAverageCalc";
 import { applyManualAdjustments } from "@/lib/manualAdjustments";
 import { applyDbWeighting } from "@/lib/manualAdjustments";
 import { LegendTooltip } from "@/components/LegendTooltip";
@@ -802,11 +802,13 @@ export default function Dashboard() {
       .filter(([_, descs]) => Object.values(descs).reduce((s, v) => s + v, 0) > 0)
       .map(([name, descs]) => {
         const total = Object.values(descs).reduce((s, v) => s + v, 0);
+        const keys = allDescriptions;
+        const vals = keys.map(d => descs[d] || 0);
+        const pcts = normalizeToHundred(keys, vals);
         const row: any = { name, total };
-        for (const desc of allDescriptions) {
-          const qty = descs[desc] || 0;
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
+        for (const desc of keys) {
+          row[desc] = pcts[desc] || 0;
+          row[`raw_${desc}`] = descs[desc] || 0;
         }
         return row;
       })
@@ -849,11 +851,18 @@ export default function Dashboard() {
           row[`raw_${desc}`] = rawQty;
         }
       } else {
+        const rawQtys: Record<string, number> = {};
         for (const desc of allDescriptions) {
           let qty = 0;
           recs.forEach((r: any) => { if (canonicalDescription(r.descricao || "") === desc) qty += getHH(r); });
-          row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-          row[`raw_${desc}`] = qty;
+          rawQtys[desc] = qty;
+        }
+        const keys = allDescriptions;
+        const vals = keys.map(d => rawQtys[d] || 0);
+        const pcts = normalizeToHundred(keys, vals);
+        for (const desc of keys) {
+          row[desc] = pcts[desc] || 0;
+          row[`raw_${desc}`] = rawQtys[desc] || 0;
         }
       }
       return row;
@@ -1000,11 +1009,13 @@ export default function Dashboard() {
         else entries.sort(([a], [b]) => MONTH_NAMES.indexOf(a) - MONTH_NAMES.indexOf(b));
         return entries.map(([label, descs]) => {
           const total = Object.values(descs).reduce((s, v) => s + v, 0);
+          const keys = allDescriptions;
+          const vals = keys.map(d => descs[d] || 0);
+          const pcts = normalizeToHundred(keys, vals);
           const row: any = { time: label, total };
-          for (const desc of allDescriptions) {
-            const qty = descs[desc] || 0;
-            row[desc] = total > 0 ? +((qty / total) * 100).toFixed(1) : 0;
-            row[`raw_${desc}`] = qty;
+          for (const desc of keys) {
+            row[desc] = pcts[desc] || 0;
+            row[`raw_${desc}`] = descs[desc] || 0;
           }
           return row;
         });

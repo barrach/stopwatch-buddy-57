@@ -1,4 +1,5 @@
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
+import { normalizeToHundred } from "@/lib/hourlyAverageCalc";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -17,6 +18,23 @@ export default function SavedReportView({ report, onBack, onExportPDF }: Props) 
   const periodLabel = report.date_mode === "single"
     ? report.data_unica || ""
     : `${report.data_inicio} até ${report.data_fim}`;
+
+  const normalizeRows = (rows: any[], xKey: string): any[] => {
+    if (!rows || rows.length === 0) return [];
+    return rows.map(row => {
+      const keys = CANONICAL_ORDER_FULL.filter(d => row[d] !== undefined && row[d] !== null);
+      if (keys.length === 0) return row;
+      const rawValues = keys.map(d => Number(row[d]) || 0);
+      const sum = rawValues.reduce((s, v) => s + v, 0);
+      if (sum <= 0) return row;
+      const normalized = normalizeToHundred(keys, rawValues);
+      const newRow: any = { [xKey]: row[xKey] };
+      for (const d of CANONICAL_ORDER_FULL) {
+        newRow[d] = normalized[d] ?? row[d] ?? 0;
+      }
+      return newRow;
+    });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -64,11 +82,11 @@ export default function SavedReportView({ report, onBack, onExportPDF }: Props) 
       </div>
 
       {/* Charts from snapshot */}
-      <StackedBarChartSection data={s.byObra || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
-      <StackedBarChartSection data={s.bySpecialty || []} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
-      <StackedBarChartSection data={s.byHorario || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
-      <StackedBarChartSection data={s.byDiaSemana || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
-      <StackedBarChartSection data={s.byMes || []} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
+      <StackedBarChartSection data={normalizeRows(s.byObra || [], "name")} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Visão Geral por Contrato" xAngle={-15} />
+      <StackedBarChartSection data={normalizeRows(s.bySpecialty || [], "name")} dataKeyX="name" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Especialidade" xAngle={-25} />
+      <StackedBarChartSection data={normalizeRows(s.byHorario || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Horário" />
+      <StackedBarChartSection data={normalizeRows(s.byDiaSemana || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Dia da Semana" />
+      <StackedBarChartSection data={normalizeRows(s.byMes || [], "time")} dataKeyX="time" descriptions={CANONICAL_ORDER_FULL} title="Produtividade por Mês" />
       <ParetoChartSection data={s.paretoData || []} title="Top Causas (Pareto)" mode="categoria" />
       <ExternalPieSection data={s.externalCausas || []} title="Causas Externas de Parada" />
     </div>

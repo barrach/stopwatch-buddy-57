@@ -18,6 +18,37 @@
  *            All HH values are derived at read-time.
  */
 
+/**
+ * Normalize an array of raw values into percentages that sum to exactly 100.0%
+ * Uses the Largest Remainder Method to distribute rounding residuals.
+ */
+export function normalizeToHundred(keys: string[], rawValues: number[]): Record<string, number> {
+  const total = rawValues.reduce((s, v) => s + v, 0);
+  if (total <= 0) return Object.fromEntries(keys.map(k => [k, 0]));
+
+  const exact = rawValues.map(v => (v / total) * 100);
+  const floored = exact.map(v => Math.floor(v * 10) / 10);
+  const flooredSum = Math.round(floored.reduce((s, v) => s + v, 0) * 10);
+  let remainder = 1000 - flooredSum;
+
+  const indices = exact.map((_, i) => i)
+    .sort((a, b) => {
+      const remA = exact[a] * 10 - Math.floor(exact[a] * 10);
+      const remB = exact[b] * 10 - Math.floor(exact[b] * 10);
+      return remB - remA;
+    });
+
+  for (let j = 0; j < remainder && j < indices.length; j++) {
+    floored[indices[j]] = Math.round((floored[indices[j]] + 0.1) * 10) / 10;
+  }
+
+  const result: Record<string, number> = {};
+  for (let i = 0; i < keys.length; i++) {
+    result[keys[i]] = +floored[i].toFixed(1);
+  }
+  return result;
+}
+
 import { canonicalDescription } from "@/lib/chartConstants";
 
 /** Descriptions that use HH REAL (qty × duration) */
@@ -317,13 +348,12 @@ export function computeHourlyAdjustedPercentages(
   // Total of all HH values
   const total = Object.values(descValues).reduce((a, b) => a + b, 0);
 
-  // Compute percentages
-  const result: Record<string, number> = {};
-  for (const desc of descriptions) {
-    result[desc] = total > 0 ? +((descValues[desc] / total) * 100).toFixed(1) : 0;
+  // Compute percentages using largest remainder method to guarantee sum = 100%
+  if (total <= 0) {
+    return Object.fromEntries(descriptions.map(d => [d, 0]));
   }
 
-  return result;
+  return normalizeToHundred(descriptions, descriptions.map(d => descValues[d] || 0));
 }
 
 /**
