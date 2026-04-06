@@ -234,14 +234,14 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
       {chartSections.map(({ id, title, dataKey, xKey, xAngle }) => (
         <div key={dataKey} id={id} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <StackedBarChartSection
-            data={sA[dataKey] || []}
+            data={normalizeRows(sA[dataKey] || [], xKey)}
             dataKeyX={xKey}
             descriptions={CANONICAL_ORDER_FULL}
             title={`${title} — A`}
             xAngle={xAngle}
           />
           <StackedBarChartSection
-            data={sB[dataKey] || []}
+            data={normalizeRows(sB[dataKey] || [], xKey)}
             dataKeyX={xKey}
             descriptions={CANONICAL_ORDER_FULL}
             title={`${title} — B`}
