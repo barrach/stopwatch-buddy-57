@@ -23,6 +23,7 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { generateSavedReportPDF } from "@/lib/savedReportPdf";
+import { captureSavedReportCharts } from "@/lib/savedReportChartCapture";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 export default function RelatoriosPage() {
@@ -407,9 +408,11 @@ export default function RelatoriosPage() {
   };
 
   // ── Export PDF from saved report ──
-  const handleExportPDF = (report: SavedReport) => {
+  const handleExportPDF = async (report: SavedReport) => {
+    toast({ title: "Gerando PDF...", description: "Capturando gráficos, aguarde..." });
     try {
-      generateSavedReportPDF(report);
+      const { images, dimensions } = await captureSavedReportCharts(report);
+      generateSavedReportPDF(report, images, dimensions);
       toast({ title: "PDF gerado com sucesso!" });
     } catch (err: any) {
       toast({ title: "Erro ao gerar PDF", description: err.message, variant: "destructive" });
