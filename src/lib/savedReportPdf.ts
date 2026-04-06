@@ -34,7 +34,8 @@ function estimateChartH(dims: SavedReportChartDimensions, key: string, width: nu
 export function generateSavedReportPDF(
   report: SavedReport,
   chartImages: SavedReportChartImages,
-  chartDimensions: SavedReportChartDimensions
+  chartDimensions: SavedReportChartDimensions,
+  externalCausasData?: SavedReportExternalCause[]
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const s = report.snapshot;
