@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Save, Archive } from "lucide-react";
@@ -87,15 +88,11 @@ export default function RelatoriosPage() {
 
   const { data: allRecords = [] } = useQuery({
     queryKey: ["observacoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("observacoes")
-        .select("*, especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)")
-        .is("deleted_at", null)
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchAllObservacoes(
+      "*, especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)",
+      { deletedNull: true },
+      [{ column: "data", ascending: false }]
+    ),
   });
 
   // ── Category helpers ──

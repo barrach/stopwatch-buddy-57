@@ -21,6 +21,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Scale, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -196,16 +197,11 @@ export default function Records() {
 
   const { data: rawRecords = [] } = useQuery({
     queryKey: ["observacoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)")
-        .is("deleted_at", null)
-        .order("data", { ascending: false })
-        .order("horario", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchAllObservacoes(
+      "*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)",
+      { deletedNull: true },
+      [{ column: "data", ascending: false }, { column: "horario", ascending: false }]
+    ),
   });
 
   // Apply contract-based restriction for non-admin users

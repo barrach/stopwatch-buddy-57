@@ -10,6 +10,7 @@ import {
 import { Sparkles, Loader2, FileText, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useUserObra } from "@/hooks/useUserObra";
 
 export default function RelatorioIA() {
@@ -36,14 +37,10 @@ export default function RelatorioIA() {
 
   const { data: allRecords = [] } = useQuery({
     queryKey: ["observacoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("observacoes")
-        .select("*, especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome)")
-        .is("deleted_at", null);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchAllObservacoes(
+      "*, especialidades(nome), categorias_observacao(nome, categoria_pai_id), obras(nome)",
+      { deletedNull: true }
+    ),
   });
 
   const { data: parentCats = [] } = useQuery({

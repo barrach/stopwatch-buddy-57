@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { Search, RotateCcw, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,15 +40,11 @@ export default function AuditoriaPage() {
 
   const { data: deletedRecords = [], isLoading } = useQuery({
     queryKey: ["observacoes_deletadas"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)")
-        .not("deleted_at", "is", null)
-        .order("deleted_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchAllObservacoes(
+      "*, rotas(nome), especialidades(nome), categorias_observacao(nome), obras(nome)",
+      { deletedNull: false },
+      [{ column: "deleted_at", ascending: false }]
+    ),
     enabled: isAdmin,
   });
 

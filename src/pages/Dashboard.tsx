@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain, Presentation, Trophy, Search } from "lucide-react";
 import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";
@@ -443,15 +444,11 @@ export default function Dashboard() {
 
   const { data: allRecords = [] } = useQuery({
     queryKey: ["observacoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("observacoes")
-        .select("*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)")
-        .is("deleted_at", null)
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchAllObservacoes(
+      "*, rotas(nome), especialidades(nome), categorias_observacao(nome, categoria_pai_id, impacta_produtividade), obras(nome)",
+      { deletedNull: true },
+      [{ column: "data", ascending: false }]
+    ),
   });
 
   const { data: parentCats = [] } = useQuery({
