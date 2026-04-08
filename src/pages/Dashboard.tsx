@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, X, Sparkles, Loader2, FileText, ChevronDown, ChevronUp, TrendingUp, CloudRain, Presentation, Trophy, Search } from "lucide-react";
 import { ChartZoomDialog, ZoomButton } from "@/components/ChartZoomDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { normalizeDescriptionName } from "@/lib/categoryNormalization";

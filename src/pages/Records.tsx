@@ -21,6 +21,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { Search, Trash2, Download, Upload, Loader2, AlertTriangle, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Scale, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

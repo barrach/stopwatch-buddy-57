@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { Search, RotateCcw, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 

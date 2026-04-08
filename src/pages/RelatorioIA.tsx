@@ -10,6 +10,7 @@ import {
 import { Sparkles, Loader2, FileText, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useUserObra } from "@/hooks/useUserObra";
 
 export default function RelatorioIA() {
