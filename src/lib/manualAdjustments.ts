@@ -59,6 +59,12 @@ export function applyManualAdjustments(records: any[]): any[] {
   const result: any[] = [];
 
   for (const r of records) {
+    // Skip manual adjustments for DB-weighted records — DB weighting takes precedence
+    if (r.ponderado && r.peso_real) {
+      result.push(r);
+      continue;
+    }
+
     const normalizedHorario = (r.horario || "").slice(0, 5);
     
     const adjustment = MANUAL_ADJUSTMENTS.find(
@@ -108,6 +114,7 @@ const WEIGHTING_DISTRIBUTION: Record<string, Array<{ descricao: string; fraction
  */
 export function applyDbWeighting(records: any[]): any[] {
   const result: any[] = [];
+  const debugLog: any[] = [];
 
   for (const r of records) {
     if (!r.ponderado || !r.peso_real) {
@@ -116,15 +123,17 @@ export function applyDbWeighting(records: any[]): any[] {
     }
 
     const pesoReal = Number(r.peso_real);
-    const pesoRestante = 1 - pesoReal;
+    const pesoRestante = +(1 - pesoReal).toFixed(4);
     const normalizedHorario = (r.horario || "").slice(0, 5);
     const qty = Number(r.quantidade_base ?? r.quantidade ?? 0);
+
+    const qtyPonderada = Math.round(qty * pesoReal * 100) / 100;
 
     // Keep original record with reduced weight
     result.push({
       ...r,
-      quantidade: Math.round(qty * pesoReal * 100) / 100,
-      quantidade_base: Math.round(qty * pesoReal * 100) / 100,
+      quantidade: qtyPonderada,
+      quantidade_base: qtyPonderada,
       _ponderado: true,
     });
 
@@ -132,17 +141,48 @@ export function applyDbWeighting(records: any[]): any[] {
     const distribution = WEIGHTING_DISTRIBUTION[normalizedHorario];
     if (distribution && pesoRestante > 0) {
       for (const d of distribution) {
+        const virtualQty = Math.round(qty * pesoRestante * d.fraction * 100) / 100;
         result.push({
           ...r,
           id: `${r.id}_pond_${d.descricao.slice(0, 10)}`,
           descricao: d.descricao,
-          quantidade: Math.round(qty * pesoRestante * d.fraction * 100) / 100,
-          quantidade_base: Math.round(qty * pesoRestante * d.fraction * 100) / 100,
+          quantidade: virtualQty,
+          quantidade_base: virtualQty,
           _ponderado_virtual: true,
           _ponderado: true,
         });
       }
     }
+
+    debugLog.push({
+      data: r.data,
+      hora_padrao: normalizedHorario,
+      hora_real: r.hora_real,
+      especialidade: (r.especialidades as any)?.nome || r.especialidade_id,
+      descricao: r.descricao,
+      qtd_original: qty,
+      peso_aplicado: pesoReal,
+      qtd_ponderada: qtyPonderada,
+      qtd_virtual_PT: pesoRestante > 0 ? Math.round(qty * pesoRestante * 100) / 100 : 0,
+    });
+  }
+
+  if (debugLog.length > 0) {
+    console.group("🔍 [Ponderação] Validação de registros ponderados");
+    console.table(debugLog);
+    const totalOriginal = debugLog.reduce((s, d) => s + d.qtd_original, 0);
+    const totalPonderado = debugLog.reduce((s, d) => s + d.qtd_ponderada, 0);
+    const totalVirtualPT = debugLog.reduce((s, d) => s + d.qtd_virtual_PT, 0);
+    console.log(`Total bruto: ${totalOriginal}`);
+    console.log(`Total observado (ponderado): ${totalPonderado}`);
+    console.log(`Total virtual (PT/distribuição): ${totalVirtualPT}`);
+    console.log(`Soma ponderado + virtual: ${+(totalPonderado + totalVirtualPT).toFixed(2)} (deve ser ≈ ${totalOriginal})`);
+    if (Math.abs(totalPonderado + totalVirtualPT - totalOriginal) > 0.1) {
+      console.warn("⚠️ DIVERGÊNCIA detectada na ponderação!");
+    } else {
+      console.log("✅ Ponderação matematicamente consistente.");
+    }
+    console.groupEnd();
   }
 
   return result;
