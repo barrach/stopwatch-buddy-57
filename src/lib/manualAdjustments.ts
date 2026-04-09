@@ -59,6 +59,12 @@ export function applyManualAdjustments(records: any[]): any[] {
   const result: any[] = [];
 
   for (const r of records) {
+    // Skip manual adjustments for DB-weighted records — DB weighting takes precedence
+    if (r.ponderado && r.peso_real) {
+      result.push(r);
+      continue;
+    }
+
     const normalizedHorario = (r.horario || "").slice(0, 5);
     
     const adjustment = MANUAL_ADJUSTMENTS.find(
