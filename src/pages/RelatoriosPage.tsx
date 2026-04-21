@@ -142,9 +142,13 @@ export default function RelatoriosPage() {
       }
       if (r.obra_id !== obraId) return false;
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
+      if (excludeClimatic) {
+        const desc = canonicalDescription(r.descricao || "");
+        if (desc === "Fatores Climáticos e Consequências") return false;
+      }
       return true;
     });
-  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
+  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords, excludeClimatic]);
 
   // ── HH medio per day ──
   const hhMedioByDay = useMemo(() => {
