@@ -4,7 +4,8 @@ import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft, FileDown, CloudOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { SavedReport } from "@/components/SavedReportsList";
 
 interface Props {
@@ -50,10 +51,18 @@ export default function SavedReportView({ report, onBack, onExportPDF }: Props) 
 
       {/* Title */}
       <div className="stat-card">
-        <h2 className="text-lg font-bold text-foreground">
-          Relatório — {periodLabel} — {report.obra_nome}
-          {report.especialidade_nome && <span className="text-muted-foreground font-normal text-sm ml-2">({report.especialidade_nome})</span>}
-        </h2>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <h2 className="text-lg font-bold text-foreground">
+            Relatório — {periodLabel} — {report.obra_nome}
+            {report.especialidade_nome && <span className="text-muted-foreground font-normal text-sm ml-2">({report.especialidade_nome})</span>}
+          </h2>
+          {report.tipo_relatorio === "sem_fatores_climaticos" && (
+            <Badge variant="outline" className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+              <CloudOff className="w-3 h-3" />
+              Sem Fatores Climáticos
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Summary */}

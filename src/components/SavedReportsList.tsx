@@ -29,6 +29,7 @@ export interface SavedReport {
   especialidade_id: string | null;
   especialidade_nome: string | null;
   snapshot: any;
+  tipo_relatorio?: string | null;
 }
 
 interface Props {

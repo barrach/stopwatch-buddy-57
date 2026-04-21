@@ -9,11 +9,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save, Archive } from "lucide-react";
+import { FileText, Save, Archive, CloudOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
@@ -41,6 +43,7 @@ export default function RelatoriosPage() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [excludeClimatic, setExcludeClimatic] = useState(false);
 
   // Auto-set obra for restricted users
   useEffect(() => {
@@ -139,9 +142,13 @@ export default function RelatoriosPage() {
       }
       if (r.obra_id !== obraId) return false;
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
+      if (excludeClimatic) {
+        const desc = canonicalDescription(r.descricao || "");
+        if (desc === "Fatores Climáticos e Consequências") return false;
+      }
       return true;
     });
-  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords]);
+  }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords, excludeClimatic]);
 
   // ── HH medio per day ──
   const hhMedioByDay = useMemo(() => {
@@ -388,7 +395,7 @@ export default function RelatoriosPage() {
 
     const { error } = await supabase.from("relatorios_salvos").insert({
       criado_por: user.id,
-      titulo: `${obraName} — ${periodLabel}`,
+      titulo: `${obraName} — ${periodLabel}${excludeClimatic ? " (Sem Fatores Climáticos)" : ""}`,
       date_mode: dateMode,
       data_unica: dateMode === "single" ? date : null,
       data_inicio: dateMode === "period" ? startDate : null,
@@ -398,7 +405,8 @@ export default function RelatoriosPage() {
       especialidade_id: especialidadeId || null,
       especialidade_nome: specName || null,
       snapshot,
-    });
+      tipo_relatorio: excludeClimatic ? "sem_fatores_climaticos" : "padrao",
+    } as any);
 
     setSaving(false);
     if (error) {
@@ -508,6 +516,27 @@ export default function RelatoriosPage() {
               </Button>
             )}
           </div>
+
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <Checkbox
+                checked={excludeClimatic}
+                onCheckedChange={(v) => { setExcludeClimatic(!!v); setGenerated(false); }}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CloudOff className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    Excluir Fatores Climáticos e Consequências
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gera o relatório desconsiderando registros desta categoria. Útil para comparar o impacto real do clima na produtividade.
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Empty state */}
@@ -521,10 +550,18 @@ export default function RelatoriosPage() {
         {generated && records.length > 0 && (
           <div className="space-y-6 animate-fade-in">
             <div className="stat-card">
-              <h2 className="text-lg font-bold text-foreground">
-                Relatório — {periodLabel} — {obraName}
-                {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
-              </h2>
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <h2 className="text-lg font-bold text-foreground">
+                  Relatório — {periodLabel} — {obraName}
+                  {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
+                </h2>
+                {excludeClimatic && (
+                  <Badge variant="outline" className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                    <CloudOff className="w-3 h-3" />
+                    Sem Fatores Climáticos
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="stat-card">
