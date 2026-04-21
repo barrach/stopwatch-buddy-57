@@ -395,7 +395,7 @@ export default function RelatoriosPage() {
 
     const { error } = await supabase.from("relatorios_salvos").insert({
       criado_por: user.id,
-      titulo: `${obraName} — ${periodLabel}`,
+      titulo: `${obraName} — ${periodLabel}${excludeClimatic ? " (Sem Fatores Climáticos)" : ""}`,
       date_mode: dateMode,
       data_unica: dateMode === "single" ? date : null,
       data_inicio: dateMode === "period" ? startDate : null,
@@ -405,7 +405,8 @@ export default function RelatoriosPage() {
       especialidade_id: especialidadeId || null,
       especialidade_nome: specName || null,
       snapshot,
-    });
+      tipo_relatorio: excludeClimatic ? "sem_fatores_climaticos" : "padrao",
+    } as any);
 
     setSaving(false);
     if (error) {
