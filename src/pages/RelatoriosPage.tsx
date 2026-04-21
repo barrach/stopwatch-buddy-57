@@ -516,6 +516,27 @@ export default function RelatoriosPage() {
               </Button>
             )}
           </div>
+
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <Checkbox
+                checked={excludeClimatic}
+                onCheckedChange={(v) => { setExcludeClimatic(!!v); setGenerated(false); }}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CloudOff className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    Excluir Fatores Climáticos e Consequências
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gera o relatório desconsiderando registros desta categoria. Útil para comparar o impacto real do clima na produtividade.
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Empty state */}
@@ -529,10 +550,18 @@ export default function RelatoriosPage() {
         {generated && records.length > 0 && (
           <div className="space-y-6 animate-fade-in">
             <div className="stat-card">
-              <h2 className="text-lg font-bold text-foreground">
-                Relatório — {periodLabel} — {obraName}
-                {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
-              </h2>
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <h2 className="text-lg font-bold text-foreground">
+                  Relatório — {periodLabel} — {obraName}
+                  {specName && <span className="text-muted-foreground font-normal text-sm ml-2">({specName})</span>}
+                </h2>
+                {excludeClimatic && (
+                  <Badge variant="outline" className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                    <CloudOff className="w-3 h-3" />
+                    Sem Fatores Climáticos
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="stat-card">
