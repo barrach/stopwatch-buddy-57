@@ -15,7 +15,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Eye, FileDown, Trash2, GitCompareArrows, Check } from "lucide-react";
+import { ArrowLeft, Eye, FileDown, Trash2, GitCompareArrows, Check, CloudOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { SavedReport } from "@/components/SavedReportsList";
 import SavedReportView from "@/components/SavedReportView";
@@ -266,7 +267,15 @@ export default function RelatoriosSalvosPage() {
                     </button>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{report.obra_nome}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground truncate">{report.obra_nome}</p>
+                      {report.tipo_relatorio === "sem_fatores_climaticos" && (
+                        <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] px-1.5 py-0 h-5">
+                          <CloudOff className="w-2.5 h-2.5" />
+                          Sem Fatores Climáticos
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Período: {periodLabel}
                       {report.especialidade_nome && ` • ${report.especialidade_nome}`}
