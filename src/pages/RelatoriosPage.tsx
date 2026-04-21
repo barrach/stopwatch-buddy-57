@@ -22,6 +22,7 @@ import {
   WEEKDAY_NAMES, MONTH_NAMES, timeIndex, getTimeBucketLabel,
 } from "@/lib/chartConstants";
 import { computeHourlyAdjustedPercentages, computeHHMedioDia, getRecordHHWithContext, normalizeToHundred } from "@/lib/hourlyAverageCalc";
+import { applyManualAdjustments, applyDbWeighting } from "@/lib/manualAdjustments";
 import {
   StackedBarChartSection, ParetoChartSection, ExternalPieSection,
 } from "@/components/ReportCharts";
@@ -134,7 +135,7 @@ export default function RelatoriosPage() {
   // ── Filtered records ──
   const records = useMemo(() => {
     if (!generated) return [];
-    return allRecords.filter((r: any) => {
+    const filtered = allRecords.filter((r: any) => {
       if (dateMode === "single") {
         if (r.data !== date) return false;
       } else {
@@ -142,12 +143,18 @@ export default function RelatoriosPage() {
       }
       if (r.obra_id !== obraId) return false;
       if (especialidadeId && r.especialidade_id !== especialidadeId) return false;
-      if (excludeClimatic) {
-        const desc = canonicalDescription(r.descricao || "");
-        if (desc === "Fatores Climáticos e Consequências") return false;
-      }
       return true;
     });
+    // Apply same visualization adjustments as Dashboard for total parity
+    const adjusted = applyDbWeighting(applyManualAdjustments(filtered));
+    // Apply climatic exclusion AFTER adjustments (mirrors Dashboard's npeExclude flow)
+    if (excludeClimatic) {
+      return adjusted.filter((r: any) => {
+        const desc = canonicalDescription(r.descricao || "");
+        return desc !== "Fatores Climáticos e Consequências";
+      });
+    }
+    return adjusted;
   }, [generated, dateMode, date, startDate, endDate, obraId, especialidadeId, allRecords, excludeClimatic]);
 
   // ── HH medio per day ──
