@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, FileDown, Loader2, Trophy, CloudOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { CANONICAL_ORDER_FULL } from "@/lib/chartConstants";
 import { normalizeToHundred } from "@/lib/hourlyAverageCalc";
 import { generateComparisonPDF } from "@/lib/comparisonReportPdf";
@@ -164,9 +165,17 @@ export default function ReportComparisonView({ reportA, reportB, onBack }: Props
           const s = report.snapshot as any;
           return (
             <div key={report.id} className="stat-card">
-              <h3 className="text-sm font-semibold text-foreground mb-2">
-                Relatório {idx === 0 ? "A" : "B"}
-              </h3>
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Relatório {idx === 0 ? "A" : "B"}
+                </h3>
+                {report.tipo_relatorio === "sem_fatores_climaticos" && (
+                  <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] px-1.5 py-0 h-5">
+                    <CloudOff className="w-2.5 h-2.5" />
+                    Sem Fatores Climáticos
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{report.obra_nome}</p>
               <p className="text-xs text-muted-foreground">Período: {periodLabel(report)}</p>
               {report.especialidade_nome && (

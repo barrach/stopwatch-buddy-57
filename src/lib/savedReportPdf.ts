@@ -77,7 +77,8 @@ export function generateSavedReportPDF(
   doc.setFontSize(22);
   doc.text("ProdControl", MARGIN, 18);
   doc.setFontSize(13);
-  doc.text("Relatório de Produtividade", MARGIN, 28);
+  const titleSuffix = report.tipo_relatorio === "sem_fatores_climaticos" ? " — Sem Fatores Climáticos" : "";
+  doc.text(`Relatório de Produtividade${titleSuffix}`, MARGIN, 28);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(`Contrato: ${report.obra_nome}`, MARGIN, 38);
