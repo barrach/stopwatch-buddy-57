@@ -9,11 +9,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllObservacoes } from "@/lib/supabaseAllRows";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save, Archive } from "lucide-react";
+import { FileText, Save, Archive, CloudOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   CANONICAL_ORDER_FULL, canonicalDescription,
@@ -41,6 +43,7 @@ export default function RelatoriosPage() {
   const [especialidadeId, setEspecialidadeId] = useState("");
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [excludeClimatic, setExcludeClimatic] = useState(false);
 
   // Auto-set obra for restricted users
   useEffect(() => {
