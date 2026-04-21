@@ -1,0 +1,1 @@
+ALTER TABLE public.relatorios_salvos ADD COLUMN IF NOT EXISTS tipo_relatorio TEXT NOT NULL DEFAULT 'padrao';

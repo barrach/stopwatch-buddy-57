@@ -412,6 +412,7 @@ export type Database = {
           obra_id: string
           obra_nome: string
           snapshot: Json
+          tipo_relatorio: string
           titulo: string
         }
         Insert: {
@@ -427,6 +428,7 @@ export type Database = {
           obra_id: string
           obra_nome: string
           snapshot?: Json
+          tipo_relatorio?: string
           titulo: string
         }
         Update: {
@@ -442,6 +444,7 @@ export type Database = {
           obra_id?: string
           obra_nome?: string
           snapshot?: Json
+          tipo_relatorio?: string
           titulo?: string
         }
         Relationships: []
