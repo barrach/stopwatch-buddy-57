@@ -36,7 +36,7 @@ const HH_MODEL_DESCRIPTIONS = new Set([
   "Interferências Operacionais",
 ]);
 
-const OPERATIONAL_TIME_SLOTS = [
+const OPERATIONAL_OPERATIONAL_TIME_SLOTS = [
   "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
   "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
 ] as const;
@@ -146,10 +146,10 @@ export default function NewObservation() {
   });
 
   const getTimeSlotsInRange = (start: string, end: string): string[] => {
-    const startIdx = TIME_SLOTS.indexOf(start as any);
-    const endIdx = TIME_SLOTS.indexOf(end as any);
+    const startIdx = OPERATIONAL_TIME_SLOTS.indexOf(start as any);
+    const endIdx = OPERATIONAL_TIME_SLOTS.indexOf(end as any);
     if (startIdx === -1 || endIdx === -1 || startIdx > endIdx) return [];
-    return TIME_SLOTS.slice(startIdx, endIdx + 1) as unknown as string[];
+    return OPERATIONAL_TIME_SLOTS.slice(startIdx, endIdx + 1) as unknown as string[];
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -368,24 +368,24 @@ export default function NewObservation() {
                 </div>
                 {isRangeMode ? (
                   <div className="flex items-center gap-2 mt-1">
-                    <Select value={time} onValueChange={(v) => { setTime(v); if (timeEnd && TIME_SLOTS.indexOf(v as any) > TIME_SLOTS.indexOf(timeEnd as any)) setTimeEnd(""); }}>
+                    <Select value={time} onValueChange={(v) => { setTime(v); if (timeEnd && OPERATIONAL_TIME_SLOTS.indexOf(v as any) > OPERATIONAL_TIME_SLOTS.indexOf(timeEnd as any)) setTimeEnd(""); }}>
                       <SelectTrigger><SelectValue placeholder="De..." /></SelectTrigger>
                       <SelectContent>
-                        {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        {OPERATIONAL_TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <span className="text-xs text-muted-foreground font-medium">até</span>
                     <Select value={timeEnd} onValueChange={setTimeEnd}>
                       <SelectTrigger><SelectValue placeholder="Até..." /></SelectTrigger>
                       <SelectContent>
-                        {TIME_SLOTS.filter((t) => !time || TIME_SLOTS.indexOf(t) >= TIME_SLOTS.indexOf(time as any)).map((t) => (
+                        {OPERATIONAL_TIME_SLOTS.filter((t) => !time || OPERATIONAL_TIME_SLOTS.indexOf(t) >= OPERATIONAL_TIME_SLOTS.indexOf(time as any)).map((t) => (
                           <SelectItem key={t} value={t}>{t}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     {time && timeEnd && (
                       <span className="text-xs text-primary font-semibold whitespace-nowrap">
-                        ({TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} horários)
+                        ({OPERATIONAL_TIME_SLOTS.slice(OPERATIONAL_TIME_SLOTS.indexOf(time as any), OPERATIONAL_TIME_SLOTS.indexOf(timeEnd as any) + 1).length} horários)
                       </span>
                     )}
                   </div>
@@ -393,7 +393,7 @@ export default function NewObservation() {
                   <Select value={time} onValueChange={setTime}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      {OPERATIONAL_TIME_SLOTS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 )}
@@ -573,7 +573,7 @@ export default function NewObservation() {
             <Button type="submit" className="flex-1 gap-2" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {isRangeMode && time && timeEnd
-                ? `Salvar ${TIME_SLOTS.slice(TIME_SLOTS.indexOf(time as any), TIME_SLOTS.indexOf(timeEnd as any) + 1).length} Observações`
+                ? `Salvar ${OPERATIONAL_TIME_SLOTS.slice(OPERATIONAL_TIME_SLOTS.indexOf(time as any), OPERATIONAL_TIME_SLOTS.indexOf(timeEnd as any) + 1).length} Observações`
                 : "Salvar Observação"}
             </Button>
             <Button type="button" variant="outline" onClick={handleRepeat} className="gap-2">
