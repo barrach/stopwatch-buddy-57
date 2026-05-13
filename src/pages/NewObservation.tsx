@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TIME_SLOTS } from "@/data/mockData";
 import { Camera, Save, RotateCcw, Loader2, Sparkles, Clock, CalendarRange, Timer } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +35,11 @@ const HH_MODEL_DESCRIPTIONS = new Set([
   "Fatores Climáticos e Consequências",
   "Interferências Operacionais",
 ]);
+
+const OPERATIONAL_TIME_SLOTS = [
+  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
+] as const;
 
 export default function NewObservation() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
