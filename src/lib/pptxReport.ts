@@ -117,7 +117,7 @@ interface RecBlock { title: string; problema: string; causa: string; acao: strin
 const WEEKDAY_ORDER = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"] as const;
 const MONTH_ORDER = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
 const HOUR_ORDER = [
-  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  "08:00", "09:00", "10:00", "11:00",
   "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
 ] as const;
 

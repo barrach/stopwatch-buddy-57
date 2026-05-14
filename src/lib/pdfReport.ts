@@ -57,7 +57,7 @@ const LEGEND_ORDER_FULL = [...STACK_ORDER_FULL].reverse();
 const LEGEND_ORDER = [...STACK_ORDER].reverse();
 const DONUT_ORDER = ["Produtivo", "Suplementar", "Não Produtivo", "Não Produtivo Externo"] as const;
 const HOUR_ORDER = [
-  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  "08:00", "09:00", "10:00", "11:00",
   "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
 ] as const;
 const WEEKDAY_ORDER = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"] as const;
