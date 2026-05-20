@@ -7,49 +7,44 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `Você receberá DUAS imagens:
-- IMAGEM 1: tabela de referência mostrando como os símbolos se parecem visualmente
-- IMAGEM 2: foto do formulário preenchido à mão
+- IMAGEM 1: tabela de referência visual dos símbolos
+- IMAGEM 2: foto do formulário
 
-ENTENDA O SISTEMA ANTES DE TUDO:
-Este formulário usa um sistema de contagem similar ao "cinco palitos" ocidental (||||).
-Cada símbolo representa um GRUPO de pessoas, onde o número de TRAÇOS/LADOS do símbolo indica a quantidade:
-- 1 traço vertical = 1 pessoa
-- 2 traços (ângulo L) = 2 pessoas
-- 3 traços (U invertido) = 3 pessoas
-- 4 traços (quadrado fechado) = 4 pessoas
-- 5 traços (quadrado + diagonal) = 5 pessoas
+CONTEXTO:
+Este formulário registra observações de produtividade de mão de obra.
+Cada célula contém marcas feitas à mão que representam pessoas observadas.
+As marcas seguem um sistema de agrupamento visual parecido com "palitinhos":
+| = 1, ⌐ = 2, ⊓ = 3, □ = 4, □com diagonal = 5.
+Múltiplas marcas numa célula são SOMADAS. Ex: □diagonal + □diagonal + | = 11.
 
-REGRA FUNDAMENTAL: conte o número de linhas/traços que formam o símbolo, não tente identificar "qual símbolo é".
-SOMA: uma célula pode ter vários símbolos em sequência. Some todos.
-Exemplo: quadrado+diagonal, quadrado+diagonal, traço = 5+5+1 = 11
+ETAPA 1 — ORIENTAÇÃO:
+Identifique onde está o cabeçalho "Megasteam" e reoriente o formulário mentalmente.
 
-PASSO 1 — ORIENTE O FORMULÁRIO:
-Localize "Megasteam" para identificar o topo. Reoriente mentalmente se necessário.
+ETAPA 2 — MAPEAMENTO LIVRE (faça isso internamente antes de gerar o JSON):
+Para cada linha do formulário, descreva o que vê célula a célula, da esquerda para direita:
+"Linha [especialidade]: célula 1 tem [descreva as marcas], célula 2 tem [descreva], ..."
+Use linguagem livre: "vejo dois grupos de marcas, o primeiro parece um quadrado com uma linha diagonal, o segundo parece um traço vertical"
 
-PASSO 2 — IDENTIFIQUE AS ESPECIALIDADES:
-Leia APENAS o que está escrito na coluna mais à esquerda.
-Possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
-NUNCA invente especialidades.
+ETAPA 3 — CONVERSÃO:
+Após descrever tudo, converta cada descrição para número usando a tabela da Imagem 1.
 
-PASSO 3 — PARA CADA CÉLULA PREENCHIDA:
-1. Conte quantos símbolos distintos existem na célula
-2. Para cada símbolo, conte quantos traços/lados ele tem
-3. Some todos os valores
+ETAPA 4 — ESPECIALIDADES (coluna mais à esquerda):
+Leia APENAS o que está escrito. Nunca invente. Possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
 
-PASSO 4 — COLUNAS (esquerda para direita):
+ETAPA 5 — COLUNAS (esquerda para direita):
 PRODUTIVO: col1=Trabalhando, col2=Planejando
 SUPLEMENTAR: col3=Assistindo/Stand By, col4=Aguardando Instruções, col5=Aguardando Liberação de PT, col6=Aguardando Ferramenta ou Material, col7=Transitando no local de trabalho - com ferramenta, col8=Transitando no local de trabalho - sem ferramenta, col9=Transitando fora do local de trabalho - com ferramenta, col10=Transitando fora do local de trabalho - sem ferramenta
 NÃO PRODUTIVO: col11=Pessoal, col12=Ocioso
 NÃO PRODUTIVO EXTERNO: col13=Interferências Operacionais, col14=Fatores Climáticos
 
-REGRAS FINAIS:
-- Célula vazia = ignorar
-- Ilegível = ignorar, não chute
-- Retorne SOMENTE JSON, sem texto antes ou depois:
+REGRAS:
+- Célula vazia ou ilegível = ignorar
+- Nunca invente valores
+- Retorne SOMENTE este JSON:
 {
   "observacoes": [
     {
-      "especialidade": "Nome exato como escrito",
+      "especialidade": "Nome como escrito no formulário",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
       "descricao": "Nome exato da causa",
       "quantidade": número inteiro
