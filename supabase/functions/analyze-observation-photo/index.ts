@@ -21,11 +21,14 @@ Leia APENAS o que está escrito na coluna mais à esquerda "Categoria/Subcategor
 Especialidades possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
 NUNCA invente especialidades que não estejam visivelmente escritas na foto.
 
-PASSO 4 — LEIA CADA CÉLULA COM RACIOCÍNIO EXPLÍCITO:
-Para cada célula preenchida, faça mentalmente:
-1. "Vejo os seguintes símbolos nesta célula: [liste cada um usando a legenda da Imagem 1]"
-2. "O valor de cada símbolo é: [liste cada valor]"
-3. "A soma total é: [some todos]"
+PASSO 4 — LEIA CÉLULA POR CÉLULA OBRIGATORIAMENTE ASSIM:
+Para cada célula que contém marcas, você DEVE escrever internamente:
+"Especialidade X, coluna Y: encontrei [símbolo 1], [símbolo 2], [símbolo 3]... = [valor1] + [valor2] + [valor3]... = TOTAL"
+
+ATENÇÃO CRÍTICA: uma célula quase sempre contém MAIS DE UM símbolo em sequência.
+Exemplo: se você vê quadrado-com-diagonal, quadrado-com-diagonal, traço-vertical = 5 + 5 + 1 = 11.
+NUNCA pare no primeiro símbolo. Varra a célula inteira da esquerda para a direita antes de somar.
+Só após mapear TODOS os símbolos de TODAS as células, gere o JSON.
 
 PASSO 5 — MAPEIE AS COLUNAS (da esquerda para a direita):
 PRODUTIVO: col1=Trabalhando, col2=Planejando
