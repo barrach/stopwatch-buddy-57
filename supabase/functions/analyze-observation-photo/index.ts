@@ -8,58 +8,73 @@ const corsHeaders = {
 
 const SYSTEM_PROMPT = `Você está analisando uma foto tirada com celular de um "Formulário de Observações - Avaliação de Produtividade da Mão-de-Obra Direta" da empresa Megasteam.
 
-IMPORTANTE — ORIENTAÇÃO E ÂNGULO:
-A foto pode estar rotacionada, inclinada ou com perspectiva distorcida. Antes de interpretar qualquer dado, você deve:
-1. Identificar a orientação correta do formulário pelo título "Formulário de Observações" ou pelo cabeçalho "Megasteam"
-2. Mentalmente reorientar o formulário para leitura normal (título no topo, colunas verticais, linhas horizontais)
-3. Só então interpretar os dados das células
+== PASSO 1 — ORIENTAR O FORMULÁRIO ==
+A foto pode estar rotacionada ou inclinada. Antes de qualquer coisa:
+- Localize o título "Formulário de Observações" ou o logo "Megasteam" para identificar qual lado é o topo
+- Reoriente mentalmente o formulário: título no topo, especialidades na coluna da esquerda, causas nas colunas à direita
 
-ESTRUTURA DO FORMULÁRIO:
-- A primeira coluna à esquerda "Categoria/Subcategoria" contém as ESPECIALIDADES nas linhas:
-  Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento
-- As demais colunas à direita representam CAUSAS, agrupadas nesta ordem exata da esquerda para direita:
+== PASSO 2 — IDENTIFICAR AS ESPECIALIDADES ==
+Leia apenas o que está ESCRITO na coluna mais à esquerda "Categoria/Subcategoria".
+As especialidades possíveis são: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
+REGRA CRÍTICA: só inclua especialidades que estejam visivelmente escritas na foto. NUNCA invente ou assuma especialidades que não consiga ler claramente.
 
-PRODUTIVO (primeiras colunas):
-  - Trabalhando
-  - Planejando
-SUPLEMENTAR (colunas do meio):
-  - Assistindo / Stand By
-  - Aguardando Instruções
-  - Aguardando Liberação de PT
-  - Aguardando Ferramenta ou Material
-  - Transitando no local de trabalho - com ferramenta
-  - Transitando no local de trabalho - sem ferramenta
-  - Transitando fora do local de trabalho - com ferramenta
-  - Transitando fora do local de trabalho - sem ferramenta
+== PASSO 3 — ENTENDER O SISTEMA DE CONTAGEM ==
+Cada marca dentro de uma célula representa pessoas observadas. Os símbolos são:
+SÍMBOLO → VALOR:
+- Traço vertical ( | ) → 1
+- Ângulo reto, tipo canto superior esquerdo de quadrado ( ⌐ com linha horizontal saindo para direita) → 2
+- Três lados sem fechar (U invertido, parece um quadrado sem o lado de baixo) → 3
+- Quadrado fechado completo ( □ ) → 4
+- Quadrado fechado com uma linha diagonal de canto a canto (não forma X, é só uma barra) → 5
+
+REGRA DE SOMA: uma célula pode conter MÚLTIPLOS símbolos. Você deve identificar CADA símbolo presente e somar todos.
+Exemplos de soma:
+- Quadrado-diagonal + Quadrado-diagonal + traço = 5 + 5 + 1 = 11
+- Quadrado-diagonal + Quadrado-diagonal + ângulo = 5 + 5 + 2 = 12
+- Quadrado-diagonal + ângulo = 5 + 2 = 7
+- Quadrado-diagonal + traço = 5 + 1 = 6
+- Três-lados = 3
+
+== PASSO 4 — LER CADA CÉLULA COM RACIOCÍNIO EXPLÍCITO ==
+Para cada célula preenchida, faça OBRIGATORIAMENTE este processo mental antes de calcular:
+1. "Nesta célula vejo os seguintes símbolos: [liste cada um]"
+2. "O valor de cada símbolo é: [liste cada valor]"
+3. "A soma total é: [some todos]"
+Só depois de completar esse raciocínio para TODAS as células, monte o JSON final.
+
+== PASSO 5 — MAPEAR AS COLUNAS ==
+As colunas aparecem nesta ordem da esquerda para direita:
+PRODUTIVO:
+  col 1 → Trabalhando
+  col 2 → Planejando
+SUPLEMENTAR:
+  col 3 → Assistindo / Stand By
+  col 4 → Aguardando Instruções
+  col 5 → Aguardando Liberação de PT
+  col 6 → Aguardando Ferramenta ou Material
+  col 7 → Transitando no local de trabalho - com ferramenta
+  col 8 → Transitando no local de trabalho - sem ferramenta
+  col 9 → Transitando fora do local de trabalho - com ferramenta
+  col 10 → Transitando fora do local de trabalho - sem ferramenta
 NÃO PRODUTIVO:
-  - Pessoal
-  - Ocioso
-NÃO PRODUTIVO EXTERNO (últimas colunas):
-  - Interferências Operacionais
-  - Fatores Climáticos
+  col 11 → Pessoal
+  col 12 → Ocioso
+NÃO PRODUTIVO EXTERNO:
+  col 13 → Interferências Operacionais
+  col 14 → Fatores Climáticos
 
-SISTEMA DE CONTAGEM — marcas feitas à mão dentro das células:
-- Traço vertical simples ( | ) = 1
-- Ângulo reto aberto (canto superior esquerdo de um quadrado, tipo ⌐) = 2
-- Três lados abertos (forma de U invertido, três lados sem fechar o quarto) = 3
-- Quadrado fechado sem marcação interna ( □ ) = 4
-- Quadrado fechado com UMA linha diagonal simples de canto a canto (não forma X, é apenas uma barra atravessando o quadrado) = 5
-- Combinações na mesma célula são SOMADAS:
-  Exemplos: três quadrados com diagonal = 5+5+5 = 15 | quadrado com diagonal + traço = 5+1 = 6 | quadrado + ângulo = 4+2 = 6
-- Célula vazia ou ilegível = ignorar (não incluir no resultado)
+== PASSO 6 — REGRAS FINAIS ==
+- Célula vazia = ignorar, não incluir no resultado
+- Se não conseguir ler um símbolo com certeza, ignore a célula
+- NUNCA invente especialidades ou valores que não consiga ver claramente
+- Inclua apenas células com quantidade maior que zero
 
-REGRAS DE LEITURA:
-- Se a foto estiver inclinada, corrija mentalmente a perspectiva antes de ler
-- Siga rigorosamente a ordem das colunas descrita acima para identificar a causa correta
-- Nunca invente valores — se uma célula estiver ilegível, ignore-a
-- Inclua apenas células com valor maior que zero e que você tenha certeza razoável do conteúdo
-- Se tiver dúvida entre dois valores possíveis, escolha o menor
-
-Retorne SOMENTE um JSON válido, sem markdown, sem explicações, sem texto antes ou depois, exatamente neste formato:
+== SAÍDA ==
+Após completar o raciocínio interno de todos os passos acima, retorne SOMENTE o JSON abaixo, sem markdown, sem explicações, sem texto antes ou depois:
 {
   "observacoes": [
     {
-      "especialidade": "Nome da especialidade",
+      "especialidade": "Nome exato como escrito no formulário",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
       "descricao": "Nome exato da causa conforme listado acima",
       "quantidade": número inteiro
