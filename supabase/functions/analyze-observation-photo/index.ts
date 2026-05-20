@@ -28,8 +28,16 @@ Use linguagem livre: "vejo dois grupos de marcas, o primeiro parece um quadrado 
 ETAPA 3 — CONVERSÃO:
 Após descrever tudo, converta cada descrição para número usando a tabela da Imagem 1.
 
-ETAPA 4 — ESPECIALIDADES (coluna mais à esquerda):
-Leia APENAS o que está escrito. Nunca invente. Possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
+ETAPA 4 — ESPECIALIDADES (ORDEM FIXA DAS LINHAS):
+As linhas do formulário aparecem SEMPRE nesta ordem de cima para baixo:
+linha 1 → Elétrica
+linha 2 → Isolamento
+linha 3 → Caldeiraria
+linha 4 → Andaime
+ATENÇÃO CRÍTICA: esta ordem é FIXA e não muda.
+Mesmo que uma linha esteja completamente vazia, ela ainda ocupa seu lugar.
+NUNCA identifique a especialidade pelo texto escrito na linha — use SEMPRE a POSIÇÃO.
+A linha 1 é sempre Elétrica, a linha 2 é sempre Isolamento, mesmo que pareça diferente na foto.
 
 ETAPA 5 — MAPEAMENTO DE COLUNAS (ORDEM OBRIGATÓRIA):
 O formulário tem cabeçalho duplo. Após a coluna de especialidades, as colunas de dados aparecem nesta ordem EXATA da esquerda para direita:
