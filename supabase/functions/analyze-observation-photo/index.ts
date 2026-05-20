@@ -7,50 +7,63 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `Você receberá DUAS imagens:
-- IMAGEM 1: legenda visual com os símbolos de contagem e seus valores
-- IMAGEM 2: foto do formulário preenchido, na horizontal
+- IMAGEM 1: legenda dos símbolos de contagem e seus valores numéricos
+- IMAGEM 2: foto de um formulário preenchido à mão
 
-REGRA 1 — ESPECIALIDADES:
-Leia o texto escrito na coluna mais à esquerda "Categoria/Subcategoria".
-Os únicos nomes válidos são exatamente estes 4, nesta ordem de cima para baixo:
-  linha 1 → "Elétrica"
-  linha 2 → "Isolamento"
-  linha 3 → "Caldeiraria"
-  linha 4 → "Andaime"
-Use SEMPRE esses nomes exatos. Nunca use variações como "Isolador", "Caldeireiro", "Encarregado" etc.
+Trate o formulário como uma PLANILHA EXCEL com a seguinte estrutura:
 
-REGRA 2 — CONTAGEM:
-Cada símbolo numa célula representa um grupo de pessoas.
-Compare cada símbolo com a Imagem 1 para identificar seu valor.
-Some TODOS os símbolos encontrados na mesma célula.
-Varra a célula inteira — nunca pare no primeiro símbolo.
+COLUNA A (fixa, não conta dados):
+Contém os nomes das especialidades. Ignore o texto escrito — use sempre a POSIÇÃO da linha:
+  Linha 1 = "Elétrica"
+  Linha 2 = "Isolamento"
+  Linha 3 = "Caldeiraria"
+  Linha 4 = "Andaime"
 
-REGRA 3 — COLUNAS (conte da esquerda para direita, após a coluna de especialidades):
-col 1  → Trabalhando                                       → PRODUTIVO
-col 2  → Planejando                                        → PRODUTIVO
-col 3  → Assistindo / Stand By                             → SUPLEMENTAR
-col 4  → Aguardando Instruções                             → SUPLEMENTAR
-col 5  → Aguardando Liberação de PT                        → SUPLEMENTAR
-col 6  → Aguardando Ferramenta ou Material                 → SUPLEMENTAR
-col 7  → Transitando no local de trabalho - com ferramenta → SUPLEMENTAR
-col 8  → Transitando no local de trabalho - sem ferramenta → SUPLEMENTAR
-col 9  → Transitando fora do local - com ferramenta        → SUPLEMENTAR
-col 10 → Transitando fora do local - sem ferramenta        → SUPLEMENTAR
-col 11 → Pessoal                                           → NÃO PRODUTIVO
-col 12 → Ocioso                                            → NÃO PRODUTIVO
-col 13 → Interferências Operacionais                       → NÃO PRODUTIVO EXTERNO
-col 14 → Fatores Climáticos                                → NÃO PRODUTIVO EXTERNO
-ATENÇÃO: células vazias contam como colunas. Nunca pule colunas vazias.
+LINHA 1 DO CABEÇALHO (categorias — células mescladas em verde):
+Agrupa as colunas de dados em 4 blocos:
+  cols B-C    → "Produtivo"
+  cols D-K    → "Suplementar"
+  cols L-M    → "Não Produtivo"
+  cols N-O    → "Não Produtivo Externo"
 
-REGRA 4 — SAÍDA:
-Inclua apenas células com quantidade maior que zero.
+LINHA 2 DO CABEÇALHO (descrições — em azul):
+Cada coluna tem um nome exato:
+  col B  → Trabalhando
+  col C  → Planejando
+  col D  → Assistindo / Stand By
+  col E  → Aguardando Instruções
+  col F  → Aguardando Liberação de PT
+  col G  → Aguardando Ferramenta ou Material
+  col H  → Transitando no local de trabalho - com ferramenta
+  col I  → Transitando no local de trabalho - sem ferramenta
+  col J  → Transitando fora do local de trabalho - com ferramenta
+  col K  → Transitando fora do local de trabalho - sem ferramenta
+  col L  → Pessoal
+  col M  → Ocioso
+  col N  → Interferências Operacionais
+  col O  → Fatores Climáticos
+
+CORPO DA PLANILHA (células em amarelo — onde estão os traços):
+Cada célula corresponde a uma interseção de linha (especialidade) e coluna (descrição).
+Para cada célula preenchida:
+1. Identifique a linha → especialidade (pela posição: 1=Elétrica, 2=Isolamento, 3=Caldeiraria, 4=Andaime)
+2. Identifique a coluna → descrição e categoria (pelo mapeamento acima)
+3. Compare os símbolos com a Imagem 1 e some todos os valores encontrados na célula
+
+REGRAS CRÍTICAS:
+- Células vazias contam como colunas — NUNCA pule colunas vazias
+- Uma célula pode ter múltiplos símbolos — some TODOS
+- Ignore qualquer texto nas linhas de especialidade — use apenas a posição
+- Nunca invente valores ou especialidades
+- Ignore células ilegíveis
+
 Retorne SOMENTE este JSON, sem texto antes ou depois:
 {
   "observacoes": [
     {
       "especialidade": "Elétrica | Isolamento | Caldeiraria | Andaime",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
-      "descricao": "Nome exato da causa conforme col acima",
+      "descricao": "Nome exato da coluna conforme mapeamento acima",
       "quantidade": número inteiro
     }
   ]
