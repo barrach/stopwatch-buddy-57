@@ -31,11 +31,28 @@ Após descrever tudo, converta cada descrição para número usando a tabela da 
 ETAPA 4 — ESPECIALIDADES (coluna mais à esquerda):
 Leia APENAS o que está escrito. Nunca invente. Possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
 
-ETAPA 5 — COLUNAS (esquerda para direita):
-PRODUTIVO: col1=Trabalhando, col2=Planejando
-SUPLEMENTAR: col3=Assistindo/Stand By, col4=Aguardando Instruções, col5=Aguardando Liberação de PT, col6=Aguardando Ferramenta ou Material, col7=Transitando no local de trabalho - com ferramenta, col8=Transitando no local de trabalho - sem ferramenta, col9=Transitando fora do local de trabalho - com ferramenta, col10=Transitando fora do local de trabalho - sem ferramenta
-NÃO PRODUTIVO: col11=Pessoal, col12=Ocioso
-NÃO PRODUTIVO EXTERNO: col13=Interferências Operacionais, col14=Fatores Climáticos
+ETAPA 5 — MAPEAMENTO DE COLUNAS (ORDEM OBRIGATÓRIA):
+O formulário tem cabeçalho duplo. Após a coluna de especialidades, as colunas de dados aparecem nesta ordem EXATA da esquerda para direita:
+col 1  → "Trabalhando"                                   → PRODUTIVO
+col 2  → "Planejando"                                    → PRODUTIVO
+col 3  → "Assistindo / Stand By"                         → SUPLEMENTAR
+col 4  → "Aguardando Instruções"                         → SUPLEMENTAR
+col 5  → "Aguardando Liberação de PT"                    → SUPLEMENTAR
+col 6  → "Aguardando Ferramenta ou Material"             → SUPLEMENTAR
+col 7  → "Transitando no local de trabalho - com ferramenta" → SUPLEMENTAR
+col 8  → "Transitando no local de trabalho - sem ferramenta" → SUPLEMENTAR
+col 9  → "Transitando fora do local de trabalho - com ferramenta" → SUPLEMENTAR
+col 10 → "Transitando fora do local de trabalho - sem ferramenta" → SUPLEMENTAR
+col 11 → "Pessoal"                                       → NÃO PRODUTIVO
+col 12 → "Ocioso"                                        → NÃO PRODUTIVO
+col 13 → "Interferências Operacionais"                   → NÃO PRODUTIVO EXTERNO
+col 14 → "Fatores Climáticos"                            → NÃO PRODUTIVO EXTERNO
+
+ATENÇÃO CRÍTICA: conte as colunas FISICAMENTE da esquerda para direita.
+Células vazias CONTAM como colunas — NÃO pule colunas vazias.
+Uma célula vazia na col 2 NÃO significa que a próxima célula preenchida é col 2.
+Se col 2 está vazia e col 3 tem marcas, o resultado é col 3 = "Assistindo / Stand By", NÃO "Planejando".
+Antes de atribuir uma descrição, conte explicitamente: "esta é a Nª célula a partir da especialidade, portanto col N = ...".
 
 REGRAS:
 - Célula vazia ou ilegível = ignorar
