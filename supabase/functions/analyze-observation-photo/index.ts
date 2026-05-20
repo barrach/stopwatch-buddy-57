@@ -49,14 +49,18 @@ REGRAS FINAIS:
   ]
 }`;
 
-// Legenda fixa do sistema de contagem (carregada uma vez no boot da função)
+// Legenda fixa do sistema de contagem (carregada uma vez do Storage público)
+const LEGEND_URL =
+  "https://adpwboqltejtfzcvrvon.supabase.co/storage/v1/object/public/assets/legend.png";
 let LEGEND_DATA_URL: string | null = null;
 async function getLegendDataUrl(): Promise<string> {
   if (LEGEND_DATA_URL) return LEGEND_DATA_URL;
-  const bytes = await Deno.readFile(new URL("./legend.jpg", import.meta.url));
+  const resp = await fetch(LEGEND_URL);
+  if (!resp.ok) throw new Error(`Falha ao carregar legenda: ${resp.status}`);
+  const buf = new Uint8Array(await resp.arrayBuffer());
   let bin = "";
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  LEGEND_DATA_URL = `data:image/jpeg;base64,${btoa(bin)}`;
+  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+  LEGEND_DATA_URL = `data:image/png;base64,${btoa(bin)}`;
   return LEGEND_DATA_URL;
 }
 
