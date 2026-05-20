@@ -7,71 +7,50 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `Você receberá DUAS imagens:
-- IMAGEM 1: tabela de referência visual dos símbolos
-- IMAGEM 2: foto do formulário
+- IMAGEM 1: legenda visual com os símbolos de contagem e seus valores
+- IMAGEM 2: foto do formulário preenchido, na horizontal
 
-CONTEXTO:
-Este formulário registra observações de produtividade de mão de obra.
-Cada célula contém marcas feitas à mão que representam pessoas observadas.
-As marcas seguem um sistema de agrupamento visual parecido com "palitinhos":
-| = 1, ⌐ = 2, ⊓ = 3, □ = 4, □com diagonal = 5.
-Múltiplas marcas numa célula são SOMADAS. Ex: □diagonal + □diagonal + | = 11.
+REGRA 1 — ESPECIALIDADES:
+Leia o texto escrito na coluna mais à esquerda "Categoria/Subcategoria".
+Os únicos nomes válidos são exatamente estes 4, nesta ordem de cima para baixo:
+  linha 1 → "Elétrica"
+  linha 2 → "Isolamento"
+  linha 3 → "Caldeiraria"
+  linha 4 → "Andaime"
+Use SEMPRE esses nomes exatos. Nunca use variações como "Isolador", "Caldeireiro", "Encarregado" etc.
 
-ETAPA 1 — ORIENTAÇÃO:
-Identifique onde está o cabeçalho "Megasteam" e reoriente o formulário mentalmente.
+REGRA 2 — CONTAGEM:
+Cada símbolo numa célula representa um grupo de pessoas.
+Compare cada símbolo com a Imagem 1 para identificar seu valor.
+Some TODOS os símbolos encontrados na mesma célula.
+Varra a célula inteira — nunca pare no primeiro símbolo.
 
-ETAPA 2 — MAPEAMENTO LIVRE (faça isso internamente antes de gerar o JSON):
-Para cada linha do formulário, descreva o que vê célula a célula, da esquerda para direita:
-"Linha [especialidade]: célula 1 tem [descreva as marcas], célula 2 tem [descreva], ..."
-Use linguagem livre: "vejo dois grupos de marcas, o primeiro parece um quadrado com uma linha diagonal, o segundo parece um traço vertical"
+REGRA 3 — COLUNAS (conte da esquerda para direita, após a coluna de especialidades):
+col 1  → Trabalhando                                       → PRODUTIVO
+col 2  → Planejando                                        → PRODUTIVO
+col 3  → Assistindo / Stand By                             → SUPLEMENTAR
+col 4  → Aguardando Instruções                             → SUPLEMENTAR
+col 5  → Aguardando Liberação de PT                        → SUPLEMENTAR
+col 6  → Aguardando Ferramenta ou Material                 → SUPLEMENTAR
+col 7  → Transitando no local de trabalho - com ferramenta → SUPLEMENTAR
+col 8  → Transitando no local de trabalho - sem ferramenta → SUPLEMENTAR
+col 9  → Transitando fora do local - com ferramenta        → SUPLEMENTAR
+col 10 → Transitando fora do local - sem ferramenta        → SUPLEMENTAR
+col 11 → Pessoal                                           → NÃO PRODUTIVO
+col 12 → Ocioso                                            → NÃO PRODUTIVO
+col 13 → Interferências Operacionais                       → NÃO PRODUTIVO EXTERNO
+col 14 → Fatores Climáticos                                → NÃO PRODUTIVO EXTERNO
+ATENÇÃO: células vazias contam como colunas. Nunca pule colunas vazias.
 
-ETAPA 3 — CONVERSÃO:
-Após descrever tudo, converta cada descrição para número usando a tabela da Imagem 1.
-
-ETAPA 4 — ESPECIALIDADES (ORDEM FIXA DAS LINHAS):
-As linhas do formulário aparecem SEMPRE nesta ordem de cima para baixo:
-linha 1 → Elétrica
-linha 2 → Isolamento
-linha 3 → Caldeiraria
-linha 4 → Andaime
-ATENÇÃO CRÍTICA: esta ordem é FIXA e não muda.
-Mesmo que uma linha esteja completamente vazia, ela ainda ocupa seu lugar.
-NUNCA identifique a especialidade pelo texto escrito na linha — use SEMPRE a POSIÇÃO.
-A linha 1 é sempre Elétrica, a linha 2 é sempre Isolamento, mesmo que pareça diferente na foto.
-
-ETAPA 5 — MAPEAMENTO DE COLUNAS (ORDEM OBRIGATÓRIA):
-O formulário tem cabeçalho duplo. Após a coluna de especialidades, as colunas de dados aparecem nesta ordem EXATA da esquerda para direita:
-col 1  → "Trabalhando"                                   → PRODUTIVO
-col 2  → "Planejando"                                    → PRODUTIVO
-col 3  → "Assistindo / Stand By"                         → SUPLEMENTAR
-col 4  → "Aguardando Instruções"                         → SUPLEMENTAR
-col 5  → "Aguardando Liberação de PT"                    → SUPLEMENTAR
-col 6  → "Aguardando Ferramenta ou Material"             → SUPLEMENTAR
-col 7  → "Transitando no local de trabalho - com ferramenta" → SUPLEMENTAR
-col 8  → "Transitando no local de trabalho - sem ferramenta" → SUPLEMENTAR
-col 9  → "Transitando fora do local de trabalho - com ferramenta" → SUPLEMENTAR
-col 10 → "Transitando fora do local de trabalho - sem ferramenta" → SUPLEMENTAR
-col 11 → "Pessoal"                                       → NÃO PRODUTIVO
-col 12 → "Ocioso"                                        → NÃO PRODUTIVO
-col 13 → "Interferências Operacionais"                   → NÃO PRODUTIVO EXTERNO
-col 14 → "Fatores Climáticos"                            → NÃO PRODUTIVO EXTERNO
-
-ATENÇÃO CRÍTICA: conte as colunas FISICAMENTE da esquerda para direita.
-Células vazias CONTAM como colunas — NÃO pule colunas vazias.
-Uma célula vazia na col 2 NÃO significa que a próxima célula preenchida é col 2.
-Se col 2 está vazia e col 3 tem marcas, o resultado é col 3 = "Assistindo / Stand By", NÃO "Planejando".
-Antes de atribuir uma descrição, conte explicitamente: "esta é a Nª célula a partir da especialidade, portanto col N = ...".
-
-REGRAS:
-- Célula vazia ou ilegível = ignorar
-- Nunca invente valores
-- Retorne SOMENTE este JSON:
+REGRA 4 — SAÍDA:
+Inclua apenas células com quantidade maior que zero.
+Retorne SOMENTE este JSON, sem texto antes ou depois:
 {
   "observacoes": [
     {
-      "especialidade": "Nome como escrito no formulário",
+      "especialidade": "Elétrica | Isolamento | Caldeiraria | Andaime",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
-      "descricao": "Nome exato da causa",
+      "descricao": "Nome exato da causa conforme col acima",
       "quantidade": número inteiro
     }
   ]
