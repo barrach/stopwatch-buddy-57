@@ -22,6 +22,8 @@ import { useOfflineQuery } from "@/hooks/useOfflineQuery";
 import { addToQueue } from "@/lib/offlineQueue";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PhotoObservationMode from "@/components/PhotoObservationMode";
 
 interface LastObservation {
   time: string; rotaId: string; obraId: string; especialidadeId: string;
@@ -338,6 +340,13 @@ export default function NewObservation() {
           </p>
         </div>
 
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6">
+            <TabsTrigger value="manual">Manual</TabsTrigger>
+            <TabsTrigger value="foto">Por Foto</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manual">
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {/* Identification */}
           <div className="stat-card animate-fade-in">
@@ -582,6 +591,12 @@ export default function NewObservation() {
             </Button>
           </div>
         </form>
+          </TabsContent>
+
+          <TabsContent value="foto">
+            <PhotoObservationMode />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
