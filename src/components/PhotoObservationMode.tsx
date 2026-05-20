@@ -69,7 +69,7 @@ export default function PhotoObservationMode() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [date] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [obraId, setObraId] = useState("");
   const [rotaId, setRotaId] = useState("");
   const [time, setTime] = useState("");
@@ -312,7 +312,12 @@ export default function PhotoObservationMode() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label className="text-xs text-muted-foreground">Data</Label>
-            <Input value={date} readOnly disabled className="mt-1 bg-muted" />
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1"
+            />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Horário *</Label>
