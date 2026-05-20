@@ -7,30 +7,36 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `Você receberá DUAS imagens:
-- IMAGEM 1: uma legenda mostrando o sistema de símbolos de contagem usado no formulário
-- IMAGEM 2: foto tirada com celular do formulário preenchido
+- IMAGEM 1: tabela de referência mostrando como os símbolos se parecem visualmente
+- IMAGEM 2: foto do formulário preenchido à mão
 
-PASSO 1 — ESTUDE A LEGENDA (Imagem 1):
-Observe cada símbolo e seu valor numérico correspondente antes de começar a leitura.
+ENTENDA O SISTEMA ANTES DE TUDO:
+Este formulário usa um sistema de contagem similar ao "cinco palitos" ocidental (||||).
+Cada símbolo representa um GRUPO de pessoas, onde o número de TRAÇOS/LADOS do símbolo indica a quantidade:
+- 1 traço vertical = 1 pessoa
+- 2 traços (ângulo L) = 2 pessoas
+- 3 traços (U invertido) = 3 pessoas
+- 4 traços (quadrado fechado) = 4 pessoas
+- 5 traços (quadrado + diagonal) = 5 pessoas
 
-PASSO 2 — ORIENTE O FORMULÁRIO (Imagem 2):
-A foto pode estar rotacionada ou inclinada. Localize o título "Formulário de Observações" ou "Megasteam" para identificar o topo. Reoriente mentalmente antes de ler.
+REGRA FUNDAMENTAL: conte o número de linhas/traços que formam o símbolo, não tente identificar "qual símbolo é".
+SOMA: uma célula pode ter vários símbolos em sequência. Some todos.
+Exemplo: quadrado+diagonal, quadrado+diagonal, traço = 5+5+1 = 11
 
-PASSO 3 — IDENTIFIQUE AS ESPECIALIDADES:
-Leia APENAS o que está escrito na coluna mais à esquerda "Categoria/Subcategoria".
-Especialidades possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
-NUNCA invente especialidades que não estejam visivelmente escritas na foto.
+PASSO 1 — ORIENTE O FORMULÁRIO:
+Localize "Megasteam" para identificar o topo. Reoriente mentalmente se necessário.
 
-PASSO 4 — LEIA CÉLULA POR CÉLULA OBRIGATORIAMENTE ASSIM:
-Para cada célula que contém marcas, você DEVE escrever internamente:
-"Especialidade X, coluna Y: encontrei [símbolo 1], [símbolo 2], [símbolo 3]... = [valor1] + [valor2] + [valor3]... = TOTAL"
+PASSO 2 — IDENTIFIQUE AS ESPECIALIDADES:
+Leia APENAS o que está escrito na coluna mais à esquerda.
+Possíveis: Elétrica, Instrumentação, Caldeiraria, Andaime, Isolamento.
+NUNCA invente especialidades.
 
-ATENÇÃO CRÍTICA: uma célula quase sempre contém MAIS DE UM símbolo em sequência.
-Exemplo: se você vê quadrado-com-diagonal, quadrado-com-diagonal, traço-vertical = 5 + 5 + 1 = 11.
-NUNCA pare no primeiro símbolo. Varra a célula inteira da esquerda para a direita antes de somar.
-Só após mapear TODOS os símbolos de TODAS as células, gere o JSON.
+PASSO 3 — PARA CADA CÉLULA PREENCHIDA:
+1. Conte quantos símbolos distintos existem na célula
+2. Para cada símbolo, conte quantos traços/lados ele tem
+3. Some todos os valores
 
-PASSO 5 — MAPEIE AS COLUNAS (da esquerda para a direita):
+PASSO 4 — COLUNAS (esquerda para direita):
 PRODUTIVO: col1=Trabalhando, col2=Planejando
 SUPLEMENTAR: col3=Assistindo/Stand By, col4=Aguardando Instruções, col5=Aguardando Liberação de PT, col6=Aguardando Ferramenta ou Material, col7=Transitando no local de trabalho - com ferramenta, col8=Transitando no local de trabalho - sem ferramenta, col9=Transitando fora do local de trabalho - com ferramenta, col10=Transitando fora do local de trabalho - sem ferramenta
 NÃO PRODUTIVO: col11=Pessoal, col12=Ocioso
@@ -38,13 +44,12 @@ NÃO PRODUTIVO EXTERNO: col13=Interferências Operacionais, col14=Fatores Climá
 
 REGRAS FINAIS:
 - Célula vazia = ignorar
-- Célula ilegível = ignorar (não chute)
-- NUNCA invente valores ou especialidades
-- Retorne SOMENTE o JSON abaixo, sem markdown, sem texto antes ou depois:
+- Ilegível = ignorar, não chute
+- Retorne SOMENTE JSON, sem texto antes ou depois:
 {
   "observacoes": [
     {
-      "especialidade": "Nome exato como escrito no formulário",
+      "especialidade": "Nome exato como escrito",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
       "descricao": "Nome exato da causa",
       "quantidade": número inteiro
