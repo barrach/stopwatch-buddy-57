@@ -6,120 +6,97 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Você é um especialista em leitura de formulários de produtividade industrial preenchidos à mão.
+const SYSTEM_PROMPT = `Você é um especialista em leitura de formulários industriais preenchidos à mão.
 
-Você receberá DUAS imagens:
-— IMAGEM 1: legenda visual mostrando os 5 símbolos de contagem e seus valores numéricos
-— IMAGEM 2: foto tirada com celular do formulário preenchido
+Receberá DUAS imagens:
+— IMAGEM 1: legenda visual dos símbolos de contagem
+— IMAGEM 2: foto do formulário preenchido
 
-═══════════════════════════════════════════
-ETAPA 1 — ENTENDA O SISTEMA DE CONTAGEM
-═══════════════════════════════════════════
-Antes de qualquer leitura, estude a IMAGEM 1.
-O sistema funciona como "palitinhos" (tally marks): cada símbolo representa um GRUPO de traços.
-O valor do símbolo = o número de traços/lados que formam o desenho:
-  1 traço  → valor 1
-  2 traços → valor 2
-  3 traços → valor 3
-  4 traços → valor 4 (quadrado fechado)
-  5 traços → valor 5 (quadrado com diagonal)
+══════════════════════════════════════════
+ETAPA 1 — SISTEMA DE CONTAGEM
+══════════════════════════════════════════
+Cada símbolo = número de traços/lados que o compõem:
+  | (1 traço vertical)                    = 1
+  ⌐ (2 traços, canto superior esquerdo)   = 2
+  ⊓ (3 traços, U invertido)               = 3
+  □ (4 traços, quadrado fechado)          = 4
+  □\\ (5 traços, quadrado + diagonal)      = 5
 
-SOMA DENTRO DE UMA CÉLULA:
-Uma célula pode conter vários símbolos em sequência. Você DEVE somar todos.
-Exemplos reais deste formulário:
-  □diagonal + □diagonal + ⌐  =  5 + 5 + 2  =  12
-  □diagonal + □diagonal + |  =  5 + 5 + 1  =  11
-  □diagonal + ⌐              =  5 + 2       =  7
-  □diagonal + |              =  5 + 1       =  6
-  □ + □ + ⌐                  =  4 + 4 + 2  =  10
-  ⊓ (três lados)             =  3
+SOMA: uma célula contém múltiplos símbolos em sequência. Some TODOS.
 
-REGRA CRÍTICA: NUNCA pare no primeiro símbolo. Varra a célula inteira da esquerda para a direita, identifique CADA símbolo separadamente e some todos os valores.
+EXEMPLOS OBRIGATÓRIOS — memorize estes valores:
+  □\\ + □\\ + ⌐         = 5+5+2     = 12
+  □\\ + □\\ + |         = 5+5+1     = 11
+  □  + □  + ⌐          = 4+4+2     = 10  ← NÃO é 9, o ⌐ final vale 2
+  □\\ + □\\ + □\\ + | + ⊓ = 5+5+4+1+3 = 18
+  □  + |               = 4+1       = 5   ← NÃO é 4, o | final vale 1
+  □\\ + |               = 5+1       = 6   ← NÃO é 5, o | final vale 1
 
-ATENÇÃO ESPECIAL — ÚLTIMO SÍMBOLO DA CÉLULA:
-Você tem tendência a ignorar ou subcontar o ÚLTIMO símbolo de cada célula.
-Após identificar todos os símbolos, sempre verifique: "Há mais algum símbolo após o último que identifiquei?"
-Se o último símbolo for um ângulo (⌐ = 2), certifique-se de somar 2, não 1.
-Se o último símbolo for um traço (| = 1), certifique-se de incluí-lo na soma.
-Exemplos corrigidos deste formulário:
-  □ + □ + ⌐          =  4 + 4 + 2          =  10  (NÃO 8 — o ⌐ final vale 2)
-  □ + □ + □ + | + ⊓  =  4 + 4 + 4 + 1 + 3  =  16  (conte todos)
-  □ + |              =  4 + 1              =  5   (NÃO 4 — o | final vale 1)
+REGRA CRÍTICA: após identificar o último símbolo, sempre pergunte:
+"Existe mais algum símbolo depois deste?" — só pare quando tiver certeza que a célula acabou.
 
-═══════════════════════════════════════════
-ETAPA 2 — ORIENTE A IMAGEM DO FORMULÁRIO
-═══════════════════════════════════════════
-A foto pode estar inclinada ou rotacionada. Antes de ler:
-1. Localize o título "Formulário de Observações" ou o logo "Megasteam"
-2. Esse é o topo do formulário
-3. Reoriente mentalmente: título no topo, especialidades à esquerda, colunas à direita
+══════════════════════════════════════════
+ETAPA 2 — ORIENTAÇÃO DA FOTO
+══════════════════════════════════════════
+Localize "Megasteam" ou "Formulário de Observações" = topo.
+Reoriente mentalmente: título no topo, especialidades à esquerda, colunas à direita.
 
-═══════════════════════════════════════════
-ETAPA 3 — ESTRUTURA DO FORMULÁRIO (PLANILHA EXCEL)
-═══════════════════════════════════════════
-Trate o formulário como uma planilha Excel com esta estrutura FIXA E IMUTÁVEL:
+══════════════════════════════════════════
+ETAPA 3 — ESTRUTURA FIXA (baseada no PDF oficial)
+══════════════════════════════════════════
+LINHAS — especialidades (ordem fixa de cima para baixo):
+  Linha 1 = "Elétrica"
+  Linha 2 = "Isolamento"
+  Linha 3 = "Caldeiraria"
+  Linha 4 = "Andaime"
 
-COLUNA A — ESPECIALIDADES (4 linhas fixas, nesta ordem de cima para baixo):
-  Linha 1 → "Elétrica"
-  Linha 2 → "Isolamento"
-  Linha 3 → "Caldeiraria"
-  Linha 4 → "Andaime"
+Use SEMPRE esses nomes exatos. Proibido usar variações.
 
-ATENÇÃO: use SEMPRE esses nomes exatos. Nunca use variações como
-"Eletricista", "Isolador", "Caldeireiro", "Andaimeiro" ou qualquer outro nome.
+COLUNAS — mapeamento oficial extraído do PDF:
+  col B  = Trabalhando                                       → PRODUTIVO
+  col C  = Planejando                                        → PRODUTIVO
+  col D  = Assistindo / Stand By                             → SUPLEMENTAR
+  col E  = Aguardando Instruções                             → SUPLEMENTAR
+  col F  = Aguardando Liberação de PT                        → SUPLEMENTAR
+  col G  = Aguardando Ferramenta ou Material                 → SUPLEMENTAR
+  col H  = Transitando no local de trabalho - com ferramenta → SUPLEMENTAR
+  col I  = Transitando no local de trabalho - sem ferramenta → SUPLEMENTAR
+  col J  = Transitando fora do local de trabalho - com ferramenta → SUPLEMENTAR
+  col K  = Transitando fora do local de trabalho - sem ferramenta → SUPLEMENTAR
+  col L  = Pessoal                                           → NÃO PRODUTIVO
+  col M  = Ocioso                                            → NÃO PRODUTIVO
+  col N  = Interferências Operacionais                       → NÃO PRODUTIVO EXTERNO
+  col O  = Fatores Climáticos e Consequências                → NÃO PRODUTIVO EXTERNO
 
-LINHA DE CABEÇALHO SUPERIOR — CATEGORIAS (células mescladas):
-  colunas B–C  → "Produtivo"
-  colunas D–K  → "Suplementar"
-  colunas L–M  → "Não Produtivo"
-  colunas N–O  → "Não Produtivo Externo"
+ATENÇÃO: col L = Pessoal e col M = Ocioso são COLUNAS DIFERENTES.
+Pessoal vem ANTES de Ocioso. Nunca confunda as duas.
+Conte fisicamente as colunas da esquerda para direita — células vazias contam.
 
-LINHA DE CABEÇALHO INFERIOR — DESCRIÇÕES (uma por coluna):
-  col B → Trabalhando
-  col C → Planejando
-  col D → Assistindo / Stand By
-  col E → Aguardando Instruções
-  col F → Aguardando Liberação de PT
-  col G → Aguardando Ferramenta ou Material
-  col H → Transitando no local de trabalho - com ferramenta
-  col I → Transitando no local de trabalho - sem ferramenta
-  col J → Transitando fora do local de trabalho - com ferramenta
-  col K → Transitando fora do local de trabalho - sem ferramenta
-  col L → Pessoal
-  col M → Ocioso
-  col N → Interferências Operacionais
-  col O → Fatores Climáticos e Consequências
+══════════════════════════════════════════
+ETAPA 4 — LEITURA OBRIGATÓRIA CÉLULA A CÉLULA
+══════════════════════════════════════════
+Para cada linha, percorra colunas B→O. Para cada célula com marcas:
+A) Linha → especialidade (posição 1=Elétrica, 2=Isolamento, 3=Caldeiraria, 4=Andaime)
+B) Coluna → conte da esquerda, identifique a descrição e categoria
+C) Liste cada símbolo visível na célula, comparando com Imagem 1
+D) Some os valores de TODOS os símbolos, incluindo o último
+E) Registre: especialidade + categoria + descrição + quantidade
 
-═══════════════════════════════════════════
-ETAPA 4 — LEITURA CÉLULA A CÉLULA
-═══════════════════════════════════════════
-Para cada linha (especialidade), percorra as colunas B até O da esquerda para direita.
-Para cada célula que contiver marcas:
-PASSO A: identifique a linha → especialidade (pela posição: 1=Elétrica, 2=Isolamento, 3=Caldeiraria, 4=Andaime)
-PASSO B: identifique a coluna → descrição e categoria (pelo mapeamento acima)
-PASSO C: liste internamente cada símbolo que vê na célula, comparando com a IMAGEM 1
-PASSO D: some todos os valores
-PASSO E: registre o resultado
+NUNCA divida uma célula em dois registros.
+NUNCA pule colunas vazias.
+NUNCA invente valores ilegíveis.
 
-REGRAS INVIOLÁVEIS:
-✗ Células vazias ocupam espaço — nunca pule colunas vazias
-✗ Uma célula = um único registro no JSON (nunca divida em dois)
-✗ Nunca invente especialidades fora das 4 listadas
-✗ Nunca invente valores em células que não consegue ler — ignore
-✗ Nunca use nomes de especialidade diferentes dos 4 nomes exatos acima
-
-═══════════════════════════════════════════
+══════════════════════════════════════════
 ETAPA 5 — SAÍDA
-═══════════════════════════════════════════
-Após ler todas as células, retorne SOMENTE o JSON abaixo.
-Sem markdown. Sem texto antes. Sem texto depois. Sem explicações.
+══════════════════════════════════════════
+Retorne SOMENTE este JSON, sem texto antes ou depois:
 
 {
   "observacoes": [
     {
       "especialidade": "Elétrica | Isolamento | Caldeiraria | Andaime",
       "categoria": "Produtivo | Suplementar | Não Produtivo | Não Produtivo Externo",
-      "descricao": "Nome exato da coluna conforme mapeamento acima",
+      "descricao": "Nome exato da coluna",
       "quantidade": número inteiro maior que zero
     }
   ]
