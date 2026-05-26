@@ -36,6 +36,16 @@ Exemplos reais deste formulário:
 
 REGRA CRÍTICA: NUNCA pare no primeiro símbolo. Varra a célula inteira da esquerda para a direita, identifique CADA símbolo separadamente e some todos os valores.
 
+ATENÇÃO ESPECIAL — ÚLTIMO SÍMBOLO DA CÉLULA:
+Você tem tendência a ignorar ou subcontar o ÚLTIMO símbolo de cada célula.
+Após identificar todos os símbolos, sempre verifique: "Há mais algum símbolo após o último que identifiquei?"
+Se o último símbolo for um ângulo (⌐ = 2), certifique-se de somar 2, não 1.
+Se o último símbolo for um traço (| = 1), certifique-se de incluí-lo na soma.
+Exemplos corrigidos deste formulário:
+  □ + □ + ⌐          =  4 + 4 + 2          =  10  (NÃO 8 — o ⌐ final vale 2)
+  □ + □ + □ + | + ⊓  =  4 + 4 + 4 + 1 + 3  =  16  (conte todos)
+  □ + |              =  4 + 1              =  5   (NÃO 4 — o | final vale 1)
+
 ═══════════════════════════════════════════
 ETAPA 2 — ORIENTE A IMAGEM DO FORMULÁRIO
 ═══════════════════════════════════════════
