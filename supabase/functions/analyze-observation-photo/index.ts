@@ -41,7 +41,7 @@ Cada coluna tem um nome exato:
   col L  → Pessoal
   col M  → Ocioso
   col N  → Interferências Operacionais
-  col O  → Fatores Climáticos
+  col O  → Fatores Climáticos e Consequências
 
 CORPO DA PLANILHA (células em amarelo — onde estão os traços):
 Cada célula corresponde a uma interseção de linha (especialidade) e coluna (descrição).
