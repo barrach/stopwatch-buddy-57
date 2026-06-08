@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           email: u.email,
           nome: profile?.nome || "",
           created_at: u.created_at,
-          role: roles?.find((r) => r.user_id === u.id)?.role || "cobrador",
+          role: roles?.find((r) => r.user_id === u.id)?.role || "apontador",
           status: profile?.status || "pendente",
           obra_id: profile?.obra_id || null,
           obra_nome: profile?.obra_id ? obras?.find((o) => o.id === profile.obra_id)?.nome || "" : "",
