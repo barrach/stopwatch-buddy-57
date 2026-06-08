@@ -4,12 +4,14 @@ import logoMega from "@/assets/logo-mega.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useUserRole } from "@/hooks/useUserRole";
 
-const navItems = [
-  { to: "/", label: "Dashboard", icon: BarChart3, adminOnly: false },
-  { to: "/nova-observacao", label: "Nova Observação", icon: Plus, adminOnly: true },
-  { to: "/registros", label: "Registros", icon: ClipboardList, adminOnly: false },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, adminOnly: false },
+type NavItem = { to: string; label: string; icon: any; show: (ctx: { isAdmin: boolean; canObserve: boolean }) => boolean };
+const navItems: NavItem[] = [
+  { to: "/", label: "Dashboard", icon: BarChart3, show: () => true },
+  { to: "/nova-observacao", label: "Nova Observação", icon: Plus, show: ({ canObserve }) => canObserve },
+  { to: "/registros", label: "Registros", icon: ClipboardList, show: () => true },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, show: () => true },
 ];
 
 const cadastroItems = [
@@ -28,6 +30,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const { user, signOut } = useAuth();
   const { canInstall, install } = useInstallPrompt();
   const { isAdmin } = useIsAdmin();
+  const { canObserve } = useUserRole();
 
   const handleClick = () => {
     onNavigate?.();
@@ -57,7 +60,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
+        {navItems.filter(item => item.show({ isAdmin, canObserve })).map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink key={item.to} to={item.to} onClick={handleClick} className={`sidebar-item ${isActive ? "sidebar-item-active" : ""}`}>

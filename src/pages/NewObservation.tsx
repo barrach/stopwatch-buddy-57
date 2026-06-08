@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useUserRole } from "@/hooks/useUserRole";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,9 +44,9 @@ const OPERATIONAL_TIME_SLOTS = [
 ] as const;
 
 export default function NewObservation() {
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canObserve, loading: roleLoading } = useUserRole();
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("");
@@ -327,8 +327,8 @@ export default function NewObservation() {
     }
   };
 
-  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (roleLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!canObserve) return <Navigate to="/" replace />;
 
   return (
     <AppLayout>
