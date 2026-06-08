@@ -33,9 +33,11 @@ interface Obra {
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
-  coordenador: "Coordenador",
-  cobrador: "Usuário",
-  user: "Usuário",
+  apontador: "Apontador",
+  visualizador: "Visualizador",
+  coordenador: "Apontador",
+  cobrador: "Apontador",
+  user: "Apontador",
 };
 
 const statusLabels: Record<string, string> = {
@@ -262,7 +264,11 @@ export default function SettingsPage() {
                               onClick={() => {
                                 setEditUser(u);
                                 setEditName(u.nome || "");
-                                setEditRole(u.role);
+            setEditRole(
+              u.role === "admin" ? "admin" :
+              u.role === "visualizador" ? "visualizador" :
+              "apontador"
+            );
                               }}
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -373,8 +379,8 @@ export default function SettingsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="coordenador">Coordenador</SelectItem>
-                  <SelectItem value="cobrador">Usuário</SelectItem>
+                <SelectItem value="apontador">Apontador (registra observações)</SelectItem>
+                <SelectItem value="visualizador">Visualizador (cliente / somente leitura)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
