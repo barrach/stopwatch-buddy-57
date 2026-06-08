@@ -533,7 +533,12 @@ export type Database = {
       reprocess_all_dynamic_observations: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "coordenador" | "cobrador"
+      app_role:
+        | "admin"
+        | "coordenador"
+        | "cobrador"
+        | "apontador"
+        | "visualizador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -661,7 +666,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "coordenador", "cobrador"],
+      app_role: [
+        "admin",
+        "coordenador",
+        "cobrador",
+        "apontador",
+        "visualizador",
+      ],
     },
   },
 } as const
