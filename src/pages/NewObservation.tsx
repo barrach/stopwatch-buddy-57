@@ -46,6 +46,7 @@ const OPERATIONAL_TIME_SLOTS = [
 export default function NewObservation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canObserve, loading: roleLoading } = useUserRole();
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("");
@@ -326,8 +327,8 @@ export default function NewObservation() {
     }
   };
 
-  if (adminLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (roleLoading) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div></AppLayout>;
+  if (!canObserve) return <Navigate to="/" replace />;
 
   return (
     <AppLayout>
