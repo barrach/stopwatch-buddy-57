@@ -70,7 +70,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
           );
         })}
 
-        {isAdmin && (
+        {(isAdmin || canObserve) && (
           <NavLink to="/auditoria" onClick={handleClick} className={`sidebar-item ${location.pathname === "/auditoria" ? "sidebar-item-active" : ""}`}>
             <ShieldAlert className="w-[18px] h-[18px]" />
             <span className="text-sm">Auditoria</span>
