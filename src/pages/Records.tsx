@@ -733,7 +733,7 @@ export default function Records() {
                 <TableHead className="text-xs font-semibold">Descrição</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Qtd</TableHead>
                 <TableHead className="text-xs font-semibold">Registrado por</TableHead>
-                {isAdmin && <TableHead className="text-xs font-semibold">Ações</TableHead>}
+                {canObserve && <TableHead className="text-xs font-semibold">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -772,7 +772,7 @@ export default function Records() {
                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={userName}>
                       {userName}
                     </TableCell>
-                    {isAdmin && (
+                    {canObserve && (
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => openEdit(r)}>
