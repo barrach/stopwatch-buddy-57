@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TIME_SLOTS } from "@/data/mockData";
 import { normalizeDescriptionName, normalizeDescriptionOptions } from "@/lib/categoryNormalization";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useUserObra } from "@/hooks/useUserObra";
 
 import { exportToExcel, parseExcelFile, type ExportRow } from "@/lib/excelUtils";
@@ -46,6 +47,7 @@ const categoryBadgeVariant: Record<string, string> = {
 
 export default function Records() {
   const { isAdmin } = useIsAdmin();
+  const { canObserve } = useUserRole();
   const { obraFilter: userObraRestriction } = useUserObra();
   const { toast } = useToast();
   const queryClient = useQueryClient();
