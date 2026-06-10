@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useUserRole } from "@/hooks/useUserRole";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ export default function AuditoriaPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { canObserve, loading: roleLoading } = useUserRole();
+  const canAccess = isAdmin || canObserve;
   const [search, setSearch] = useState("");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
@@ -34,7 +37,7 @@ export default function AuditoriaPage() {
       if (error) throw error;
       return data;
     },
-    enabled: isAdmin,
+    enabled: canAccess,
   });
   const profileMap = new Map(profiles.map((p) => [p.user_id, p.nome || p.email || p.user_id.substring(0, 8)]));
 
@@ -45,7 +48,7 @@ export default function AuditoriaPage() {
       { deletedNull: false },
       [{ column: "deleted_at", ascending: false }]
     ),
-    enabled: isAdmin,
+    enabled: canAccess,
   });
 
   const { mutate: restoreRecord } = useMutation({
@@ -98,7 +101,7 @@ export default function AuditoriaPage() {
     return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
-  if (adminLoading) {
+  if (adminLoading || roleLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground text-sm">Carregando...</div>
@@ -106,7 +109,7 @@ export default function AuditoriaPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return <Navigate to="/" replace />;
   }
 
