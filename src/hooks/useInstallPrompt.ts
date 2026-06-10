@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -32,7 +33,29 @@ export function useInstallPrompt() {
   }, []);
 
   const install = async () => {
-    if (!deferredPrompt) return false;
+    if (!deferredPrompt) {
+      // Fallback: no native prompt available (common on Chrome desktop when SW is self-destroying,
+      // or on iOS Safari). Show manual instructions.
+      const ua = navigator.userAgent.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(ua);
+      const isSafari = /safari/.test(ua) && !/chrome|chromium|edg/.test(ua);
+      const isFirefox = /firefox/.test(ua);
+
+      let message: string;
+      if (isIOS && isSafari) {
+        message = "No Safari: toque no botão Compartilhar e escolha 'Adicionar à Tela de Início'.";
+      } else if (isFirefox) {
+        message = "No Firefox: abra o menu (⋮) e escolha 'Instalar' ou 'Adicionar à Tela Inicial'.";
+      } else {
+        message = "Abra o menu do navegador (⋮ no canto superior direito) e clique em 'Instalar ProdControl' ou 'Instalar app'.";
+      }
+
+      toast.info("Como instalar o app", {
+        description: message,
+        duration: 10000,
+      });
+      return false;
+    }
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
