@@ -23,7 +23,17 @@ import RelatoriosSalvosPage from "./pages/RelatoriosSalvosPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 min — evita refetch em toda navegação
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retry: 1,
+    },
+  },
+});
 
 function AppRoutes() {
   useOfflineSync();
