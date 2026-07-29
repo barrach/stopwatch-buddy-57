@@ -233,6 +233,7 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
 
   for (const r of dayRecords) {
     let qty: number;
+    let dur: number;
     if (usesDerivedHHValue(r)) {
       qty = specialtyBaseMap.get(`${r.data}|${r.especialidade_id ?? "sem-especialidade"}`) || 0;
       // Apply fallback if no base in day
@@ -240,10 +241,13 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
         const hist = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
         qty = hist > 0 ? hist : FALLBACK_DEFAULT_QTY;
       }
+      // Ignora duração do evento no cálculo do HH médio para manter
+      // simetria com getRecordHHWithContext (dynamic = qty × 1).
+      dur = 1;
     } else {
       qty = getStoredQty(r);
+      dur = getDuration(r);
     }
-    const dur = getDuration(r);
     hhTotal += qty * dur;
     qtyTotal += qty;
   }
