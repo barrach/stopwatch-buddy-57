@@ -496,7 +496,7 @@ Gere um relatório executivo completo e preciso com base nesses dados. Use EXATA
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.6-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
