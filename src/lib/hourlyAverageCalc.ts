@@ -136,7 +136,11 @@ function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
   return resultMap;
 }
 
-const FALLBACK_DEFAULT_QTY = 10;
+// Conservative default when no productive baseline exists for the specialty
+// on the target day and no historical average can be derived. Using 1 avoids
+// inflating NPE HH totals by assuming a fictional crew size (previous value
+// of 10 was superestimating parado externo em dias sem base produtiva).
+const FALLBACK_DEFAULT_QTY = 1;
 
 /**
  * Compute historical average for a specialty from records of other days (last 7 days).
@@ -144,16 +148,14 @@ const FALLBACK_DEFAULT_QTY = 10;
  */
 function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string, allRecords: any[]): number {
   const specId = especialidadeId ?? "sem-especialidade";
-  const currentDateObj = new Date(currentDate);
-  const sevenDaysAgo = new Date(currentDateObj);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  // Filter records: same specialty, different days (last 7), non-dynamic only
+  // Widen the historical window: use ALL available past days for the same
+  // specialty (non-dynamic records only). A 7-day window frequently returned
+  // zero and forced the default fallback (10), which inflated NPE metrics
+  // on days with only "parado externo" launches.
   const historicalRecords = allRecords.filter((rec) => {
     if (usesDerivedHHValue(rec)) return false;
     if ((rec.especialidade_id ?? "sem-especialidade") !== specId) return false;
-    const recDate = new Date(rec.data);
-    return rec.data !== currentDate && recDate >= sevenDaysAgo && recDate < currentDateObj;
+    return rec.data !== currentDate;
   });
 
   if (historicalRecords.length === 0) return 0;
