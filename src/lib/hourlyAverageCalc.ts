@@ -233,6 +233,7 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
 
   for (const r of dayRecords) {
     let qty: number;
+    let dur: number;
     if (usesDerivedHHValue(r)) {
       qty = specialtyBaseMap.get(`${r.data}|${r.especialidade_id ?? "sem-especialidade"}`) || 0;
       // Apply fallback if no base in day
@@ -240,10 +241,13 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
         const hist = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
         qty = hist > 0 ? hist : FALLBACK_DEFAULT_QTY;
       }
+      // Ignora duração do evento no cálculo do HH médio para manter
+      // simetria com getRecordHHWithContext (dynamic = qty × 1).
+      dur = 1;
     } else {
       qty = getStoredQty(r);
+      dur = getDuration(r);
     }
-    const dur = getDuration(r);
     hhTotal += qty * dur;
     qtyTotal += qty;
   }
@@ -266,14 +270,19 @@ export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: a
   const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
-    // HH REAL
-    const valorFinal = qty * duracao;
+    // HH REAL — duração ignorada no peso do %: usamos qty × 1h
+    // para evitar que eventos longos (ex.: 8h de chuva) inflem o NPE
+    // em ordens de grandeza superiores às amostras produtivas (que
+    // valem qty × HH_medio_dia ≈ qty × 1). A duração continua
+    // preservada no registro para relatórios de horas paradas.
+    const valorFinal = qty * 1;
     console.log({
       tipo: "HH_REAL",
       categoria: (r.categorias_observacao as any)?.nome || r.categoria || "",
       descricao: desc,
       qtd: qty,
       duracao,
+      duracao_ignorada_no_peso: true,
       valor_final: valorFinal,
     });
     return valorFinal;
