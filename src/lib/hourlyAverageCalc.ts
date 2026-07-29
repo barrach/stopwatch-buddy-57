@@ -266,14 +266,19 @@ export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: a
   const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
-    // HH REAL
-    const valorFinal = qty * duracao;
+    // HH REAL — duração ignorada no peso do %: usamos qty × 1h
+    // para evitar que eventos longos (ex.: 8h de chuva) inflem o NPE
+    // em ordens de grandeza superiores às amostras produtivas (que
+    // valem qty × HH_medio_dia ≈ qty × 1). A duração continua
+    // preservada no registro para relatórios de horas paradas.
+    const valorFinal = qty * 1;
     console.log({
       tipo: "HH_REAL",
       categoria: (r.categorias_observacao as any)?.nome || r.categoria || "",
       descricao: desc,
       qtd: qty,
       duracao,
+      duracao_ignorada_no_peso: true,
       valor_final: valorFinal,
     });
     return valorFinal;
