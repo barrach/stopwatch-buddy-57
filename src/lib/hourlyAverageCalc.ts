@@ -351,13 +351,48 @@ export function computeHourlyAdjustedPercentages(
 }
 
 /**
+ * Memoized grouping of a record array by `data|obra_id`.
+ * Avoids re-scanning the full dataset once per record (O(n²) → O(n)).
+ */
+const dayGroupCache = new WeakMap<any[], Map<string, any[]>>();
+
+function getDayGroups(allRecords: any[]): Map<string, any[]> {
+  const cached = dayGroupCache.get(allRecords);
+  if (cached) return cached;
+  const groups = new Map<string, any[]>();
+  for (const rec of allRecords) {
+    const key = `${rec.data}|${rec.obra_id}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(rec);
+  }
+  dayGroupCache.set(allRecords, groups);
+  return groups;
+}
+
+const hhMedioCache = new WeakMap<any[], Map<string, number>>();
+
+function getHHMedioForDay(dayKey: string, dayRecords: any[], allRecords: any[]): number {
+  let cache = hhMedioCache.get(allRecords);
+  if (!cache) {
+    cache = new Map();
+    hhMedioCache.set(allRecords, cache);
+  }
+  const hit = cache.get(dayKey);
+  if (hit !== undefined) return hit;
+  const value = computeHHMedioDia(dayRecords, allRecords);
+  cache.set(dayKey, value);
+  return value;
+}
+
+/**
  * Get display quantity for a record (for the "Qtd" column).
  * Dynamic records show the HH real value (qty × duration).
  * Other records show raw quantity.
  */
 export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
   if (usesDerivedHHValue(r)) {
-    const dayRecords = allRecords.filter((rec) => `${rec.data}|${rec.obra_id}` === `${r.data}|${r.obra_id}`);
+    const dayKey = `${r.data}|${r.obra_id}`;
+    const dayRecords = getDayGroups(allRecords).get(dayKey) || [];
     return Math.round(getCalculatedQty(r, dayRecords, allRecords));
   }
   return Number(r.quantidade ?? 0);
@@ -368,9 +403,9 @@ export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
  * This is the main function to use for ALL chart/aggregate calculations.
  */
 export function getRecordValue(r: any, allRecords: any[]): number {
-  // Find all records from the same day/obra
   const dayKey = `${r.data}|${r.obra_id}`;
-  const dayRecords = allRecords.filter(rec => `${rec.data}|${rec.obra_id}` === dayKey);
-  const hhMedio = computeHHMedioDia(dayRecords, allRecords);
+  const dayRecords = getDayGroups(allRecords).get(dayKey) || [];
+  const hhMedio = getHHMedioForDay(dayKey, dayRecords, allRecords);
   return getRecordHHWithContext(r, hhMedio, dayRecords, allRecords);
 }
+
