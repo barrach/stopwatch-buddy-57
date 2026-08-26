@@ -88,8 +88,16 @@ function getDuration(r: any): number {
 /**
  * Build a map of (date|especialidade) → average qty per hour.
  * Groups non-dynamic records by hour, sums per hour, then divides total by unique hours.
+ *
+ * Memoized per record-array reference: this function is called for every record
+ * inside hot loops, and recomputing it each time made large datasets freeze the UI.
  */
+const daySpecialtyBaseCache = new WeakMap<any[], Map<string, number>>();
+
 function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
+  const cached = daySpecialtyBaseCache.get(dayRecords);
+  if (cached) return cached;
+
   // First pass: group qty by (date|especialidade|hour)
   const hourlyMap = new Map<string, Map<string, number>>(); // specKey → (hour → sumQty)
 
@@ -116,25 +124,13 @@ function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
 
     // Confidence factor: clamp between 0.25 and 1.0
     const fatorConfiabilidade = Math.min(Math.max(uniqueHours / EXPECTED_OBSERVATIONS, 0.25), 1.0);
-    const qtdAjustada = avgPerHour * fatorConfiabilidade;
-
-    console.log({
-      especialidade_key: specKey,
-      horas_unicas: [...hoursMap.keys()],
-      qtd_por_hora: Object.fromEntries(hoursMap),
-      QTD_total_dia: totalQty,
-      media_amostras_por_hora: avgPerHour,
-      total_amostras: uniqueHours,
-      horas_com_registro: uniqueHours,
-      fator_confiabilidade: fatorConfiabilidade,
-      qtd_final: qtdAjustada,
-    });
-
-    resultMap.set(specKey, qtdAjustada);
+    resultMap.set(specKey, avgPerHour * fatorConfiabilidade);
   }
 
+  daySpecialtyBaseCache.set(dayRecords, resultMap);
   return resultMap;
 }
+
 
 // Conservative default when no productive baseline exists for the specialty
 // on the target day and no historical average can be derived. Using 1 avoids
@@ -146,8 +142,20 @@ const FALLBACK_DEFAULT_QTY = 1;
  * Compute historical average for a specialty from records of other days (last 7 days).
  * Returns average qty per hour across those days, or 0 if no data.
  */
+const historicalAvgCache = new WeakMap<any[], Map<string, number>>();
+
 function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string, allRecords: any[]): number {
   const specId = especialidadeId ?? "sem-especialidade";
+  const cacheKey = `${specId}|${currentDate}`;
+  let cache = historicalAvgCache.get(allRecords);
+  if (cache) {
+    const hit = cache.get(cacheKey);
+    if (hit !== undefined) return hit;
+  } else {
+    cache = new Map();
+    historicalAvgCache.set(allRecords, cache);
+  }
+
   // Widen the historical window: use ALL available past days for the same
   // specialty (non-dynamic records only). A 7-day window frequently returned
   // zero and forced the default fallback (10), which inflated NPE metrics
@@ -158,7 +166,10 @@ function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string,
     return rec.data !== currentDate;
   });
 
-  if (historicalRecords.length === 0) return 0;
+  if (historicalRecords.length === 0) {
+    cache.set(cacheKey, 0);
+    return 0;
+  }
 
   // Group by day, compute avg per day, then average across days
   const dayMap = new Map<string, any[]>();
@@ -181,7 +192,9 @@ function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string,
     }
   }
 
-  return dayCount > 0 ? totalAvg / dayCount : 0;
+  const result = dayCount > 0 ? totalAvg / dayCount : 0;
+  cache.set(cacheKey, result);
+  return result;
 }
 
 function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number {
@@ -189,37 +202,18 @@ function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number
 
   const specialtyKey = `${r.data}|${r.especialidade_id ?? "sem-especialidade"}`;
   const specialtyBaseQty = getDaySpecialtyBaseMap(dayRecords).get(specialtyKey) || 0;
-  const duracao = getDuration(r);
 
   let finalQty = specialtyBaseQty;
-  let origem = "dia";
 
   if (specialtyBaseQty === 0 && allRecords && allRecords.length > 0) {
-    // FALLBACK: historical average (last 7 days)
+    // FALLBACK: historical average
     const historicalAvg = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
-    if (historicalAvg > 0) {
-      finalQty = historicalAvg;
-      origem = "historico_7dias";
-    } else {
-      // FALLBACK do fallback: default value
-      finalQty = FALLBACK_DEFAULT_QTY;
-      origem = "default_fallback";
-    }
+    finalQty = historicalAvg > 0 ? historicalAvg : FALLBACK_DEFAULT_QTY;
   }
-
-  console.log({
-    especialidade: (r.especialidades as any)?.nome || r.especialidade_id || "Sem especialidade",
-    data: r.data,
-    tem_base_no_dia: specialtyBaseQty > 0,
-    QTD_base_especialidade: specialtyBaseQty,
-    qtd_dinamica: finalQty,
-    origem,
-    duracao,
-    valor_final: finalQty * duracao,
-  });
 
   return finalQty;
 }
+
 
 /**
  * Compute HH_medio_dia for a set of records (same day/obra).
@@ -252,10 +246,9 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
     qtyTotal += qty;
   }
   if (qtyTotal === 0) return 0;
-  const medio = hhTotal / qtyTotal;
-  console.log({ HH_total_dia: hhTotal, QTD_total_dia: qtyTotal, HH_medio_dia: medio });
-  return medio;
+  return hhTotal / qtyTotal;
 }
+
 
 /**
  * Get the effective HH value for a single record.
@@ -267,7 +260,6 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
 export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: any[] = [], allRecords?: any[]): number {
   const desc = canonicalDescription(r.descricao || "Sem descrição");
   const qty = getCalculatedQty(r, dayRecords, allRecords);
-  const duracao = getDuration(r);
 
   if (HH_DESCRIPTIONS.has(desc)) {
     // HH REAL — duração ignorada no peso do %: usamos qty × 1h
@@ -275,21 +267,12 @@ export function getRecordHHWithContext(r: any, hhMedioDia: number, dayRecords: a
     // em ordens de grandeza superiores às amostras produtivas (que
     // valem qty × HH_medio_dia ≈ qty × 1). A duração continua
     // preservada no registro para relatórios de horas paradas.
-    const valorFinal = qty * 1;
-    console.log({
-      tipo: "HH_REAL",
-      categoria: (r.categorias_observacao as any)?.nome || r.categoria || "",
-      descricao: desc,
-      qtd: qty,
-      duracao,
-      duracao_ignorada_no_peso: true,
-      valor_final: valorFinal,
-    });
-    return valorFinal;
+    return qty * 1;
   }
 
   // HH EQUIVALENTE
   const valorFinal = qty * hhMedioDia;
+
   return valorFinal;
 }
 
@@ -368,13 +351,48 @@ export function computeHourlyAdjustedPercentages(
 }
 
 /**
+ * Memoized grouping of a record array by `data|obra_id`.
+ * Avoids re-scanning the full dataset once per record (O(n²) → O(n)).
+ */
+const dayGroupCache = new WeakMap<any[], Map<string, any[]>>();
+
+function getDayGroups(allRecords: any[]): Map<string, any[]> {
+  const cached = dayGroupCache.get(allRecords);
+  if (cached) return cached;
+  const groups = new Map<string, any[]>();
+  for (const rec of allRecords) {
+    const key = `${rec.data}|${rec.obra_id}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(rec);
+  }
+  dayGroupCache.set(allRecords, groups);
+  return groups;
+}
+
+const hhMedioCache = new WeakMap<any[], Map<string, number>>();
+
+function getHHMedioForDay(dayKey: string, dayRecords: any[], allRecords: any[]): number {
+  let cache = hhMedioCache.get(allRecords);
+  if (!cache) {
+    cache = new Map();
+    hhMedioCache.set(allRecords, cache);
+  }
+  const hit = cache.get(dayKey);
+  if (hit !== undefined) return hit;
+  const value = computeHHMedioDia(dayRecords, allRecords);
+  cache.set(dayKey, value);
+  return value;
+}
+
+/**
  * Get display quantity for a record (for the "Qtd" column).
  * Dynamic records show the HH real value (qty × duration).
  * Other records show raw quantity.
  */
 export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
   if (usesDerivedHHValue(r)) {
-    const dayRecords = allRecords.filter((rec) => `${rec.data}|${rec.obra_id}` === `${r.data}|${r.obra_id}`);
+    const dayKey = `${r.data}|${r.obra_id}`;
+    const dayRecords = getDayGroups(allRecords).get(dayKey) || [];
     return Math.round(getCalculatedQty(r, dayRecords, allRecords));
   }
   return Number(r.quantidade ?? 0);
@@ -385,9 +403,9 @@ export function getDisplayQuantity(r: any, allRecords: any[] = []): number {
  * This is the main function to use for ALL chart/aggregate calculations.
  */
 export function getRecordValue(r: any, allRecords: any[]): number {
-  // Find all records from the same day/obra
   const dayKey = `${r.data}|${r.obra_id}`;
-  const dayRecords = allRecords.filter(rec => `${rec.data}|${rec.obra_id}` === dayKey);
-  const hhMedio = computeHHMedioDia(dayRecords, allRecords);
+  const dayRecords = getDayGroups(allRecords).get(dayKey) || [];
+  const hhMedio = getHHMedioForDay(dayKey, dayRecords, allRecords);
   return getRecordHHWithContext(r, hhMedio, dayRecords, allRecords);
 }
+
