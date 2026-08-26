@@ -246,10 +246,9 @@ export function computeHHMedioDia(dayRecords: any[], allRecords?: any[]): number
     qtyTotal += qty;
   }
   if (qtyTotal === 0) return 0;
-  const medio = hhTotal / qtyTotal;
-  console.log({ HH_total_dia: hhTotal, QTD_total_dia: qtyTotal, HH_medio_dia: medio });
-  return medio;
+  return hhTotal / qtyTotal;
 }
+
 
 /**
  * Get the effective HH value for a single record.
