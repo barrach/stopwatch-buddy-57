@@ -55,26 +55,34 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/nova-observacao" element={<NewObservation />} />
-      <Route path="/registros" element={<Records />} />
-      <Route path="/rotas" element={<RoutesPage />} />
-      <Route path="/configuracoes" element={<SettingsPage />} />
-      <Route path="/cadastro/rotas" element={<CadastroRotas />} />
-      <Route path="/cadastro/especialidades" element={<CadastroEspecialidades />} />
-      <Route path="/cadastro/categorias" element={<CadastroCategorias />} />
-      <Route path="/cadastro/obras" element={<CadastroObras />} />
-      
-      <Route path="/auditoria" element={<AuditoriaPage />} />
-      <Route path="/aprovacoes" element={<AprovacoesPage />} />
-      <Route path="/relatorios" element={<RelatoriosPage />} />
-      <Route path="/relatorios-salvos" element={<RelatoriosSalvosPage />} />
-      <Route path="/relatorio-ia" element={<RelatorioIA />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-muted-foreground text-sm">Carregando...</div>
+        </div>
+      }
+    >
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/nova-observacao" element={<NewObservation />} />
+        <Route path="/registros" element={<Records />} />
+        <Route path="/rotas" element={<RoutesPage />} />
+        <Route path="/configuracoes" element={<SettingsPage />} />
+        <Route path="/cadastro/rotas" element={<CadastroRotas />} />
+        <Route path="/cadastro/especialidades" element={<CadastroEspecialidades />} />
+        <Route path="/cadastro/categorias" element={<CadastroCategorias />} />
+        <Route path="/cadastro/obras" element={<CadastroObras />} />
+        <Route path="/auditoria" element={<AuditoriaPage />} />
+        <Route path="/aprovacoes" element={<AprovacoesPage />} />
+        <Route path="/relatorios" element={<RelatoriosPage />} />
+        <Route path="/relatorios-salvos" element={<RelatoriosSalvosPage />} />
+        <Route path="/relatorio-ia" element={<RelatorioIA />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
