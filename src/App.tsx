@@ -3,25 +3,27 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Dashboard from "./pages/Dashboard";
-import NewObservation from "./pages/NewObservation";
-import Records from "./pages/Records";
-import RoutesPage from "./pages/RoutesPage";
-import SettingsPage from "./pages/SettingsPage";
-import CadastroRotas from "./pages/CadastroRotas";
-import CadastroEspecialidades from "./pages/CadastroEspecialidades";
-import CadastroCategorias from "./pages/CadastroCategorias";
-import CadastroObras from "./pages/CadastroObras";
-
-import AuditoriaPage from "./pages/AuditoriaPage";
-import AprovacoesPage from "./pages/AprovacoesPage";
-import RelatorioIA from "./pages/RelatorioIA";
-import RelatoriosPage from "./pages/RelatoriosPage";
-import RelatoriosSalvosPage from "./pages/RelatoriosSalvosPage";
 import LoginPage from "./pages/LoginPage";
-import NotFound from "./pages/NotFound";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const NewObservation = lazy(() => import("./pages/NewObservation"));
+const Records = lazy(() => import("./pages/Records"));
+const RoutesPage = lazy(() => import("./pages/RoutesPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const CadastroRotas = lazy(() => import("./pages/CadastroRotas"));
+const CadastroEspecialidades = lazy(() => import("./pages/CadastroEspecialidades"));
+const CadastroCategorias = lazy(() => import("./pages/CadastroCategorias"));
+const CadastroObras = lazy(() => import("./pages/CadastroObras"));
+const AuditoriaPage = lazy(() => import("./pages/AuditoriaPage"));
+const AprovacoesPage = lazy(() => import("./pages/AprovacoesPage"));
+const RelatorioIA = lazy(() => import("./pages/RelatorioIA"));
+const RelatoriosPage = lazy(() => import("./pages/RelatoriosPage"));
+const RelatoriosSalvosPage = lazy(() => import("./pages/RelatoriosSalvosPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
