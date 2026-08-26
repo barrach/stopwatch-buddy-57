@@ -88,8 +88,16 @@ function getDuration(r: any): number {
 /**
  * Build a map of (date|especialidade) → average qty per hour.
  * Groups non-dynamic records by hour, sums per hour, then divides total by unique hours.
+ *
+ * Memoized per record-array reference: this function is called for every record
+ * inside hot loops, and recomputing it each time made large datasets freeze the UI.
  */
+const daySpecialtyBaseCache = new WeakMap<any[], Map<string, number>>();
+
 function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
+  const cached = daySpecialtyBaseCache.get(dayRecords);
+  if (cached) return cached;
+
   // First pass: group qty by (date|especialidade|hour)
   const hourlyMap = new Map<string, Map<string, number>>(); // specKey → (hour → sumQty)
 
@@ -116,25 +124,13 @@ function getDaySpecialtyBaseMap(dayRecords: any[]): Map<string, number> {
 
     // Confidence factor: clamp between 0.25 and 1.0
     const fatorConfiabilidade = Math.min(Math.max(uniqueHours / EXPECTED_OBSERVATIONS, 0.25), 1.0);
-    const qtdAjustada = avgPerHour * fatorConfiabilidade;
-
-    console.log({
-      especialidade_key: specKey,
-      horas_unicas: [...hoursMap.keys()],
-      qtd_por_hora: Object.fromEntries(hoursMap),
-      QTD_total_dia: totalQty,
-      media_amostras_por_hora: avgPerHour,
-      total_amostras: uniqueHours,
-      horas_com_registro: uniqueHours,
-      fator_confiabilidade: fatorConfiabilidade,
-      qtd_final: qtdAjustada,
-    });
-
-    resultMap.set(specKey, qtdAjustada);
+    resultMap.set(specKey, avgPerHour * fatorConfiabilidade);
   }
 
+  daySpecialtyBaseCache.set(dayRecords, resultMap);
   return resultMap;
 }
+
 
 // Conservative default when no productive baseline exists for the specialty
 // on the target day and no historical average can be derived. Using 1 avoids
