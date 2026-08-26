@@ -142,8 +142,20 @@ const FALLBACK_DEFAULT_QTY = 1;
  * Compute historical average for a specialty from records of other days (last 7 days).
  * Returns average qty per hour across those days, or 0 if no data.
  */
+const historicalAvgCache = new WeakMap<any[], Map<string, number>>();
+
 function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string, allRecords: any[]): number {
   const specId = especialidadeId ?? "sem-especialidade";
+  const cacheKey = `${specId}|${currentDate}`;
+  let cache = historicalAvgCache.get(allRecords);
+  if (cache) {
+    const hit = cache.get(cacheKey);
+    if (hit !== undefined) return hit;
+  } else {
+    cache = new Map();
+    historicalAvgCache.set(allRecords, cache);
+  }
+
   // Widen the historical window: use ALL available past days for the same
   // specialty (non-dynamic records only). A 7-day window frequently returned
   // zero and forced the default fallback (10), which inflated NPE metrics
@@ -154,7 +166,10 @@ function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string,
     return rec.data !== currentDate;
   });
 
-  if (historicalRecords.length === 0) return 0;
+  if (historicalRecords.length === 0) {
+    cache.set(cacheKey, 0);
+    return 0;
+  }
 
   // Group by day, compute avg per day, then average across days
   const dayMap = new Map<string, any[]>();
@@ -177,7 +192,9 @@ function getHistoricalSpecialtyAvg(especialidadeId: string, currentDate: string,
     }
   }
 
-  return dayCount > 0 ? totalAvg / dayCount : 0;
+  const result = dayCount > 0 ? totalAvg / dayCount : 0;
+  cache.set(cacheKey, result);
+  return result;
 }
 
 function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number {
@@ -185,37 +202,18 @@ function getCalculatedQty(r: any, dayRecords: any[], allRecords?: any[]): number
 
   const specialtyKey = `${r.data}|${r.especialidade_id ?? "sem-especialidade"}`;
   const specialtyBaseQty = getDaySpecialtyBaseMap(dayRecords).get(specialtyKey) || 0;
-  const duracao = getDuration(r);
 
   let finalQty = specialtyBaseQty;
-  let origem = "dia";
 
   if (specialtyBaseQty === 0 && allRecords && allRecords.length > 0) {
-    // FALLBACK: historical average (last 7 days)
+    // FALLBACK: historical average
     const historicalAvg = getHistoricalSpecialtyAvg(r.especialidade_id, r.data, allRecords);
-    if (historicalAvg > 0) {
-      finalQty = historicalAvg;
-      origem = "historico_7dias";
-    } else {
-      // FALLBACK do fallback: default value
-      finalQty = FALLBACK_DEFAULT_QTY;
-      origem = "default_fallback";
-    }
+    finalQty = historicalAvg > 0 ? historicalAvg : FALLBACK_DEFAULT_QTY;
   }
-
-  console.log({
-    especialidade: (r.especialidades as any)?.nome || r.especialidade_id || "Sem especialidade",
-    data: r.data,
-    tem_base_no_dia: specialtyBaseQty > 0,
-    QTD_base_especialidade: specialtyBaseQty,
-    qtd_dinamica: finalQty,
-    origem,
-    duracao,
-    valor_final: finalQty * duracao,
-  });
 
   return finalQty;
 }
+
 
 /**
  * Compute HH_medio_dia for a set of records (same day/obra).
