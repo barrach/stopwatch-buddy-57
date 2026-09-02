@@ -68,13 +68,14 @@ export default function NewObservation() {
   const [lastObs, setLastObs] = useState<LastObservation | null>(null);
 
   // Rotas are fetched per selected contract so the list is always fresh and scoped
-  const { data: allRotas = [] } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
+  const { data: allRotas = [], refetch: refetchRotas, isFetching: isFetchingRotas } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
     ["rotas", "ativas", obraId || "none"], "rotas", "id, nome, obra_id",
     obraId
       ? [{ column: "status", value: "Ativo" }, { column: "obra_id", value: obraId }]
       : [{ column: "status", value: "Ativo" }],
     "nome"
   );
+
 
   const rotas = useMemo(
     () => obraId ? allRotas.filter((r) => r.obra_id === obraId) : [],
@@ -438,7 +439,18 @@ export default function NewObservation() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Rota *</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Rota *</Label>
+                  <button
+                    type="button"
+                    onClick={() => refetchRotas()}
+                    disabled={!obraId || isFetchingRotas}
+                    className="text-xs text-primary flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isFetchingRotas ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                    Atualizar
+                  </button>
+                </div>
                 <Select value={rotaId} onValueChange={setRotaId} disabled={!obraId}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder={!obraId ? "Selecione o contrato primeiro" : rotas.length === 0 ? "Nenhuma rota para este contrato" : "Selecione..."} /></SelectTrigger>
                   <SelectContent>
@@ -449,6 +461,7 @@ export default function NewObservation() {
                   <p className="text-xs text-muted-foreground mt-1">Nenhuma rota cadastrada para este contrato</p>
                 )}
               </div>
+
             </div>
           </div>
 
