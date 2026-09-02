@@ -76,10 +76,25 @@ export default function NewObservation() {
     [allRotas, obraId]
   );
 
-  const { data: obras = [] } = useOfflineQuery<{ id: string; nome: string }>(
+  const { data: allObras = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["obras", "ativas"], "obras", "id, nome",
     [{ column: "status", value: "Ativo" }], "nome"
   );
+
+  const { obraFilter: userObraRestriction } = useUserObra();
+
+  const obras = useMemo(
+    () => userObraRestriction ? allObras.filter((o) => o.id === userObraRestriction) : allObras,
+    [allObras, userObraRestriction]
+  );
+
+  // Auto-select the user's only contract
+  useEffect(() => {
+    if (userObraRestriction && obraId !== userObraRestriction) {
+      setObraId(userObraRestriction);
+      setRotaId("");
+    }
+  }, [userObraRestriction]);
 
   const { data: especialidades = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["especialidades", "ativas"], "especialidades", "id, nome",
