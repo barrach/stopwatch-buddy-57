@@ -68,13 +68,14 @@ export default function NewObservation() {
   const [lastObs, setLastObs] = useState<LastObservation | null>(null);
 
   // Rotas are fetched per selected contract so the list is always fresh and scoped
-  const { data: allRotas = [] } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
+  const { data: allRotas = [], refetch: refetchRotas, isFetching: isFetchingRotas } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
     ["rotas", "ativas", obraId || "none"], "rotas", "id, nome, obra_id",
     obraId
       ? [{ column: "status", value: "Ativo" }, { column: "obra_id", value: obraId }]
       : [{ column: "status", value: "Ativo" }],
     "nome"
   );
+
 
   const rotas = useMemo(
     () => obraId ? allRotas.filter((r) => r.obra_id === obraId) : [],
