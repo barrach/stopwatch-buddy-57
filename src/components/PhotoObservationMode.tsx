@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOfflineQuery } from "@/hooks/useOfflineQuery";
+import { useUserObra } from "@/hooks/useUserObra";
 import { reprocessarObservacoesDoDia } from "@/lib/dynamicObservationSync";
 
 const PHOTO_TIME_SLOTS = [
@@ -91,10 +92,24 @@ export default function PhotoObservationMode() {
   const [mDesc, setMDesc] = useState("");
   const [mQty, setMQty] = useState("1");
 
-  const { data: obras = [] } = useOfflineQuery<{ id: string; nome: string }>(
+  const { data: allObras = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["obras", "ativas"], "obras", "id, nome",
     [{ column: "status", value: "Ativo" }], "nome"
   );
+
+  const { obraFilter: userObraRestriction } = useUserObra();
+
+  const obras = useMemo(
+    () => userObraRestriction ? allObras.filter((o) => o.id === userObraRestriction) : allObras,
+    [allObras, userObraRestriction]
+  );
+
+  useEffect(() => {
+    if (userObraRestriction && obraId !== userObraRestriction) {
+      setObraId(userObraRestriction);
+      setRotaId("");
+    }
+  }, [userObraRestriction]);
   const { data: allRotas = [] } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
     ["rotas", "ativas"], "rotas", "id, nome, obra_id",
     [{ column: "status", value: "Ativo" }], "nome"
