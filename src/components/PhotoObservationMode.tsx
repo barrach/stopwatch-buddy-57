@@ -111,9 +111,13 @@ export default function PhotoObservationMode() {
     }
   }, [userObraRestriction]);
   const { data: allRotas = [] } = useOfflineQuery<{ id: string; nome: string; obra_id: string }>(
-    ["rotas", "ativas"], "rotas", "id, nome, obra_id",
-    [{ column: "status", value: "Ativo" }], "nome"
+    ["rotas", "ativas", obraId || "none"], "rotas", "id, nome, obra_id",
+    obraId
+      ? [{ column: "status", value: "Ativo" }, { column: "obra_id", value: obraId }]
+      : [{ column: "status", value: "Ativo" }],
+    "nome"
   );
+
   const { data: especialidades = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["especialidades", "ativas"], "especialidades", "id, nome",
     [{ column: "status", value: "Ativo" }], "nome"
