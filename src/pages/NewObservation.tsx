@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserObra } from "@/hooks/useUserObra";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,10 +77,25 @@ export default function NewObservation() {
     [allRotas, obraId]
   );
 
-  const { data: obras = [] } = useOfflineQuery<{ id: string; nome: string }>(
+  const { data: allObras = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["obras", "ativas"], "obras", "id, nome",
     [{ column: "status", value: "Ativo" }], "nome"
   );
+
+  const { obraFilter: userObraRestriction } = useUserObra();
+
+  const obras = useMemo(
+    () => userObraRestriction ? allObras.filter((o) => o.id === userObraRestriction) : allObras,
+    [allObras, userObraRestriction]
+  );
+
+  // Auto-select the user's only contract
+  useEffect(() => {
+    if (userObraRestriction && obraId !== userObraRestriction) {
+      setObraId(userObraRestriction);
+      setRotaId("");
+    }
+  }, [userObraRestriction]);
 
   const { data: especialidades = [] } = useOfflineQuery<{ id: string; nome: string }>(
     ["especialidades", "ativas"], "especialidades", "id, nome",
