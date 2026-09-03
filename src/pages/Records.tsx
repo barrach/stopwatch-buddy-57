@@ -295,6 +295,11 @@ export default function Records() {
     }
   };
 
+  const horaOptions = useMemo(() => {
+    const set = new Set<string>(records.map((r: any) => (r.horario || "").slice(0, 5)).filter(Boolean));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [records]);
+
   const filtered = records.filter((r: any) => {
     if (filterEspecialidade !== "all" && r.especialidade_id !== filterEspecialidade) return false;
     if (filterCategoria !== "all") {
@@ -307,6 +312,7 @@ export default function Records() {
       if (descNorm !== filterDescNorm) return false;
     }
     if (filterObra !== "all" && r.obra_id !== filterObra) return false;
+    if (filterHora !== "all" && (r.horario || "").slice(0, 5) !== filterHora) return false;
     if (filterDateStart && r.data < filterDateStart) return false;
     if (filterDateEnd && r.data > filterDateEnd) return false;
     if (search) {
@@ -332,7 +338,7 @@ export default function Records() {
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterEspecialidade, filterCategoria, filterDescricao, filterObra, filterDateStart, filterDateEnd]);
+  }, [search, filterEspecialidade, filterCategoria, filterDescricao, filterObra, filterHora, filterDateStart, filterDateEnd]);
 
   // Reset description filter when category changes
   useEffect(() => {
@@ -588,6 +594,15 @@ export default function Records() {
                 <SelectContent>
                   <SelectItem value="all">Todas Descrições</SelectItem>
                   {filterDescricaoOptions.map((d) => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-32">
+              <Select value={filterHora} onValueChange={setFilterHora}>
+                <SelectTrigger><SelectValue placeholder="Hora" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Horas</SelectItem>
+                  {horaOptions.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
