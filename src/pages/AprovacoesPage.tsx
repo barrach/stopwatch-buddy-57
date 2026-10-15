@@ -67,7 +67,7 @@ export default function AprovacoesPage() {
     try {
       await callAdmin("approve-user", { targetUserId: userId });
       toast.success("Usuário aprovado com sucesso!");
-      fetchPending();
+      fetchPending(); window.dispatchEvent(new Event("approvals-changed"));
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -80,7 +80,7 @@ export default function AprovacoesPage() {
     try {
       await callAdmin("reject-user", { targetUserId: userId });
       toast.success("Usuário rejeitado");
-      fetchPending();
+      fetchPending(); window.dispatchEvent(new Event("approvals-changed"));
     } catch (e: any) {
       toast.error(e.message);
     } finally {

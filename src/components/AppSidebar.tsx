@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download, FileBarChart, UserCheck } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
@@ -33,7 +34,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const { canInstall, install } = useInstallPrompt();
   const { isAdmin } = useIsAdmin();
   const { canObserve } = useUserRole();
-  const { data: pendingCount = 0 } = useQuery({
+  const { data: pendingCount = 0, refetch: refetchPending } = useQuery({
     queryKey: ["pending-approvals-count"],
     enabled: isAdmin,
     refetchInterval: 60_000,
@@ -44,6 +45,8 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
       return count ?? 0;
     },
   });
+
+  useEffect(() => { const h = () => refetchPending(); window.addEventListener("approvals-changed", h); return () => window.removeEventListener("approvals-changed", h); }, [refetchPending]);
 
   const handleClick = () => {
     onNavigate?.();
