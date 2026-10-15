@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { BarChart3, ClipboardList, Plus, Settings, Building2, Tag, Wrench, Route, X, ShieldAlert, LogOut, Download, FileBarChart, UserCheck } from "lucide-react";
 import logoMega from "@/assets/logo-mega.png";
@@ -5,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = { to: string; label: string; icon: any; show: (ctx: { isAdmin: boolean; canObserve: boolean }) => boolean };
 const navItems: NavItem[] = [
@@ -31,6 +34,19 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const { canInstall, install } = useInstallPrompt();
   const { isAdmin } = useIsAdmin();
   const { canObserve } = useUserRole();
+  const { data: pendingCount = 0, refetch: refetchPending } = useQuery({
+    queryKey: ["pending-approvals-count"],
+    enabled: isAdmin,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pendente");
+      return count ?? 0;
+    },
+  });
+
+  useEffect(() => { const h = () => refetchPending(); window.addEventListener("approvals-changed", h); return () => window.removeEventListener("approvals-changed", h); }, [refetchPending]);
 
   const handleClick = () => {
     onNavigate?.();
@@ -80,7 +96,12 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
         {isAdmin && (
           <NavLink to="/aprovacoes" onClick={handleClick} className={`sidebar-item ${location.pathname === "/aprovacoes" ? "sidebar-item-active" : ""}`}>
             <UserCheck className="w-[18px] h-[18px]" />
-            <span className="text-sm">Aprovações</span>
+            <span className="text-sm flex-1">Aprovações</span>
+            {pendingCount > 0 && (
+              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold flex items-center justify-center animate-pulse">
+                {pendingCount}
+              </span>
+            )}
           </NavLink>
         )}
 
